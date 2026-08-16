@@ -1,0 +1,173 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                   String        @id @default(cuid())
+  name                 String?
+  email                String?       @unique
+  emailVerified        DateTime?
+  image                String?
+  accounts             Account[]
+  sessions             Session[]
+  folders              Folder[]      @relation("UserFolders")
+  documents            Document[]    @relation("UserDocuments")
+  folderSharesReceived FolderShare[] @relation("SharedWithUser")
+  folderSharesCreated  FolderShare[] @relation("SharedByUser")
+  auditLogs            AuditLog[]
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Folder {
+  id        String   @id @default(cuid())
+  name      String
+  ownerId   String
+  parentId  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  owner    User          @relation("UserFolders", fields: [ownerId], references: [id], onDelete: Cascade)
+  parent   Folder?       @relation("FolderHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children Folder[]      @relation("FolderHierarchy")
+  documents Document[]
+  shares   FolderShare[]
+
+  @@index([ownerId])
+  @@index([parentId])
+}
+
+model Document {
+  id        String   @id @default(cuid())
+  name      String
+  blobUrl   String
+  blobPath  String
+  mimeType  String
+  sizeBytes Int
+  folderId  String
+  ownerId   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  owner        User          @relation("UserDocuments", fields: [ownerId], references: [id], onDelete: Cascade)
+  folder       Folder        @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  tags         DocumentTag[]
+  aiProcessing AiProcessing?
+  auditLogs    AuditLog[]
+
+  @@index([ownerId])
+  @@index([folderId])
+}
+
+model Tag {
+  id        String        @id @default(cuid())
+  name      String        @unique
+  documents DocumentTag[]
+  createdAt DateTime      @default(now())
+}
+
+model DocumentTag {
+  documentId String
+  tagId      String
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  tag      Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([documentId, tagId])
+}
+
+model FolderShare {
+  id               String   @id @default(cuid())
+  folderId         String
+  sharedWithUserId String
+  createdById      String
+  permission       String   @default("READ_ONLY")
+  createdAt        DateTime @default(now())
+
+  folder     Folder @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  sharedWith User   @relation("SharedWithUser", fields: [sharedWithUserId], references: [id], onDelete: Cascade)
+  createdBy  User   @relation("SharedByUser", fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@unique([folderId, sharedWithUserId])
+  @@index([sharedWithUserId])
+  @@index([folderId])
+}
+
+enum AiStatus {
+  NOT_REQUESTED
+  QUEUED
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model AiProcessing {
+  id                     String    @id @default(cuid())
+  documentId             String    @unique
+  status                 AiStatus  @default(NOT_REQUESTED)
+  extractedText          String?   @db.Text
+  summaryMarkdown        String?   @db.Text
+  interpretationMarkdown String?   @db.Text
+  errorMessage           String?   @db.Text
+  modelUsed              String?
+  processedAt            DateTime?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  action     String
+  userId     String
+  documentId String?
+  folderId   String?
+  metadata   String?  @db.Text
+  createdAt  DateTime @default(now())
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  document Document? @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
