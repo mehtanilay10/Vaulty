@@ -10,3 +10,32 @@
 - [x] Implemented route protection middleware (`src/middleware.ts`).
 - [x] Documented environment variables in `.env.example`.
 - [x] Created Google Sign-In page (`/auth/signin`) and Landing page (`/`).
+
+## Phase 2: Folder Hierarchy & Private Document Management
+- [x] Built Folder API routes (`/api/folders`, `/api/folders/[id]`) supporting nested creation, rename, move, and recursive cascading delete.
+- [x] Implemented Vercel Blob private upload service (`src/lib/blob.ts`, `/api/documents/upload`) validating file MIME type, extension, size limits, and owner authorization.
+- [x] Implemented authorized streaming proxy endpoint (`/api/documents/[id]/file`) verifying owner or recursive folder share access before serving buffers.
+- [x] Built Dashboard page (`/dashboard`), My Documents view (`/documents`), Folder Detail view with breadcrumbs (`/folders/[folderId]`), and Document Detail view (`/documents/[documentId]`).
+
+## Phase 3: Tags, Document Properties & Global Search
+- [x] Added free-form tag creation and filtering.
+- [x] Created Document Properties Modal and Folder Properties Modal with rename, move, re-tag, AI retry, and deletion controls.
+- [x] Implemented permission-aware global search API (`/api/search`) and Search page (`/search`) searching across filenames, folder names, tags, and AI summary text.
+
+## Phase 4: Folder Sharing & Security Authorization Logic
+- [x] Implemented central authorization engine (`src/lib/authz.ts`) with recursive folder share inheritance.
+- [x] Built User Search API (`/api/users/search`) and Folder Sharing API (`/api/folders/[id]/shares`).
+- [x] Enforced strict read-only locks on all mutation operations for shared users.
+- [x] Built Shared With Me page (`/shared`) listing top-level folders shared with the user.
+- [x] Added privacy-conscious audit logging for folder creations, uploads, deletions, shares, and unshares.
+
+## Phase 5: Gemini AI Document Processing
+- [x] Integrated `@google/genai` server-side SDK (`src/lib/gemini.ts`) using `GEMINI_API_KEY`.
+- [x] Designed structured JSON output prompt for Gemini (extracted text, Markdown summary, informational interpretation with medical disclaimers and hallucination guards).
+- [x] Implemented non-blocking async AI processing workflow (`AiProcessing` status tracking: `QUEUED`, `PROCESSING`, `COMPLETED`, `FAILED`).
+- [x] Built UI tabs for AI Summary (rendered Markdown via `react-markdown`), AI Interpretation, and Extracted Text, plus owner-only AI trigger/retry controls.
+
+## Phase 6: Mobile UX, PWA & Final Build
+- [x] Built responsive Mobile Navigation Bar (`MobileNav.tsx`) with quick upload action button and touch targets.
+- [x] Created PWA Web App Manifest (`public/manifest.json`).
+- [x] Executed full project build (`yarn build`) and verified zero errors or warnings.
