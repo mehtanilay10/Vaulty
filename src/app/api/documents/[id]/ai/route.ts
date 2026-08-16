@@ -43,7 +43,7 @@ export async function POST(
       create: {
         documentId: id,
         status: "QUEUED",
-        modelUsed: "gemini-2.5-flash",
+        modelUsed: "gemini-2.0-flash",
       },
     });
 

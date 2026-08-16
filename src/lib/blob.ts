@@ -31,13 +31,19 @@ export function getMaxUploadSize(): number {
   return 52428800; // Default 50MB
 }
 
-export async function uploadPrivateBlob(filename: string, fileData: Buffer | Blob) {
+export async function uploadPrivateBlob(
+  filename: string,
+  fileData: Buffer | Blob,
+  customPath?: string
+) {
   const blobToken = process.env.BLOB_READ_WRITE_TOKEN;
-  const uniqueName = `vaulty-docs/${Date.now()}-${filename.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
   
-  const blob = await put(uniqueName, fileData, {
+  const blobPathname = customPath || `vaulty-docs/${Date.now()}-${filename.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
+  
+  const blob = await put(blobPathname, fileData, {
     access: "private",
     token: blobToken,
+    addRandomSuffix: false, // Ensure exact hierarchy path
   });
 
   return {

@@ -36,7 +36,7 @@ export async function processDocumentWithGemini(
   const base64Data = fileBuffer.toString("base64");
 
   const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
+    model: "gemini-2.0-flash",
     contents: [
       {
         role: "user",

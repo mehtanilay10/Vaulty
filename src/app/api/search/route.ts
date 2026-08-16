@@ -12,14 +12,16 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     const q = searchParams.get("q") || "";
+    const limitParam = searchParams.get("limit");
+    const maxLimit = limitParam ? parseInt(limitParam, 10) : 50;
 
     if (!q.trim()) {
       return NextResponse.json({ documents: [] });
     }
 
-    const queryStr = q.trim();
+    const queryStr = q.trim().toLowerCase();
 
-    // 1. Fetch candidate documents matching query by name, tag, or AI summary
+    // 1. Fetch candidate documents matching query by name, tag, folder, or AI summary
     const candidateDocuments = await prisma.document.findMany({
       where: {
         OR: [
@@ -35,24 +37,52 @@ export async function GET(req: NextRequest) {
         tags: { include: { tag: true } },
         aiProcessing: { select: { status: true, summaryMarkdown: true } },
       },
-      orderBy: { createdAt: "desc" },
-      take: 50,
+      take: 100,
     });
 
-    // 2. Perform security authorization check for every candidate document
-    const authorizedDocs = [];
+    // 2. Perform security authorization check & compute Priority Score
+    const scoredDocs = [];
 
     for (const doc of candidateDocuments) {
       const access = await checkDocumentAccess(user.id, doc.id);
       if (access.hasAccess) {
-        authorizedDocs.push({
+        const docNameLower = doc.name.toLowerCase();
+        const folderNameLower = doc.folder?.name?.toLowerCase() || "";
+        const tagNames = doc.tags.map((t) => t.tag.name.toLowerCase());
+
+        let score = 0;
+
+        // Exact or prefix name match
+        if (docNameLower === queryStr) score += 100;
+        else if (docNameLower.startsWith(queryStr)) score += 80;
+        else if (docNameLower.includes(queryStr)) score += 60;
+
+        // Tag match
+        if (tagNames.some((tag) => tag.includes(queryStr))) score += 40;
+
+        // Folder name match
+        if (folderNameLower.includes(queryStr)) score += 30;
+
+        // AI Summary match
+        if (doc.aiProcessing?.summaryMarkdown?.toLowerCase().includes(queryStr)) score += 10;
+
+        scoredDocs.push({
           ...doc,
           ownershipType: access.isOwner ? "Owned by me" : "Shared with me",
+          score,
         });
       }
     }
 
-    return NextResponse.json({ documents: authorizedDocs });
+    // Sort by Priority Score descending, then by creation date
+    scoredDocs.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+
+    const finalDocs = scoredDocs.slice(0, maxLimit);
+
+    return NextResponse.json({ documents: finalDocs });
   } catch (error) {
     console.error("GET /api/search error:", error);
     return NextResponse.json({ error: "Search failed." }, { status: 500 });

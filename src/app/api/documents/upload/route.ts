@@ -5,6 +5,26 @@ import { checkFolderAccess } from "@/lib/authz";
 import { validateFileTypeAndExtension, getMaxUploadSize, uploadPrivateBlob } from "@/lib/blob";
 import { processDocumentWithGemini } from "@/lib/gemini";
 
+async function getFolderHierarchyPath(folderId: string): Promise<string> {
+  const segments: string[] = [];
+  let currentId: string | null = folderId;
+
+  while (currentId) {
+    const targetFolder: { name: string; parentId: string | null } | null =
+      await prisma.folder.findUnique({
+        where: { id: currentId },
+        select: { name: true, parentId: true },
+      });
+    if (!targetFolder) break;
+    // Sanitize segment name while preserving normal characters
+    const cleanSegment = targetFolder.name.replace(/[/\\?%*:|"<>]/g, "_").trim();
+    segments.unshift(cleanSegment);
+    currentId = targetFolder.parentId;
+  }
+
+  return segments.join("/");
+}
+
 export async function POST(req: NextRequest) {
   try {
     const user = await getCurrentUser();
@@ -56,8 +76,18 @@ export async function POST(req: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const fileBuffer = Buffer.from(arrayBuffer);
 
-    // 4. Upload to Vercel Blob Private Storage
-    const blobResult = await uploadPrivateBlob(file.name, fileBuffer);
+    // 4. Construct Vercel Blob folder path matching user system hierarchy
+    // Format: vaulty-docs/{UserName}/{FolderPath}/{filename}
+    const cleanUserName = (user.name || user.email || user.id)
+      .replace(/[/\\?%*:|"<>]/g, "_")
+      .trim();
+    const folderPath = await getFolderHierarchyPath(folderId);
+    const cleanFileName = docName.replace(/[/\\?%*:|"<>]/g, "_");
+
+    const fullBlobPath = `vaulty-docs/${cleanUserName}/${folderPath}/${cleanFileName}`;
+
+    // Upload to Vercel Blob Private Storage
+    const blobResult = await uploadPrivateBlob(file.name, fileBuffer, fullBlobPath);
 
     // 5. Save Document in DB
     const document = await prisma.document.create({
@@ -96,13 +126,13 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 7. Handle AI Processing Request
+    // 7. Handle AI Processing Request with updated Gemini model
     if (generateAi) {
       const aiRecord = await prisma.aiProcessing.create({
         data: {
           documentId: document.id,
           status: "QUEUED",
-          modelUsed: "gemini-2.5-flash",
+          modelUsed: "gemini-2.0-flash",
         },
       });
 
@@ -150,7 +180,7 @@ export async function POST(req: NextRequest) {
         userId: user.id,
         documentId: document.id,
         folderId: folderId,
-        metadata: JSON.stringify({ documentName: document.name, sizeBytes: document.sizeBytes }),
+        metadata: JSON.stringify({ documentName: document.name, sizeBytes: document.sizeBytes, blobPath: fullBlobPath }),
       },
     });
 
