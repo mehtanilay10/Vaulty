@@ -6,7 +6,14 @@
     "dev": "next dev",
     "build": "prisma generate && next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "next lint",
+    "type-check": "tsc --noEmit",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:studio": "prisma studio",
+    "db:migrate": "prisma migrate dev",
+    "db:seed": "tsx prisma/seed.ts",
+    "vercel-build": "prisma generate && prisma migrate deploy && next build"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",
@@ -36,5 +43,5 @@
     "tailwindcss": "^4",
     "typescript": "^5"
   },
-  "packageManager": "yarn@1.22.15"
+  "packageManager": "yarn@4.5.3"
 }
