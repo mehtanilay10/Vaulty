@@ -138,35 +138,33 @@ export function FolderPropertiesModal({
   if (!isOpen || !folder) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in">
-      <div className="w-full max-w-lg bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-        {/* Modal Header */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-800">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-bg-main/80 backdrop-blur-md animate-in fade-in">
+      <div className="w-full max-w-lg bg-bg-surface border border-border-subtle rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div className="flex items-center justify-between p-6 border-b border-border-subtle">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-400">
+            <div className="p-2.5 rounded-xl bg-accent-primary-soft text-accent-primary">
               <Folder className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-white truncate max-w-xs">{folder.name}</h2>
-              <p className="text-xs text-slate-400">Folder Settings &amp; Permissions</p>
+              <h2 className="text-lg font-bold text-text-primary truncate max-w-xs">{folder.name}</h2>
+              <p className="text-xs text-text-muted">Folder Settings &amp; Permissions</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="p-2 rounded-xl text-text-muted hover:text-text-primary hover:bg-bg-muted transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Tab Navigation */}
-        <div className="flex border-b border-slate-800 bg-slate-950/40 px-6">
+        <div className="flex border-b border-border-subtle bg-bg-muted px-6">
           <button
             onClick={() => setActiveTab("general")}
             className={`py-3 px-4 text-xs font-semibold border-b-2 transition-colors cursor-pointer ${
               activeTab === "general"
-                ? "border-indigo-500 text-indigo-400"
-                : "border-transparent text-slate-400 hover:text-slate-200"
+                ? "border-accent-primary text-accent-primary"
+                : "border-transparent text-text-muted hover:text-text-primary"
             }`}
           >
             General &amp; Actions
@@ -175,8 +173,8 @@ export function FolderPropertiesModal({
             onClick={() => setActiveTab("sharing")}
             className={`py-3 px-4 text-xs font-semibold border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 ${
               activeTab === "sharing"
-                ? "border-indigo-500 text-indigo-400"
-                : "border-transparent text-slate-400 hover:text-slate-200"
+                ? "border-accent-primary text-accent-primary"
+                : "border-transparent text-text-muted hover:text-text-primary"
             }`}
           >
             <Users className="w-3.5 h-3.5" />
@@ -184,17 +182,16 @@ export function FolderPropertiesModal({
           </button>
         </div>
 
-        {/* Modal Body */}
         <div className="p-6 overflow-y-auto space-y-6 flex-1">
           {error && (
-            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center gap-2">
+            <div className="p-3 rounded-xl bg-accent-rose-soft border border-accent-rose/20 text-accent-rose text-xs flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 shrink-0" />
               <span>{error}</span>
             </div>
           )}
 
           {successMsg && (
-            <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs flex items-center gap-2">
+            <div className="p-3 rounded-xl bg-accent-emerald-soft border border-accent-emerald/20 text-accent-emerald text-xs flex items-center gap-2">
               <Check className="w-4 h-4 shrink-0" />
               <span>{successMsg}</span>
             </div>
@@ -202,21 +199,20 @@ export function FolderPropertiesModal({
 
           {activeTab === "general" && (
             <div className="space-y-6">
-              {/* Rename Form */}
               <form onSubmit={handleRename} className="space-y-3">
-                <label className="block text-xs font-semibold text-slate-300">Folder Name</label>
+                <label className="block text-xs font-semibold text-text-secondary">Folder Name</label>
                 <div className="flex gap-2">
                   <input
                     type="text"
                     value={folderName}
                     onChange={(e) => setFolderName(e.target.value)}
                     disabled={!isOwner}
-                    className="flex-1 px-4 py-2.5 rounded-xl bg-slate-950/60 border border-slate-800 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 disabled:opacity-60"
+                    className="vault-input flex-1 px-4 py-2.5 text-sm disabled:opacity-60"
                   />
                   {isOwner && (
                     <button
                       type="submit"
-                      className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition-colors cursor-pointer"
+                      className="px-4 py-2.5 rounded-xl vault-btn-primary text-xs cursor-pointer"
                     >
                       Save
                     </button>
@@ -224,59 +220,57 @@ export function FolderPropertiesModal({
                 </div>
               </form>
 
-              {/* Metadata Info */}
-              <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 text-xs text-slate-400 space-y-2">
+              <div className="p-4 rounded-2xl bg-bg-muted border border-border-subtle text-xs text-text-secondary space-y-2">
                 <div className="flex justify-between">
                   <span>Owner:</span>
-                  <span className="text-slate-200 font-medium">
+                  <span className="text-text-primary font-medium">
                     {folder.owner?.name || folder.owner?.email || "You"}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span>Created:</span>
-                  <span className="text-slate-200">
+                  <span className="text-text-primary">
                     {new Date(folder.createdAt).toLocaleDateString()}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span>Your Permission:</span>
-                  <span className="text-indigo-400 font-semibold uppercase">
+                  <span className="text-accent-primary font-semibold uppercase">
                     {isOwner ? "Owner" : "Read Only"}
                   </span>
                 </div>
               </div>
 
-              {/* Destructive Action Zone */}
               {isOwner && (
-                <div className="pt-4 border-t border-slate-800">
+                <div className="pt-4 border-t border-border-subtle">
                   {!confirmDelete ? (
                     <button
                       onClick={() => setConfirmDelete(true)}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-400 font-medium text-xs transition-colors cursor-pointer"
+                      className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-accent-rose-soft hover:bg-accent-rose-soft border border-accent-rose/20 text-accent-rose font-medium text-xs transition-colors cursor-pointer"
                     >
                       <Trash2 className="w-4 h-4" />
                       <span>Delete Folder &amp; All Contained Files</span>
                     </button>
                   ) : (
-                    <div className="p-4 rounded-2xl bg-rose-950/40 border border-rose-500/30 space-y-3">
-                      <div className="flex items-center gap-2 text-rose-300 font-semibold text-xs">
+                    <div className="p-4 rounded-2xl bg-accent-rose-soft border border-accent-rose/20 space-y-3">
+                      <div className="flex items-center gap-2 text-accent-rose font-semibold text-xs">
                         <AlertTriangle className="w-4 h-4" />
                         <span>Confirm Destructive Deletion</span>
                       </div>
-                      <p className="text-[11px] text-slate-300 leading-relaxed">
+                      <p className="text-[11px] text-text-secondary leading-relaxed">
                         Deleting &quot;{folder.name}&quot; will permanently remove this folder, all nested subfolders, and all contained files. This action cannot be undone.
                       </p>
                       <div className="flex items-center gap-2 pt-1">
                         <button
                           onClick={() => setConfirmDelete(false)}
-                          className="flex-1 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-medium hover:bg-slate-700 transition-colors"
+                          className="flex-1 py-2 rounded-xl bg-bg-muted text-text-secondary text-xs font-medium hover:bg-border-subtle transition-colors"
                         >
                           Cancel
                         </button>
                         <button
                           onClick={handleDeleteFolder}
                           disabled={isDeleting}
-                          className="flex-1 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold transition-colors disabled:opacity-50 cursor-pointer"
+                          className="flex-1 py-2 rounded-xl bg-accent-rose hover:bg-accent-rose text-white text-xs font-semibold transition-colors disabled:opacity-50 cursor-pointer"
                         >
                           {isDeleting ? "Deleting..." : "Permanently Delete"}
                         </button>
@@ -291,52 +285,51 @@ export function FolderPropertiesModal({
           {activeTab === "sharing" && (
             <div className="space-y-6">
               {!isOwner ? (
-                <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 text-xs text-slate-400 space-y-1">
-                  <p className="font-semibold text-white">Shared Access Notice</p>
+                <div className="p-4 rounded-2xl bg-bg-muted border border-border-subtle text-xs text-text-secondary space-y-1">
+                  <p className="font-semibold text-text-primary">Shared Access Notice</p>
                   <p>You have Read-Only access to this folder. Only the folder owner can modify sharing settings.</p>
                 </div>
               ) : (
                 <>
-                  {/* Share Search Input */}
                   <div className="space-y-2">
-                    <label className="block text-xs font-semibold text-slate-300">
+                    <label className="block text-xs font-semibold text-text-secondary">
                       Share with Registered User
                     </label>
                     <div className="relative">
-                      <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3 pointer-events-none" />
+                      <Search className="w-4 h-4 text-text-muted absolute left-3.5 top-3 pointer-events-none" />
                       <input
                         type="text"
                         value={userQuery}
                         onChange={(e) => setUserQuery(e.target.value)}
                         placeholder="Search user by email or name..."
-                        className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950/60 border border-slate-800 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                        className="vault-input w-full pl-10 pr-4 py-2.5 text-sm placeholder:text-text-muted"
                       />
                     </div>
 
-                    {/* Search Results Dropdown */}
                     {searchResults.length > 0 && (
-                      <div className="bg-slate-950 border border-slate-800 rounded-2xl p-2 space-y-1 shadow-xl max-h-48 overflow-y-auto">
+                      <div className="bg-bg-surface border border-border-subtle rounded-2xl p-2 space-y-1 shadow-xl max-h-48 overflow-y-auto">
                         {searchResults.map((u) => (
                           <div
                             key={u.id}
-                            className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-800/80 transition-colors"
+                            className="flex items-center justify-between p-2 rounded-xl hover:bg-bg-muted transition-colors"
                           >
                             <div className="flex items-center gap-2.5 truncate">
                               {u.image ? (
                                 <img src={u.image} alt="" className="w-7 h-7 rounded-full" />
                               ) : (
-                                <div className="w-7 h-7 rounded-full bg-indigo-600/20 text-indigo-400 font-bold text-xs flex items-center justify-center">
+                                <div className="w-7 h-7 rounded-full bg-accent-primary-soft text-accent-primary font-bold text-xs flex items-center justify-center">
                                   {u.name?.[0] || u.email[0]}
                                 </div>
                               )}
                               <div className="truncate text-xs">
-                                <p className="font-semibold text-white truncate">{u.name || "User"}</p>
-                                <p className="text-slate-400 truncate">{u.email}</p>
+                                <p className="font-semibold text-text-primary truncate">{u.name || "User"}</p>
+                                <p className="text-text-muted truncate">{u.email}</p>
                               </div>
                             </div>
+
                             <button
                               onClick={() => handleShareWithUser(u.id)}
-                              className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium flex items-center gap-1 transition-colors shrink-0 cursor-pointer"
+                              className="px-3 py-1.5 rounded-lg bg-accent-primary hover:bg-accent-primary-hover text-white text-xs font-medium flex items-center gap-1 transition-colors shrink-0 cursor-pointer"
                             >
                               <UserPlus className="w-3.5 h-3.5" />
                               <span>Share</span>
@@ -347,14 +340,13 @@ export function FolderPropertiesModal({
                     )}
                   </div>
 
-                  {/* Active Shares List */}
                   <div className="space-y-3">
-                    <h3 className="text-xs font-semibold text-slate-300">
+                    <h3 className="text-xs font-semibold text-text-secondary">
                       Users with Access ({shares.length})
                     </h3>
 
                     {shares.length === 0 ? (
-                      <p className="text-xs text-slate-500 italic">
+                      <p className="text-xs text-text-muted italic">
                         This folder is currently private and not shared with anyone.
                       </p>
                     ) : (
@@ -362,31 +354,31 @@ export function FolderPropertiesModal({
                         {shares.map((share) => (
                           <div
                             key={share.id}
-                            className="flex items-center justify-between p-3 rounded-2xl bg-slate-950/60 border border-slate-800 text-xs"
+                            className="flex items-center justify-between p-3 rounded-2xl bg-bg-muted border border-border-subtle text-xs"
                           >
                             <div className="flex items-center gap-3 truncate">
                               {share.sharedWith?.image ? (
                                 <img src={share.sharedWith.image} alt="" className="w-8 h-8 rounded-full" />
                               ) : (
-                                <div className="w-8 h-8 rounded-full bg-indigo-600/20 text-indigo-400 font-bold text-xs flex items-center justify-center">
+                                <div className="w-8 h-8 rounded-full bg-accent-primary-soft text-accent-primary font-bold text-xs flex items-center justify-center">
                                   {share.sharedWith?.name?.[0] || share.sharedWith?.email?.[0]}
                                 </div>
                               )}
                               <div className="truncate">
-                                <p className="font-semibold text-white truncate">
+                                <p className="font-semibold text-text-primary truncate">
                                   {share.sharedWith?.name || "User"}
                                 </p>
-                                <p className="text-slate-400 truncate">{share.sharedWith?.email}</p>
+                                <p className="text-text-muted truncate">{share.sharedWith?.email}</p>
                               </div>
                             </div>
 
                             <div className="flex items-center gap-3 shrink-0">
-                              <span className="px-2 py-0.5 rounded-md bg-slate-800 text-indigo-300 text-[10px] font-medium uppercase">
+                              <span className="px-2 py-0.5 rounded-md bg-bg-surface text-accent-primary text-[10px] font-medium uppercase border border-border-subtle">
                                 {share.permission}
                               </span>
                               <button
                                 onClick={() => handleRevokeShare(share.sharedWith.id)}
-                                className="text-rose-400 hover:text-rose-300 font-medium text-xs hover:underline cursor-pointer"
+                                className="text-accent-rose hover:text-accent-rose font-medium text-xs hover:underline cursor-pointer"
                               >
                                 Revoke
                               </button>

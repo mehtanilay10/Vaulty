@@ -57,28 +57,28 @@ export function CreateFolderModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in">
-      <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl overflow-hidden p-6 space-y-5">
-        <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-bg-main/80 backdrop-blur-md animate-in fade-in">
+      <div className="w-full max-w-md bg-bg-surface border border-border-subtle rounded-3xl shadow-2xl overflow-hidden p-6 space-y-5">
+        <div className="flex items-center justify-between border-b border-border-subtle pb-4">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400">
+            <div className="p-2.5 rounded-xl bg-accent-primary-soft text-accent-primary">
               <FolderPlus className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-white">Create New Folder</h2>
-              <p className="text-xs text-slate-400">Organize your private documents</p>
+              <h2 className="text-lg font-bold text-text-primary">Create New Folder</h2>
+              <p className="text-xs text-text-muted">Organize your private documents</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="p-2 rounded-xl text-text-muted hover:text-text-primary hover:bg-bg-muted transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {error && (
-          <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center gap-2">
+          <div className="p-3 rounded-xl bg-accent-rose-soft border border-accent-rose/20 text-accent-rose text-xs flex items-center gap-2">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{error}</span>
           </div>
@@ -86,7 +86,7 @@ export function CreateFolderModal({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+            <label className="block text-xs font-semibold text-text-secondary mb-1.5">
               Folder Name
             </label>
             <input
@@ -95,7 +95,7 @@ export function CreateFolderModal({
               onChange={(e) => setFolderName(e.target.value)}
               placeholder="e.g. Medical Reports, Government IDs"
               autoFocus
-              className="w-full px-4 py-2.5 rounded-xl bg-slate-950/60 border border-slate-800 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+              className="vault-input w-full px-4 py-2.5 text-sm placeholder:text-text-muted"
             />
           </div>
 
@@ -103,14 +103,14 @@ export function CreateFolderModal({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl text-slate-400 hover:text-white text-sm transition-colors"
+              className="px-4 py-2 rounded-xl text-text-muted hover:text-text-primary text-sm transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading || !folderName.trim()}
-              className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm shadow-md shadow-indigo-600/20 disabled:opacity-50 transition-all cursor-pointer"
+              className="px-5 py-2 rounded-xl vault-btn-primary disabled:opacity-50 cursor-pointer"
             >
               {loading ? "Creating..." : "Create Folder"}
             </button>

@@ -116,10 +116,9 @@ export function StorageSettingsClient({ user }: { user: { id: string; defaultSto
   };
 
   const isConnected = connection && connection.status === "CONNECTED";
-  const driveStatusColor = isConnected ? "text-emerald-400" : "text-slate-400";
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#07090e] text-slate-900 dark:text-slate-100 flex flex-col transition-colors">
+    <div className="min-h-screen bg-bg-main text-text-primary flex flex-col transition-colors">
       <Navbar />
 
       <div className="flex-1 flex overflow-hidden">
@@ -127,39 +126,38 @@ export function StorageSettingsClient({ user }: { user: { id: string; defaultSto
 
         <main className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 pb-24 md:pb-8">
           <div>
-            <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-              <HardDrive className="w-7 h-7 text-indigo-400" />
+            <h1 className="text-2xl font-bold text-text-primary flex items-center gap-3">
+              <HardDrive className="w-7 h-7 text-accent-primary" />
               <span>Storage Settings</span>
             </h1>
-            <p className="text-slate-400 text-sm mt-1">
+            <p className="text-text-secondary text-sm mt-1">
               Manage your default storage provider and Google Drive connection
             </p>
           </div>
 
           <div className="max-w-3xl space-y-6">
             {statusMessage && (
-              <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-sm flex items-center gap-2">
+              <div className="p-4 rounded-2xl bg-accent-emerald-soft border border-accent-emerald/20 text-accent-emerald text-sm flex items-center gap-2">
                 <CheckCircle2 className="w-5 h-5 shrink-0" />
                 <span>{statusMessage}</span>
               </div>
             )}
 
             {errorMessage && (
-              <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-sm flex items-center gap-2">
+              <div className="p-4 rounded-2xl bg-accent-rose-soft border border-accent-rose/20 text-accent-rose text-sm flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5 shrink-0" />
                 <span>{errorMessage}</span>
               </div>
             )}
 
-            {/* Default Storage Provider */}
-            <div className="p-6 rounded-3xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 space-y-4">
-              <h2 className="text-base font-bold text-white flex items-center gap-2">
-                <Cloud className="w-5 h-5 text-blue-400" />
+            <div className="vault-card p-6 space-y-4">
+              <h2 className="text-base font-bold text-text-primary flex items-center gap-2">
+                <Cloud className="w-5 h-5 text-accent-primary" />
                 <span>Default Storage for New Uploads</span>
               </h2>
 
               <div className="flex flex-col sm:flex-row gap-4">
-                <label className={`flex-1 p-4 rounded-2xl border-2 cursor-pointer transition-all ${selectedProvider === "GOOGLE_DRIVE" ? "border-indigo-500 bg-indigo-500/5" : "border-slate-200 dark:border-slate-700 hover:border-slate-300"}`}>
+                <label className={`flex-1 p-4 rounded-2xl border-2 cursor-pointer transition-all ${selectedProvider === "GOOGLE_DRIVE" ? "border-accent-primary bg-accent-primary-soft" : "border-border-subtle hover:border-border-subtle"}`}>
                   <input
                     type="radio"
                     name="storageProvider"
@@ -169,17 +167,17 @@ export function StorageSettingsClient({ user }: { user: { id: string; defaultSto
                     className="sr-only"
                   />
                   <div className="flex items-start gap-3">
-                    <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400">
+                    <div className="p-2.5 rounded-xl bg-accent-primary-soft text-accent-primary">
                       <Cloud className="w-5 h-5" />
                     </div>
                     <div>
-                      <p className="font-bold text-sm text-slate-900 dark:text-white">Google Drive</p>
-                      <p className="text-xs text-slate-500 mt-1">Store documents in your Google Drive</p>
+                      <p className="font-bold text-sm text-text-primary">Google Drive</p>
+                      <p className="text-xs text-text-muted mt-1">Store documents in your Google Drive</p>
                     </div>
                   </div>
                 </label>
 
-                <label className={`flex-1 p-4 rounded-2xl border-2 cursor-pointer transition-all ${selectedProvider === "VERCEL_BLOB" ? "border-indigo-500 bg-indigo-500/5" : "border-slate-200 dark:border-slate-700 hover:border-slate-300"}`}>
+                <label className={`flex-1 p-4 rounded-2xl border-2 cursor-pointer transition-all ${selectedProvider === "VERCEL_BLOB" ? "border-accent-primary bg-accent-primary-soft" : "border-border-subtle hover:border-border-subtle"}`}>
                   <input
                     type="radio"
                     name="storageProvider"
@@ -189,12 +187,12 @@ export function StorageSettingsClient({ user }: { user: { id: string; defaultSto
                     className="sr-only"
                   />
                   <div className="flex items-start gap-3">
-                    <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-400">
+                    <div className="p-2.5 rounded-xl bg-accent-primary-soft text-accent-primary">
                       <HardDrive className="w-5 h-5" />
                     </div>
                     <div>
-                      <p className="font-bold text-sm text-slate-900 dark:text-white">Vercel Blob</p>
-                      <p className="text-xs text-slate-500 mt-1">Store documents in private Vercel Blob</p>
+                      <p className="font-bold text-sm text-text-primary">Vercel Blob</p>
+                      <p className="text-xs text-text-muted mt-1">Store documents in private Vercel Blob</p>
                     </div>
                   </div>
                 </label>
@@ -202,27 +200,26 @@ export function StorageSettingsClient({ user }: { user: { id: string; defaultSto
 
               <button
                 onClick={handleProviderChange}
-                className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition-colors cursor-pointer disabled:opacity-50"
+                className="px-5 py-2.5 rounded-xl vault-btn-primary text-xs disabled:opacity-50 cursor-pointer"
                 disabled={selectedProvider === user.defaultStorageProvider}
               >
                 Save Default Provider
               </button>
             </div>
 
-            {/* Google Drive Connection */}
-            <div className="p-6 rounded-3xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 space-y-4">
+            <div className="vault-card p-6 space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="text-base font-bold text-white flex items-center gap-2">
-                  <Cloud className="w-5 h-5 text-indigo-400" />
+                <h2 className="text-base font-bold text-text-primary flex items-center gap-2">
+                  <Cloud className="w-5 h-5 text-accent-primary" />
                   <span>Google Drive</span>
                 </h2>
                 {isConnected ? (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-semibold border border-emerald-500/20">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent-emerald-soft text-accent-emerald text-xs font-semibold border border-accent-emerald/20">
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     Connected
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-500/10 text-slate-400 text-xs font-semibold border border-slate-500/20">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-bg-muted text-text-muted text-xs font-semibold border border-border-subtle">
                     <XCircle className="w-3.5 h-3.5" />
                     Not Connected
                   </span>
@@ -231,18 +228,18 @@ export function StorageSettingsClient({ user }: { user: { id: string; defaultSto
 
               {isConnected ? (
                 <div className="space-y-4">
-                  <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-2">
+                  <div className="p-4 rounded-2xl bg-bg-muted border border-border-subtle space-y-2">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-slate-400">Root Folder</span>
-                      <span className="text-slate-300 font-mono">{connection.rootFolderId || "—"}</span>
+                      <span className="text-text-muted">Root Folder</span>
+                      <span className="text-text-secondary font-mono">{connection.rootFolderId || "—"}</span>
                     </div>
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-slate-400">Docs Folder</span>
-                      <span className="text-slate-300 font-mono">{connection.docsFolderId || "—"}</span>
+                      <span className="text-text-muted">Docs Folder</span>
+                      <span className="text-text-secondary font-mono">{connection.docsFolderId || "—"}</span>
                     </div>
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-slate-400">Last Sync</span>
-                      <span className="text-slate-300">{connection.lastSyncedAt ? new Date(connection.lastSyncedAt).toLocaleString() : "Never"}</span>
+                      <span className="text-text-muted">Last Sync</span>
+                      <span className="text-text-secondary">{connection.lastSyncedAt ? new Date(connection.lastSyncedAt).toLocaleString() : "Never"}</span>
                     </div>
                   </div>
 
@@ -250,7 +247,7 @@ export function StorageSettingsClient({ user }: { user: { id: string; defaultSto
                     <button
                       onClick={handleSync}
                       disabled={syncing}
-                      className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition-colors disabled:opacity-50 cursor-pointer"
+                      className="flex items-center gap-2 px-4 py-2.5 rounded-xl vault-btn-primary text-xs disabled:opacity-50 cursor-pointer"
                     >
                       {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
                       <span>{syncing ? "Syncing..." : "Sync Now"}</span>
@@ -260,7 +257,7 @@ export function StorageSettingsClient({ user }: { user: { id: string; defaultSto
                       href={`https://drive.google.com/drive/folders/${connection.docsFolderId || connection.rootFolderId}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-medium border border-slate-200 dark:border-slate-700/80 transition-colors cursor-pointer"
+                      className="flex items-center gap-2 px-4 py-2.5 rounded-xl vault-btn-secondary text-xs cursor-pointer"
                     >
                       <ExternalLink className="w-4 h-4" />
                       <span>Open Drive</span>
@@ -269,7 +266,7 @@ export function StorageSettingsClient({ user }: { user: { id: string; defaultSto
                     <button
                       onClick={handleDisconnect}
                       disabled={disconnecting}
-                      className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-400 text-xs font-medium transition-colors disabled:opacity-50 cursor-pointer"
+                      className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-accent-rose-soft hover:bg-accent-rose-soft border border-accent-rose/20 text-accent-rose text-xs font-medium transition-colors disabled:opacity-50 cursor-pointer"
                     >
                       {disconnecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Unplug className="w-4 h-4" />}
                       <span>{disconnecting ? "Disconnecting..." : "Disconnect"}</span>
@@ -278,13 +275,13 @@ export function StorageSettingsClient({ user }: { user: { id: string; defaultSto
                 </div>
               ) : (
                 <div className="space-y-3">
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-text-secondary">
                     Connect your Google Drive to store documents directly in your Drive. Vaulty will create a Vaulty folder with Docs, Summary, and Text subfolders.
                   </p>
                   <button
                     onClick={handleConnect}
                     disabled={connecting}
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-colors disabled:opacity-50 cursor-pointer"
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl vault-btn-primary text-sm disabled:opacity-50 cursor-pointer"
                   >
                     {connecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Cloud className="w-4 h-4" />}
                     <span>{connecting ? "Connecting..." : "Connect Google Drive"}</span>
@@ -293,15 +290,14 @@ export function StorageSettingsClient({ user }: { user: { id: string; defaultSto
               )}
             </div>
 
-            {/* Vercel Blob */}
-            <div className="p-6 rounded-3xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 space-y-4">
-              <h2 className="text-base font-bold text-white flex items-center gap-2">
-                <HardDrive className="w-5 h-5 text-blue-400" />
+            <div className="vault-card p-6 space-y-4">
+              <h2 className="text-base font-bold text-text-primary flex items-center gap-2">
+                <HardDrive className="w-5 h-5 text-accent-primary" />
                 <span>Vercel Blob</span>
               </h2>
 
-              <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800">
-                <p className="text-xs text-slate-400">
+              <div className="p-4 rounded-2xl bg-bg-muted border border-border-subtle">
+                <p className="text-xs text-text-secondary">
                   Vercel Private Blob storage is always available as an alternative storage provider. Existing Blob documents remain accessible.
                 </p>
               </div>

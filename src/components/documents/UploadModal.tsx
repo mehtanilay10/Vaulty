@@ -121,7 +121,6 @@ export function UploadModal({
         throw new Error(data.error || "Upload failed.");
       }
 
-      // Reset form & close
       setFile(null);
       setDocName("");
       setTags("");
@@ -137,42 +136,39 @@ export function UploadModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in">
-      <div className="w-full max-w-lg bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-        {/* Modal Header */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-800">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-bg-main/80 backdrop-blur-md animate-in fade-in">
+      <div className="w-full max-w-lg bg-bg-surface border border-border-subtle rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div className="flex items-center justify-between p-6 border-b border-border-subtle">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400">
+            <div className="p-2.5 rounded-xl bg-accent-primary-soft text-accent-primary">
               <Upload className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-white">Upload Document</h2>
-              <p className="text-xs text-slate-400">Add PDF or images to your private vault</p>
+              <h2 className="text-lg font-bold text-text-primary">Upload Document</h2>
+              <p className="text-xs text-text-muted">Add PDF or images to your private vault</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="p-2 rounded-xl text-text-muted hover:text-text-primary hover:bg-bg-muted transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Modal Body */}
         <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-5 flex-1">
           {error && (
-            <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center gap-2">
+            <div className="p-4 rounded-xl bg-accent-rose-soft border border-accent-rose/20 text-accent-rose text-xs flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{error}</span>
             </div>
           )}
 
-          {/* File Selector Zone */}
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-2">
+            <label className="block text-xs font-semibold text-text-secondary mb-2">
               Select Document (PDF, JPEG, PNG, WebP)
             </label>
-            <div className="relative border-2 border-dashed border-slate-700/80 hover:border-indigo-500/50 rounded-2xl p-6 text-center transition-colors bg-slate-950/40">
+             <div className="relative border-2 border-dashed border-border-subtle hover:border-accent-primary/50 rounded-2xl p-6 text-center transition-colors bg-bg-muted">
               <input
                 type="file"
                 accept=".pdf,.jpg,.jpeg,.png,.webp"
@@ -180,19 +176,19 @@ export function UploadModal({
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
               />
               <div className="flex flex-col items-center gap-2">
-                <FileText className="w-8 h-8 text-indigo-400" />
+                <FileText className="w-8 h-8 text-accent-primary" />
                 {file ? (
-                  <div className="text-sm font-semibold text-emerald-400 truncate max-w-full">
+                  <div className="text-sm font-semibold text-accent-emerald truncate max-w-full">
                     ✓ {file.name} ({Math.round(file.size / 1024)} KB)
                   </div>
                 ) : (
                   <>
-                    <p className="text-sm text-slate-300 font-medium">
+                    <p className="text-sm text-text-secondary font-medium">
                       Click or drag file to upload
                     </p>
-                    <div className="flex items-center gap-3 text-xs text-slate-500 mt-1">
+                    <div className="flex items-center gap-3 text-xs text-text-muted mt-1">
                       <span>PDF, JPG, PNG up to 50MB</span>
-                      <span className="inline-flex items-center gap-1 text-slate-400 bg-slate-800/60 px-2 py-0.5 rounded-md">
+                      <span className="inline-flex items-center gap-1 text-text-secondary bg-bg-surface px-2 py-0.5 rounded-md border border-border-subtle">
                         <Camera className="w-3 h-3" /> Camera supported
                       </span>
                     </div>
@@ -202,9 +198,8 @@ export function UploadModal({
             </div>
           </div>
 
-          {/* Document Name */}
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+            <label className="block text-xs font-semibold text-text-secondary mb-1.5">
               Document Display Name
             </label>
             <input
@@ -212,19 +207,18 @@ export function UploadModal({
               value={docName}
               onChange={(e) => setDocName(e.target.value)}
               placeholder="e.g. Blood Test Report Aug 2026"
-              className="w-full px-4 py-2.5 rounded-xl bg-slate-950/60 border border-slate-800 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+              className="vault-input w-full px-4 py-2.5 text-sm placeholder:text-text-muted"
             />
           </div>
 
-          {/* Folder Selector */}
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+            <label className="block text-xs font-semibold text-text-secondary mb-1.5">
               Destination Folder
             </label>
             <select
               value={selectedFolderId}
               onChange={(e) => setSelectedFolderId(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl bg-slate-950/60 border border-slate-800 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+              className="vault-input w-full px-4 py-2.5 text-sm text-text-secondary"
             >
               {folders.length === 0 ? (
                 <option value="">No folders found. Create one first.</option>
@@ -238,9 +232,8 @@ export function UploadModal({
             </select>
           </div>
 
-          {/* Free-form Tags */}
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+            <label className="block text-xs font-semibold text-text-secondary mb-1.5">
               Tags (Comma separated)
             </label>
             <input
@@ -248,56 +241,53 @@ export function UploadModal({
               value={tags}
               onChange={(e) => setTags(e.target.value)}
               placeholder="e.g. medical, blood-test, 2026"
-              className="w-full px-4 py-2.5 rounded-xl bg-slate-950/60 border border-slate-800 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+              className="vault-input w-full px-4 py-2.5 text-sm placeholder:text-text-muted"
             />
           </div>
 
-          {/* Storage Provider Indicator */}
-          <div className="p-3.5 rounded-2xl bg-slate-950/40 border border-slate-800 flex items-center justify-between">
+          <div className="p-3.5 rounded-2xl bg-bg-muted border border-border-subtle flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <HardDrive className="w-5 h-5 text-indigo-400 shrink-0" />
+              <HardDrive className="w-5 h-5 text-accent-primary shrink-0" />
               <div>
-                <p className="text-xs font-semibold text-white">Storage Provider</p>
-                <p className="text-[11px] text-slate-400">
+                <p className="text-xs font-semibold text-text-primary">Storage Provider</p>
+                <p className="text-[11px] text-text-muted">
                   {storageProvider === "GOOGLE_DRIVE" ? "Google Drive" : "Vercel Blob"}
                 </p>
               </div>
             </div>
-            <span className="text-[10px] uppercase font-bold text-indigo-400 px-2 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/20">
+            <span className="text-[10px] uppercase font-bold text-accent-primary px-2 py-0.5 rounded bg-accent-primary-soft border border-accent-primary/20">
               {storageProvider === "GOOGLE_DRIVE" ? "Drive" : "Blob"}
             </span>
           </div>
 
-          {/* AI Checkbox */}
-          <div className="p-3.5 rounded-2xl bg-indigo-950/30 border border-indigo-500/20 flex items-center justify-between">
+          <div className="p-3.5 rounded-2xl bg-accent-primary-soft border border-accent-primary/20 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Sparkles className="w-5 h-5 text-indigo-400 shrink-0" />
+              <Sparkles className="w-5 h-5 text-accent-primary shrink-0" />
               <div>
-                <p className="text-xs font-semibold text-white">Generate Gemini AI Summary</p>
-                <p className="text-[11px] text-slate-400">OCR extraction, structured summary &amp; interpretation</p>
+                <p className="text-xs font-semibold text-text-primary">Generate Gemini AI Summary</p>
+                <p className="text-[11px] text-text-muted">OCR extraction, structured summary &amp; interpretation</p>
               </div>
             </div>
             <input
               type="checkbox"
               checked={generateAi}
               onChange={(e) => setGenerateAi(e.target.checked)}
-              className="w-5 h-5 rounded accent-indigo-600 cursor-pointer"
+              className="w-5 h-5 rounded accent-accent-primary cursor-pointer"
             />
           </div>
 
-          {/* Footer Submit */}
-          <div className="pt-3 flex items-center justify-end gap-3 border-t border-slate-800">
+          <div className="pt-3 flex items-center justify-end gap-3 border-t border-border-subtle">
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2.5 rounded-xl text-slate-400 hover:text-white text-sm font-medium transition-colors"
+              className="px-5 py-2.5 rounded-xl text-text-muted hover:text-text-primary text-sm font-medium transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading || !file || !selectedFolderId}
-              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-medium text-sm shadow-lg shadow-indigo-600/20 disabled:opacity-50 transition-all cursor-pointer"
+              className="px-6 py-2.5 rounded-xl vault-btn-primary disabled:opacity-50 cursor-pointer"
             >
               {loading ? "Uploading to Vault..." : "Upload Document"}
             </button>

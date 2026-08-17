@@ -1,7 +1,6 @@
 import { auth } from "@/auth";
 import { SettingsClient } from "@/components/settings/SettingsClient";
 import Link from "next/link";
-import { HardDrive, User, Shield, Cpu, CheckCircle2 } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { MobileNav } from "@/components/layout/MobileNav";
@@ -12,7 +11,7 @@ export default async function SettingsPage() {
   const user = session.user;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+    <div className="min-h-screen bg-bg-main text-text-primary flex flex-col transition-colors">
       <Navbar />
 
       <div className="flex-1 flex overflow-hidden">
@@ -20,94 +19,19 @@ export default async function SettingsPage() {
 
         <main className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 pb-24 md:pb-8">
           <div>
-            <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-              <User className="w-7 h-7 text-indigo-400" />
+            <h1 className="text-2xl font-bold text-text-primary flex items-center gap-3">
+              <span className="p-2 rounded-xl bg-accent-primary-soft text-accent-primary">
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+              </span>
               <span>Account &amp; Vault Settings</span>
             </h1>
-            <p className="text-slate-400 text-sm mt-1">
+            <p className="text-text-secondary text-sm mt-1">
               User identity details, security parameters, and storage allocation
             </p>
           </div>
 
           <div className="max-w-3xl space-y-6">
-            {/* User Info Card */}
-            <div className="p-6 rounded-3xl bg-slate-900/60 border border-slate-800/80 space-y-4">
-              <h2 className="text-base font-bold text-white flex items-center gap-2">
-                <Shield className="w-5 h-5 text-indigo-400" />
-                <span>Google OAuth Identity</span>
-              </h2>
-
-              <div className="flex items-center gap-4 p-4 rounded-2xl bg-slate-950/60 border border-slate-800">
-                {user?.image ? (
-                  <img src={user.image} alt="" className="w-14 h-14 rounded-2xl ring-2 ring-indigo-500/30" />
-                ) : (
-                  <div className="w-14 h-14 rounded-2xl bg-indigo-600/20 text-indigo-400 font-bold text-xl flex items-center justify-center">
-                    {user?.name?.[0] || user?.email?.[0]}
-                  </div>
-                )}
-                <div>
-                  <h3 className="font-bold text-lg text-white">{user?.name || "Standard User"}</h3>
-                  <p className="text-sm text-slate-400">{user?.email}</p>
-                  <span className="inline-flex items-center gap-1 mt-1 text-[11px] font-semibold text-emerald-400">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Authenticated Standard User
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Storage Settings Link */}
-            <div className="p-6 rounded-3xl bg-slate-900/60 border border-slate-800/80 space-y-4">
-              <h2 className="text-base font-bold text-white flex items-center gap-2">
-                <HardDrive className="w-5 h-5 text-blue-400" />
-                <span>Storage</span>
-              </h2>
-
-              <p className="text-xs text-slate-400">
-                Manage your Google Drive connection and default storage provider.
-              </p>
-
-              <Link
-                href="/settings/storage"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-colors cursor-pointer"
-              >
-                <HardDrive className="w-4 h-4" />
-                <span>Storage Settings</span>
-              </Link>
-            </div>
-
-            {/* Application Parameters */}
-            <div className="p-6 rounded-3xl bg-slate-900/60 border border-slate-800/80 space-y-4">
-              <h2 className="text-base font-bold text-white flex items-center gap-2">
-                <Cpu className="w-5 h-5 text-blue-400" />
-                <span>Storage &amp; AI Configuration</span>
-              </h2>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-slate-300">
-                <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-1">
-                  <span className="text-slate-400 font-medium">Blob Storage Mode</span>
-                  <p className="font-bold text-white text-sm">Vercel Private Blob</p>
-                  <p className="text-slate-500">Authorized server streaming proxy active.</p>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-1">
-                  <span className="text-slate-400 font-medium">Max File Limit</span>
-                  <p className="font-bold text-white text-sm">50 MB per document</p>
-                  <p className="text-slate-500">Supports PDF, JPEG, PNG, WebP.</p>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-1">
-                  <span className="text-slate-400 font-medium">AI Engine</span>
-                  <p className="font-bold text-white text-sm">Google Gemini 2.5 Flash</p>
-                  <p className="text-slate-500">OCR text extraction &amp; Markdown summary.</p>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-1">
-                  <span className="text-slate-400 font-medium">Database Engine</span>
-                  <p className="font-bold text-white text-sm">Supabase / Neon PostgreSQL</p>
-                  <p className="text-slate-500">Prisma ORM with recursive permissions.</p>
-                </div>
-              </div>
-            </div>
+            <SettingsClient user={user} />
           </div>
         </main>
       </div>

@@ -42,9 +42,6 @@ export function SyncCenterClient({
   const [events, setEvents] = useState(recentEvents);
 
   const isConnected = connection && connection.status === "CONNECTED";
-  const statusColor = isConnected ? "text-emerald-400" : "text-slate-400";
-  const statusBg = isConnected ? "bg-emerald-500/10 border-emerald-500/20" : "bg-slate-500/10 border-slate-500/20";
-  const statusText = isConnected ? "Connected" : "Disconnected";
 
   const handleSync = async () => {
     setSyncing(true);
@@ -98,7 +95,7 @@ export function SyncCenterClient({
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#07090e] text-slate-900 dark:text-slate-100 flex flex-col transition-colors">
+    <div className="min-h-screen bg-bg-main text-text-primary flex flex-col transition-colors">
       <Navbar />
 
       <div className="flex-1 flex overflow-hidden">
@@ -106,65 +103,64 @@ export function SyncCenterClient({
 
         <main className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 pb-24 md:pb-8">
           <div>
-            <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-              <RefreshCw className="w-7 h-7 text-indigo-400" />
+            <h1 className="text-2xl font-bold text-text-primary flex items-center gap-3">
+              <RefreshCw className="w-7 h-7 text-accent-primary" />
               <span>Sync Center</span>
             </h1>
-            <p className="text-slate-400 text-sm mt-1">
+            <p className="text-text-secondary text-sm mt-1">
               Monitor and manage your Google Drive synchronization
             </p>
           </div>
 
           {errorMessage && (
-            <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-sm flex items-center gap-2">
+            <div className="p-4 rounded-2xl bg-accent-rose-soft border border-accent-rose/20 text-accent-rose text-sm flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 shrink-0" />
               <span>{errorMessage}</span>
             </div>
           )}
 
           {successMessage && (
-            <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-sm flex items-center gap-2">
+            <div className="p-4 rounded-2xl bg-accent-emerald-soft border border-accent-emerald/20 text-accent-emerald text-sm flex items-center gap-2">
               <CheckCircle2 className="w-5 h-5 shrink-0" />
               <span>{successMessage}</span>
             </div>
           )}
 
-          {/* Connection Status Card */}
-          <div className="p-6 rounded-3xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 space-y-4">
+          <div className="vault-card p-6 space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400">
+                <div className="p-2.5 rounded-xl bg-accent-primary-soft text-accent-primary">
                   <HardDrive className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-base font-bold text-white">Google Drive</h2>
-                  <p className="text-xs text-slate-400">
+                  <h2 className="text-base font-bold text-text-primary">Google Drive</h2>
+                  <p className="text-xs text-text-muted">
                     {isConnected ? `Connected • Last sync: ${connection.lastSyncedAt ? new Date(connection.lastSyncedAt).toLocaleString() : "Never"}` : "Not connected"}
                   </p>
                 </div>
               </div>
-              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${statusBg} ${statusColor}`}>
-                <div className={`w-2 h-2 rounded-full ${isConnected ? "bg-emerald-400" : "bg-slate-400"}`} />
-                {statusText}
+              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${isConnected ? "bg-accent-emerald-soft text-accent-emerald border-accent-emerald/20" : "bg-bg-muted text-text-muted border-border-subtle"}`}>
+                <div className={`w-2 h-2 rounded-full ${isConnected ? "bg-accent-emerald" : "bg-text-muted"}`} />
+                {isConnected ? "Connected" : "Disconnected"}
               </span>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 text-center">
-                <p className="text-2xl font-bold text-white">{stats.synced}</p>
-                <p className="text-xs text-slate-400 mt-1">Synced</p>
+              <div className="p-4 rounded-2xl bg-bg-muted border border-border-subtle text-center">
+                <p className="text-2xl font-bold text-text-primary">{stats.synced}</p>
+                <p className="text-xs text-text-muted mt-1">Synced</p>
               </div>
-              <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 text-center">
-                <p className="text-2xl font-bold text-white">{stats.pending}</p>
-                <p className="text-xs text-slate-400 mt-1">Pending</p>
+              <div className="p-4 rounded-2xl bg-bg-muted border border-border-subtle text-center">
+                <p className="text-2xl font-bold text-text-primary">{stats.pending}</p>
+                <p className="text-xs text-text-muted mt-1">Pending</p>
               </div>
-              <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 text-center">
-                <p className="text-2xl font-bold text-white">{stats.failed}</p>
-                <p className="text-xs text-slate-400 mt-1">Failed</p>
+              <div className="p-4 rounded-2xl bg-bg-muted border border-border-subtle text-center">
+                <p className="text-2xl font-bold text-text-primary">{stats.failed}</p>
+                <p className="text-xs text-text-muted mt-1">Failed</p>
               </div>
-              <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 text-center">
-                <p className="text-2xl font-bold text-white">{events.filter((e) => e.operation === "CONFLICT").length}</p>
-                <p className="text-xs text-slate-400 mt-1">Conflicts</p>
+              <div className="p-4 rounded-2xl bg-bg-muted border border-border-subtle text-center">
+                <p className="text-2xl font-bold text-text-primary">{events.filter((e) => e.operation === "CONFLICT").length}</p>
+                <p className="text-xs text-text-muted mt-1">Conflicts</p>
               </div>
             </div>
 
@@ -172,7 +168,7 @@ export function SyncCenterClient({
               <button
                 onClick={handleSync}
                 disabled={syncing || !isConnected}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-colors disabled:opacity-50 cursor-pointer"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl vault-btn-primary text-sm disabled:opacity-50 cursor-pointer"
               >
                 {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
                 <span>{syncing ? "Syncing..." : "Sync Now"}</span>
@@ -180,7 +176,7 @@ export function SyncCenterClient({
 
               <Link
                 href="/settings/storage"
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-sm font-medium border border-slate-200 dark:border-slate-700/80 transition-colors"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl vault-btn-secondary text-sm"
               >
                 <ShieldCheck className="w-4 h-4" />
                 <span>Storage Settings</span>
@@ -188,15 +184,14 @@ export function SyncCenterClient({
             </div>
           </div>
 
-          {/* Recent Activity */}
           <div className="space-y-4">
-            <h2 className="text-lg font-bold text-white flex items-center gap-2">
-              <Clock className="w-5 h-5 text-amber-500" />
+            <h2 className="text-lg font-bold text-text-primary flex items-center gap-2">
+              <Clock className="w-5 h-5 text-accent-secondary" />
               <span>Recent Activity</span>
             </h2>
 
             {events.length === 0 ? (
-              <div className="p-6 rounded-2xl bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 text-center text-xs text-slate-500">
+              <div className="vault-card p-6 text-center text-xs text-text-muted">
                 No sync activity yet.
               </div>
             ) : (
@@ -204,22 +199,22 @@ export function SyncCenterClient({
                 {events.map((event) => (
                   <div
                     key={event.id}
-                    className="p-4 rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 flex items-center justify-between gap-4"
+                    className="vault-card p-4 flex items-center justify-between gap-4"
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-xl ${event.status === "SUCCESS" ? "bg-emerald-500/10 text-emerald-400" : event.status === "FAILED" ? "bg-rose-500/10 text-rose-400" : "bg-amber-500/10 text-amber-400"}`}>
+                      <div className={`p-2 rounded-xl ${event.status === "SUCCESS" ? "bg-accent-emerald-soft text-accent-emerald" : event.status === "FAILED" ? "bg-accent-rose-soft text-accent-rose" : "bg-accent-secondary-soft text-accent-secondary"}`}>
                         {getOperationIcon(event.operation)}
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-slate-900 dark:text-white truncate max-w-xs">
+                        <p className="text-sm font-semibold text-text-primary truncate max-w-xs">
                           {getTargetName(event)}
                         </p>
-                        <p className="text-xs text-slate-500">
+                        <p className="text-xs text-text-muted">
                           {getOperationLabel(event.operation)} • {new Date(event.createdAt).toLocaleString()}
                         </p>
                       </div>
                     </div>
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${event.status === "SUCCESS" ? "bg-emerald-500/10 text-emerald-400" : event.status === "FAILED" ? "bg-rose-500/10 text-rose-400" : "bg-amber-500/10 text-amber-400"}`}>
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${event.status === "SUCCESS" ? "bg-accent-emerald-soft text-accent-emerald" : event.status === "FAILED" ? "bg-accent-rose-soft text-accent-rose" : "bg-accent-secondary-soft text-accent-secondary"}`}>
                       {event.status}
                     </span>
                   </div>

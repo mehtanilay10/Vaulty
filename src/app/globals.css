@@ -1,49 +1,151 @@
 @import "tailwindcss";
 
+@theme {
+  --color-bg-main: var(--bg-main);
+  --color-bg-surface: var(--bg-surface);
+  --color-bg-muted: var(--bg-muted);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-default: var(--border-default);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-accent-primary: var(--accent-primary);
+  --color-accent-primary-hover: var(--accent-primary-hover);
+  --color-accent-primary-soft: var(--accent-primary-soft);
+  --color-accent-primary-ring: var(--accent-primary-ring);
+  --color-accent-secondary: var(--accent-secondary);
+  --color-accent-secondary-soft: var(--accent-secondary-soft);
+  --color-accent-emerald: var(--accent-emerald);
+  --color-accent-emerald-soft: var(--accent-emerald-soft);
+  --color-accent-rose: var(--accent-rose);
+  --color-accent-rose-soft: var(--accent-rose-soft);
+}
+
 @layer base {
   :root {
-    --bg-main: #f8fafc;
-    --card-bg: #ffffff;
-    --card-border: #e2e8f0;
-    --text-primary: #0f172a;
-    --text-muted: #64748b;
-    --accent-gold: #c59b27;
-    --accent-gold-bg: rgba(197, 155, 39, 0.1);
+    --bg-main: #fafafa;
+    --bg-surface: #ffffff;
+    --bg-muted: #f4f4f5;
+    --border-subtle: #e4e4e7;
+    --border-default: #d4d4d8;
+    --text-primary: #18181b;
+    --text-secondary: #3f3f46;
+    --text-muted: #71717a;
+    --accent-primary: #4f46e5;
+    --accent-primary-hover: #4338ca;
+    --accent-primary-soft: rgba(79, 70, 229, 0.08);
+    --accent-primary-ring: rgba(79, 70, 229, 0.25);
+    --accent-secondary: #f59e0b;
+    --accent-secondary-soft: rgba(245, 158, 11, 0.1);
+    --accent-emerald: #10b981;
+    --accent-emerald-soft: rgba(16, 185, 129, 0.1);
+    --accent-rose: #f43f5e;
+    --accent-rose-soft: rgba(244, 63, 94, 0.1);
   }
 
   .dark {
-    --bg-main: #07090e;
-    --card-bg: rgba(15, 23, 42, 0.65);
-    --card-border: rgba(255, 255, 255, 0.08);
-    --text-primary: #f8fafc;
-    --text-muted: #94a3b8;
-    --accent-gold: #e5c158;
-    --accent-gold-bg: rgba(229, 193, 88, 0.12);
+    --bg-main: #09090b;
+    --bg-surface: #18181b;
+    --bg-muted: #27272a;
+    --border-subtle: #27272a;
+    --border-default: #3f3f46;
+    --text-primary: #fafafa;
+    --text-secondary: #d4d4d8;
+    --text-muted: #a1a1aa;
+    --accent-primary: #818cf8;
+    --accent-primary-hover: #6366f1;
+    --accent-primary-soft: rgba(129, 140, 248, 0.12);
+    --accent-primary-ring: rgba(129, 140, 248, 0.35);
+    --accent-secondary: #fbbf24;
+    --accent-secondary-soft: rgba(251, 191, 36, 0.12);
+    --accent-emerald: #34d399;
+    --accent-emerald-soft: rgba(52, 211, 153, 0.12);
+    --accent-rose: #fb7185;
+    --accent-rose-soft: rgba(251, 113, 133, 0.12);
   }
 }
 
-/* Custom Art-Directed Utility Classes */
-.vault-card {
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
-  backdrop-filter: blur(16px);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+@layer base {
+  body {
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+  ::selection {
+    background-color: var(--accent-primary);
+    color: white;
+  }
 }
 
-.vault-card:hover {
-  border-color: rgba(229, 193, 88, 0.3);
-  transform: translateY(-2px);
-}
+@layer components {
+  .vault-card {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 1rem;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
 
-.gold-glow {
-  box-shadow: 0 0 25px -5px rgba(229, 193, 88, 0.25);
-}
+  .vault-card-hover:hover {
+    border-color: var(--accent-primary-ring);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 30px -12px rgba(0, 0, 0, 0.12);
+  }
 
-.glass-panel {
-  background: rgba(15, 23, 42, 0.7);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  .dark .vault-card-hover:hover {
+    box-shadow: 0 8px 30px -12px rgba(0, 0, 0, 0.4);
+  }
+
+  .vault-input {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 0.75rem;
+    transition: all 0.15s ease;
+  }
+
+  .vault-input:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 3px var(--accent-primary-ring);
+  }
+
+  .vault-btn-primary {
+    background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-primary-hover) 100%);
+    color: white;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    transition: all 0.15s ease;
+    box-shadow: 0 4px 14px 0 rgba(79, 70, 229, 0.25);
+  }
+
+  .vault-btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px -2px rgba(79, 70, 229, 0.35);
+  }
+
+  .vault-btn-primary:active {
+    transform: translateY(0) scale(0.98);
+  }
+
+  .vault-btn-secondary {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-primary);
+    border-radius: 0.75rem;
+    font-weight: 500;
+    transition: all 0.15s ease;
+  }
+
+  .vault-btn-secondary:hover {
+    background-color: var(--bg-muted);
+    border-color: var(--border-default);
+  }
+
+  .glass-panel {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
 }
 
 /* Custom scrollbar */
@@ -55,9 +157,17 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.2);
+  background: var(--border-default);
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.4);
+  background: var(--text-muted);
+}
+
+/* Smooth theme transition */
+html {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+html * {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
