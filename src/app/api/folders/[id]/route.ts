@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { checkFolderAccess } from "@/lib/authz";
 import { deletePrivateBlob } from "@/lib/blob";
+import { getProviderForUser, getProviderForDocument } from "@/lib/storage/factory";
 
 export async function GET(
   req: NextRequest,
@@ -88,12 +89,22 @@ export async function PATCH(
     const body = await req.json();
     const { name, parentId } = body;
 
+    const folder = await prisma.folder.findUnique({
+      where: { id },
+      select: { name: true, parentId: true, storageProvider: true, storageFolderId: true },
+    });
+
+    if (!folder) {
+      return NextResponse.json({ error: "Folder not found." }, { status: 404 });
+    }
+
     const updateData: { name?: string; parentId?: string | null } = {};
 
     if (name && typeof name === "string" && name.trim()) {
       updateData.name = name.trim();
     }
 
+    let newParentId: string | null | undefined;
     if (parentId !== undefined) {
       if (parentId === id) {
         return NextResponse.json({ error: "A folder cannot be its own parent." }, { status: 400 });
@@ -104,13 +115,40 @@ export async function PATCH(
           return NextResponse.json({ error: "You can only move folders to folders you own." }, { status: 403 });
         }
       }
-      updateData.parentId = parentId || null;
+      newParentId = parentId || null;
+      updateData.parentId = newParentId;
     }
 
     const updatedFolder = await prisma.folder.update({
       where: { id },
       data: updateData,
     });
+
+    if (folder.storageProvider === "GOOGLE_DRIVE" && folder.storageFolderId) {
+      try {
+        const { provider } = await getProviderForUser(user.id, "GOOGLE_DRIVE");
+
+        if (name && name.trim() && name.trim() !== folder.name) {
+          await provider.renameFolder(folder.storageFolderId, name.trim());
+        }
+
+        if (newParentId !== undefined && newParentId !== folder.parentId) {
+          let newDriveParentId: string | null | undefined;
+
+          if (newParentId) {
+            const newParentFolder = await prisma.folder.findUnique({
+              where: { id: newParentId },
+              select: { storageFolderId: true },
+            });
+            newDriveParentId = newParentFolder?.storageFolderId || undefined;
+          }
+
+          await provider.moveFolder(folder.storageFolderId, newDriveParentId || null);
+        }
+      } catch (driveError) {
+        console.error("Failed to sync folder change to Drive:", driveError);
+      }
+    }
 
     return NextResponse.json({ folder: updatedFolder });
   } catch (error) {
@@ -139,7 +177,6 @@ export async function DELETE(
       );
     }
 
-    // Recursively collect all document blob URLs inside this folder and nested child subfolders
     const getAllFolderIds = async (rootId: string): Promise<string[]> => {
       const children = await prisma.folder.findMany({
         where: { parentId: rootId },
@@ -155,24 +192,51 @@ export async function DELETE(
 
     const allFolderIds = await getAllFolderIds(id);
 
-    // Find all documents in these folders to clean up Vercel Blobs
     const documentsToDelete = await prisma.document.findMany({
       where: { folderId: { in: allFolderIds } },
-      select: { blobUrl: true },
+      select: { blobUrl: true, storageProvider: true, storageFileId: true, id: true },
     });
 
     for (const doc of documentsToDelete) {
+      if (doc.storageProvider === "GOOGLE_DRIVE" && doc.storageFileId) {
+        try {
+          const { provider } = await getProviderForDocument({
+            id: doc.id,
+            storageProvider: doc.storageProvider,
+            storageFileId: doc.storageFileId,
+            ownerId: user.id,
+            folderId: id,
+          });
+          await provider.deleteFile(doc.storageFileId);
+        } catch (driveError) {
+          console.error("Drive delete error for document:", driveError);
+        }
+      }
       if (doc.blobUrl) {
         await deletePrivateBlob(doc.blobUrl);
       }
     }
 
-    // Delete folder (Prisma cascading rules delete child folders & documents)
+    const foldersToDelete = await prisma.folder.findMany({
+      where: { id: { in: allFolderIds } },
+      select: { id: true, name: true, storageProvider: true, storageFolderId: true },
+    });
+
+    for (const folder of foldersToDelete) {
+      if (folder.storageProvider === "GOOGLE_DRIVE" && folder.storageFolderId) {
+        try {
+          const { provider } = await getProviderForUser(user.id, "GOOGLE_DRIVE");
+          await provider.deleteFolder(folder.storageFolderId);
+        } catch (driveError) {
+          console.error("Drive folder delete error:", driveError);
+        }
+      }
+    }
+
     await prisma.folder.delete({
       where: { id },
     });
 
-    // Create Audit Log
     await prisma.auditLog.create({
       data: {
         action: "FOLDER_DELETE",

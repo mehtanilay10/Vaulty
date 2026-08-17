@@ -30,6 +30,7 @@ export function DocumentPropertiesModal({
   const [isAiRetrying, setIsAiRetrying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const storageLabel = document?.storageProvider === "GOOGLE_DRIVE" ? "Google Drive" : "Vercel Blob";
 
   useEffect(() => {
     if (document) {
@@ -259,7 +260,7 @@ export function DocumentPropertiesModal({
                     <span>Confirm Document Deletion</span>
                   </div>
                   <p className="text-[11px] text-slate-300 leading-relaxed">
-                    Are you sure you want to delete &quot;{document.name}&quot;? The file will be permanently removed from Vercel Blob private storage.
+                    Are you sure you want to delete &quot;{document.name}&quot;? The file will be permanently removed from {storageLabel}.
                   </p>
                   <div className="flex items-center gap-2 pt-1">
                     <button

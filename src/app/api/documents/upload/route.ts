@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { checkFolderAccess } from "@/lib/authz";
 import { validateFileTypeAndExtension, getMaxUploadSize, uploadPrivateBlob } from "@/lib/blob";
 import { processDocumentWithGemini } from "@/lib/gemini";
+import { getProviderForUser } from "@/lib/storage/factory";
+import type { StorageProviderType } from "@/lib/storage/provider";
 
 async function getFolderHierarchyPath(folderId: string): Promise<string> {
   const segments: string[] = [];
@@ -16,7 +18,6 @@ async function getFolderHierarchyPath(folderId: string): Promise<string> {
         select: { name: true, parentId: true },
       });
     if (!targetFolder) break;
-    // Sanitize segment name while preserving normal characters
     const cleanSegment = targetFolder.name.replace(/[/\\?%*:|"<>]/g, "_").trim();
     segments.unshift(cleanSegment);
     currentId = targetFolder.parentId;
@@ -47,7 +48,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Target folder is required." }, { status: 400 });
     }
 
-    // 1. Authorization Check: Must be folder owner
     const folderAccess = await checkFolderAccess(user.id, folderId);
     if (!folderAccess.isOwner) {
       return NextResponse.json(
@@ -56,13 +56,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 2. Validate MIME & File extension
     const validation = validateFileTypeAndExtension(file.name, file.type);
     if (!validation.valid) {
       return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
-    // 3. Size limit check
     const maxSize = getMaxUploadSize();
     if (file.size > maxSize) {
       const maxMb = Math.round(maxSize / (1024 * 1024));
@@ -76,33 +74,84 @@ export async function POST(req: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const fileBuffer = Buffer.from(arrayBuffer);
 
-    // 4. Construct Vercel Blob folder path matching user system hierarchy
-    // Format: vaulty-docs/{UserName}/{FolderPath}/{filename}
-    const cleanUserName = (user.name || user.email || user.id)
-      .replace(/[/\\?%*:|"<>]/g, "_")
-      .trim();
-    const folderPath = await getFolderHierarchyPath(folderId);
-    const cleanFileName = docName.replace(/[/\\?%*:|"<>]/g, "_");
+    const userRecord = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: { defaultStorageProvider: true },
+    });
 
-    const fullBlobPath = `vaulty-docs/${cleanUserName}/${folderPath}/${cleanFileName}`;
+    const storageProvider: StorageProviderType = userRecord?.defaultStorageProvider || "GOOGLE_DRIVE";
 
-    // Upload to Vercel Blob Private Storage
-    const blobResult = await uploadPrivateBlob(file.name, fileBuffer, fullBlobPath);
+    let blobUrl: string | null = null;
+    let blobPath: string | null = null;
+    let storageFileId: string | null = null;
+    let storageParentId: string | null = null;
+    let storageModifiedAt: Date | null = null;
+    let storageChecksum: string | null = null;
+    let storageVersion: string | null = null;
+    let storageWebViewLink: string | null = null;
 
-    // 5. Save Document in DB
+    if (storageProvider === "GOOGLE_DRIVE") {
+      try {
+        const { provider } = await getProviderForUser(user.id, "GOOGLE_DRIVE");
+        const folderPath = await getFolderHierarchyPath(folderId);
+        const cleanFileName = docName.replace(/[/\\?%*:|"<>]/g, "_");
+        
+        const uploadResult = await provider.uploadFile({
+          filename: cleanFileName,
+          mimeType: file.type || "application/octet-stream",
+          data: fileBuffer,
+        });
+
+        storageFileId = uploadResult.id;
+        storageParentId = uploadResult.parentId || null;
+        storageModifiedAt = uploadResult.modifiedAt;
+        storageChecksum = uploadResult.checksum || null;
+        storageVersion = uploadResult.version || null;
+        storageWebViewLink = uploadResult.webViewLink || null;
+      } catch (driveError) {
+        console.error("Google Drive upload failed, falling back to Blob:", driveError);
+        const cleanUserName = (user.name || user.email || user.id)
+          .replace(/[/\\?%*:|"<>]/g, "_")
+          .trim();
+        const folderPath = await getFolderHierarchyPath(folderId);
+        const cleanFileName = docName.replace(/[/\\?%*:|"<>]/g, "_");
+        const fullBlobPath = `vaulty-docs/${cleanUserName}/${folderPath}/${cleanFileName}`;
+        const blobResult = await uploadPrivateBlob(file.name, fileBuffer, fullBlobPath);
+        blobUrl = blobResult.url;
+        blobPath = blobResult.pathname;
+      }
+    } else {
+      const cleanUserName = (user.name || user.email || user.id)
+        .replace(/[/\\?%*:|"<>]/g, "_")
+        .trim();
+      const folderPath = await getFolderHierarchyPath(folderId);
+      const cleanFileName = docName.replace(/[/\\?%*:|"<>]/g, "_");
+      const fullBlobPath = `vaulty-docs/${cleanUserName}/${folderPath}/${cleanFileName}`;
+      const blobResult = await uploadPrivateBlob(file.name, fileBuffer, fullBlobPath);
+      blobUrl = blobResult.url;
+      blobPath = blobResult.pathname;
+    }
+
     const document = await prisma.document.create({
       data: {
         name: docName,
-        blobUrl: blobResult.url,
-        blobPath: blobResult.pathname,
+        blobUrl,
+        blobPath,
         mimeType: file.type || "application/octet-stream",
         sizeBytes: file.size,
         folderId: folderId,
         ownerId: user.id,
+        storageProvider: storageFileId ? "GOOGLE_DRIVE" : "VERCEL_BLOB",
+        storageFileId,
+        storageParentId,
+        storageModifiedAt,
+        storageChecksum,
+        storageVersion,
+        storageWebViewLink,
+        storageStatus: "ACTIVE",
       },
     });
 
-    // 6. Save Tags
     if (tagsInput) {
       const rawTags = tagsInput
         .split(",")
@@ -126,7 +175,6 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 7. Handle AI Processing Request with updated Gemini model
     if (generateAi) {
       const aiRecord = await prisma.aiProcessing.create({
         data: {
@@ -136,7 +184,6 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      // Asynchronous Gemini AI Execution (Non-blocking response)
       (async () => {
         try {
           await prisma.aiProcessing.update({
@@ -173,14 +220,18 @@ export async function POST(req: NextRequest) {
       })();
     }
 
-    // 8. Create Audit Log
     await prisma.auditLog.create({
       data: {
         action: "DOCUMENT_UPLOAD",
         userId: user.id,
         documentId: document.id,
         folderId: folderId,
-        metadata: JSON.stringify({ documentName: document.name, sizeBytes: document.sizeBytes, blobPath: fullBlobPath }),
+        metadata: JSON.stringify({
+          documentName: document.name,
+          sizeBytes: document.sizeBytes,
+          storageProvider,
+          storageFileId: storageFileId || undefined,
+        }),
       },
     });
 

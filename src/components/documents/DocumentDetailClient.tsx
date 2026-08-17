@@ -21,6 +21,7 @@ import {
   CheckCircle2,
   Lock,
   RefreshCw,
+  ExternalLink,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -41,6 +42,8 @@ export function DocumentDetailClient({
   );
   const [isPropertiesOpen, setIsPropertiesOpen] = useState(false);
   const [isRetryingAi, setIsRetryingAi] = useState(false);
+  const storageLabel = document?.storageProvider === "GOOGLE_DRIVE" ? "Google Drive" : "Vercel Blob";
+  const storageColor = document?.storageProvider === "GOOGLE_DRIVE" ? "text-indigo-400" : "text-blue-400";
 
   const fileProxyUrl = `/api/documents/${document.id}/file`;
   const isPdf = document.mimeType === "application/pdf";
@@ -105,7 +108,7 @@ export function DocumentDetailClient({
                 </div>
 
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Folder: <Link href={`/folders/${document.folder?.id}`} className="text-amber-600 dark:text-amber-400 hover:underline">{document.folder?.name}</Link> &bull; Uploaded: {new Date(document.createdAt).toLocaleDateString()} &bull; Owner: {isOwner ? "You" : document.owner?.name || document.owner?.email}
+                  Folder: <Link href={`/folders/${document.folder?.id}`} className="text-amber-600 dark:text-amber-400 hover:underline">{document.folder?.name}</Link> &bull; Storage: <span className={storageColor}>{storageLabel}</span> &bull; Uploaded: {new Date(document.createdAt).toLocaleDateString()} &bull; Owner: {isOwner ? "You" : document.owner?.name || document.owner?.email}
                 </p>
 
                 {document.tags?.length > 0 && (
@@ -124,6 +127,17 @@ export function DocumentDetailClient({
             </div>
 
             <div className="flex items-center gap-3">
+              {document.storageProvider === "GOOGLE_DRIVE" && document.storageWebViewLink && (
+                <a
+                  href={document.storageWebViewLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 text-xs font-medium border border-indigo-500/20 transition-colors cursor-pointer"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  <span>Open in Drive</span>
+                </a>
+              )}
               <a
                 href={fileProxyUrl}
                 download={document.name}

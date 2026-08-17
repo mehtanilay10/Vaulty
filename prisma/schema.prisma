@@ -7,19 +7,62 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum StorageProvider {
+  GOOGLE_DRIVE
+  VERCEL_BLOB
+}
+
+enum StorageConnectionStatus {
+  CONNECTED
+  SYNCING
+  SYNCED
+  PENDING
+  FAILED
+  DISCONNECTED
+  RECONNECT_REQUIRED
+}
+
+enum DocumentStorageStatus {
+  ACTIVE
+  DELETED_EXTERNALLY
+  PENDING
+  FAILED
+  CONFLICT
+}
+
+enum SyncEventStatus {
+  SUCCESS
+  FAILED
+  PENDING
+}
+
+enum SyncEventOperation {
+  UPLOAD
+  DOWNLOAD
+  UPDATE
+  RENAME
+  MOVE
+  DELETE
+  IMPORT
+  CONFLICT
+}
+
 model User {
   id                   String        @id @default(cuid())
   name                 String?
   email                String?       @unique
   emailVerified        DateTime?
   image                String?
+  defaultStorageProvider StorageProvider @default(GOOGLE_DRIVE)
   accounts             Account[]
   sessions             Session[]
   folders              Folder[]      @relation("UserFolders")
   documents            Document[]    @relation("UserDocuments")
   folderSharesReceived FolderShare[] @relation("SharedWithUser")
   folderSharesCreated  FolderShare[] @relation("SharedByUser")
+  storageConnections   StorageConnection[]
   auditLogs            AuditLog[]
+  syncEvents           SyncEvent[]
   createdAt            DateTime      @default(now())
   updatedAt            DateTime      @updatedAt
 }
@@ -64,6 +107,8 @@ model Folder {
   name      String
   ownerId   String
   parentId  String?
+  storageProvider StorageProvider @default(GOOGLE_DRIVE)
+  storageFolderId String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -75,17 +120,28 @@ model Folder {
 
   @@index([ownerId])
   @@index([parentId])
+  @@index([storageFolderId])
 }
 
 model Document {
   id        String   @id @default(cuid())
   name      String
-  blobUrl   String
-  blobPath  String
+  blobUrl   String?
+  blobPath  String?
   mimeType  String
   sizeBytes Int
   folderId  String
   ownerId   String
+  storageProvider StorageProvider @default(VERCEL_BLOB)
+  storageFileId String?
+  storageParentId String?
+  storageModifiedAt DateTime?
+  storageChecksum String?
+  storageVersion String?
+  storageWebViewLink String?
+  storageStatus DocumentStorageStatus @default(ACTIVE)
+  googleDriveSummaryFileId String?
+  googleDriveTextFileId String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -94,9 +150,11 @@ model Document {
   tags         DocumentTag[]
   aiProcessing AiProcessing?
   auditLogs    AuditLog[]
+  syncEvents   SyncEvent[]
 
   @@index([ownerId])
   @@index([folderId])
+  @@index([storageFileId])
 }
 
 model Tag {
@@ -170,4 +228,55 @@ model AuditLog {
   document Document? @relation(fields: [documentId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+model StorageConnection {
+  id                  String                  @id @default(cuid())
+  userId              String
+  provider            StorageProvider         @default(GOOGLE_DRIVE)
+  status              StorageConnectionStatus @default(DISCONNECTED)
+  rootFolderId        String?
+  docsFolderId        String?
+  summaryFolderId     String?
+  textFolderId        String?
+  accessToken         String?                 @db.Text
+  refreshToken        String?                 @db.Text
+  expiresAt           DateTime?
+  pageToken           String?
+  channelId           String?
+  channelResourceId   String?
+  channelExpiration   DateTime?
+  lastSyncedAt        DateTime?
+  createdAt           DateTime                @default(now())
+  updatedAt           DateTime                @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  syncEvents SyncEvent[] @relation("ConnectionSyncEvents")
+
+  @@unique([userId, provider])
+  @@index([userId])
+}
+
+model SyncEvent {
+  id          String            @id @default(cuid())
+  userId      String
+  provider    StorageProvider   @default(GOOGLE_DRIVE)
+  documentId  String?
+  folderId    String?
+  operation   SyncEventOperation
+  status      SyncEventStatus   @default(PENDING)
+  errorCode   String?
+  errorMessage String?          @db.Text
+  metadata    String?           @db.Text
+  createdAt   DateTime          @default(now())
+  completedAt DateTime?
+
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  document    Document?         @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  connection  StorageConnection? @relation("ConnectionSyncEvents", fields: [connectionId], references: [id], onDelete: SetNull)
+  connectionId String?
+
+  @@index([userId])
+  @@index([documentId])
+  @@index([createdAt])
 }

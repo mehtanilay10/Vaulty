@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, FileText, Users, Folder, Search, Settings, ShieldCheck } from "lucide-react";
+import { LayoutDashboard, FileText, Users, Folder, Search, Settings, ShieldCheck, RefreshCw } from "lucide-react";
 import { clsx } from "clsx";
 
 const navItems = [
@@ -10,6 +10,7 @@ const navItems = [
   { name: "My Documents", href: "/documents", icon: FileText },
   { name: "Shared With Me", href: "/shared", icon: Users },
   { name: "Folders", href: "/folders", icon: Folder },
+  { name: "Sync Center", href: "/sync", icon: RefreshCw },
   { name: "Search", href: "/search", icon: Search },
   { name: "Settings", href: "/settings", icon: Settings },
 ];

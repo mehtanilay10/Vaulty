@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { checkFolderAccess } from "@/lib/authz";
+import { getProviderForUser } from "@/lib/storage/factory";
 
 export async function GET(req: NextRequest) {
   try {
@@ -10,7 +11,6 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Fetch folders owned by user
     const ownedFolders = await prisma.folder.findMany({
       where: { ownerId: user.id },
       include: {
@@ -41,7 +41,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Folder name is required." }, { status: 400 });
     }
 
-    // If parentId is provided, verify user owns the parent folder
     if (parentId) {
       const parentAccess = await checkFolderAccess(user.id, parentId);
       if (!parentAccess.isOwner) {
@@ -52,15 +51,45 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    const userRecord = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: { defaultStorageProvider: true },
+    });
+
     const folder = await prisma.folder.create({
       data: {
         name: name.trim(),
         ownerId: user.id,
         parentId: parentId || null,
+        storageProvider: userRecord?.defaultStorageProvider || "GOOGLE_DRIVE",
       },
     });
 
-    // Create Audit Log
+    if (userRecord?.defaultStorageProvider === "GOOGLE_DRIVE") {
+      try {
+        const { provider } = await getProviderForUser(user.id, "GOOGLE_DRIVE");
+        let parentDriveId: string | undefined;
+
+        if (parentId) {
+          const parentFolder = await prisma.folder.findUnique({
+            where: { id: parentId },
+            select: { storageFolderId: true },
+          });
+          if (parentFolder?.storageFolderId) {
+            parentDriveId = parentFolder.storageFolderId;
+          }
+        }
+
+        const driveFolder = await provider.createFolder(folder.name, parentDriveId);
+        await prisma.folder.update({
+          where: { id: folder.id },
+          data: { storageFolderId: driveFolder.id },
+        });
+      } catch (driveError) {
+        console.error("Failed to create Drive folder for new Vaulty folder:", driveError);
+      }
+    }
+
     await prisma.auditLog.create({
       data: {
         action: "FOLDER_CREATE",

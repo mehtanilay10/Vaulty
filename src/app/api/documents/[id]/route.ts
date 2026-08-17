@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { checkDocumentAccess, checkFolderAccess } from "@/lib/authz";
 import { deletePrivateBlob } from "@/lib/blob";
+import { getProviderForDocument } from "@/lib/storage/factory";
 
 export async function GET(
   req: NextRequest,
@@ -92,9 +93,7 @@ export async function PATCH(
       updateData.folderId = folderId;
     }
 
-    // Update tags if provided
     if (Array.isArray(tags)) {
-      // Clear existing document tags
       await prisma.documentTag.deleteMany({
         where: { documentId: id },
       });
@@ -155,31 +154,43 @@ export async function DELETE(
 
     const doc = await prisma.document.findUnique({
       where: { id },
-      select: { blobUrl: true, name: true, folderId: true },
+      select: { id: true, blobUrl: true, name: true, folderId: true, storageProvider: true, storageFileId: true },
     });
 
     if (!doc) {
       return NextResponse.json({ error: "Document not found." }, { status: 404 });
     }
 
-    // Clean up Vercel Blob file
+    if (doc.storageProvider === "GOOGLE_DRIVE" && doc.storageFileId) {
+      try {
+        const { provider } = await getProviderForDocument({
+          id: doc.id,
+          storageProvider: doc.storageProvider,
+          storageFileId: doc.storageFileId,
+          ownerId: user.id,
+          folderId: doc.folderId,
+        });
+        await provider.deleteFile(doc.storageFileId);
+      } catch (driveError) {
+        console.error("Google Drive delete error:", driveError);
+      }
+    }
+
     if (doc.blobUrl) {
       await deletePrivateBlob(doc.blobUrl);
     }
 
-    // Delete database record
     await prisma.document.delete({
       where: { id },
     });
 
-    // Audit log
     await prisma.auditLog.create({
       data: {
         action: "DOCUMENT_DELETE",
         userId: user.id,
         documentId: id,
         folderId: doc.folderId,
-        metadata: JSON.stringify({ documentName: doc.name }),
+        metadata: JSON.stringify({ documentName: doc.name, storageProvider: doc.storageProvider }),
       },
     });
 

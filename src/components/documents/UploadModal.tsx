@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Upload, FileText, Sparkles, Folder, Tag, AlertCircle, Camera, Check } from "lucide-react";
+import { X, Upload, FileText, Sparkles, Folder, Tag, AlertCircle, Camera, Check, HardDrive } from "lucide-react";
 
 interface FolderOption {
   id: string;
@@ -27,6 +27,28 @@ export function UploadModal({
   const [generateAi, setGenerateAi] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [storageProvider, setStorageProvider] = useState<"GOOGLE_DRIVE" | "VERCEL_BLOB">("GOOGLE_DRIVE");
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchFolders();
+      fetchDefaultProvider();
+    }
+  }, [isOpen]);
+
+  const fetchDefaultProvider = async () => {
+    try {
+      const res = await fetch("/api/user/settings");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.defaultStorageProvider) {
+          setStorageProvider(data.defaultStorageProvider);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch default provider:", err);
+    }
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -228,6 +250,22 @@ export function UploadModal({
               placeholder="e.g. medical, blood-test, 2026"
               className="w-full px-4 py-2.5 rounded-xl bg-slate-950/60 border border-slate-800 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
             />
+          </div>
+
+          {/* Storage Provider Indicator */}
+          <div className="p-3.5 rounded-2xl bg-slate-950/40 border border-slate-800 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <HardDrive className="w-5 h-5 text-indigo-400 shrink-0" />
+              <div>
+                <p className="text-xs font-semibold text-white">Storage Provider</p>
+                <p className="text-[11px] text-slate-400">
+                  {storageProvider === "GOOGLE_DRIVE" ? "Google Drive" : "Vercel Blob"}
+                </p>
+              </div>
+            </div>
+            <span className="text-[10px] uppercase font-bold text-indigo-400 px-2 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/20">
+              {storageProvider === "GOOGLE_DRIVE" ? "Drive" : "Blob"}
+            </span>
           </div>
 
           {/* AI Checkbox */}

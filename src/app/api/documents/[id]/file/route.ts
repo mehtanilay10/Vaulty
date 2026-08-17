@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/auth";
 import { checkDocumentAccess } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
+import { getProviderForDocument } from "@/lib/storage/factory";
 
 export async function GET(
   req: NextRequest,
@@ -25,10 +26,49 @@ export async function GET(
 
     const doc = await prisma.document.findUnique({
       where: { id },
-      select: { blobUrl: true, mimeType: true, name: true },
+      select: {
+        id: true,
+        name: true,
+        mimeType: true,
+        blobUrl: true,
+        storageProvider: true,
+        storageFileId: true,
+      },
     });
 
-    if (!doc || !doc.blobUrl) {
+    if (!doc) {
+      return NextResponse.json({ error: "Document not found." }, { status: 404 });
+    }
+
+    if (doc.storageProvider === "GOOGLE_DRIVE" && doc.storageFileId) {
+      try {
+        const { provider } = await getProviderForDocument({
+          id: doc.id,
+          storageProvider: doc.storageProvider,
+          storageFileId: doc.storageFileId,
+          ownerId: user.id,
+          folderId: "",
+        });
+
+        const buffer = await provider.downloadFile(doc.storageFileId);
+
+        return new Response(Buffer.from(buffer), {
+          headers: {
+            "Content-Type": doc.mimeType,
+            "Content-Disposition": `inline; filename="${encodeURIComponent(doc.name)}"`,
+            "Cache-Control": "private, max-age=3600",
+          },
+        });
+      } catch (driveError) {
+        console.error("Drive file fetch error:", driveError);
+        return NextResponse.json(
+          { error: "Failed to fetch document from Google Drive." },
+          { status: 500 }
+        );
+      }
+    }
+
+    if (!doc.blobUrl) {
       return NextResponse.json({ error: "Document file not found." }, { status: 404 });
     }
 
@@ -38,7 +78,6 @@ export async function GET(
     });
 
     if (!fileRes.ok) {
-      // Fallback direct fetch if token header format differs
       const directRes = await fetch(doc.blobUrl);
       if (!directRes.ok) {
         return NextResponse.json({ error: "Failed to fetch document blob." }, { status: 500 });
@@ -62,7 +101,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error("Error streaming private blob file:", error);
+    console.error("Error streaming document file:", error);
     return NextResponse.json(
       { error: "An unexpected error occurred while retrieving the document file." },
       { status: 500 }

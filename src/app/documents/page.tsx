@@ -18,6 +18,12 @@ export default async function DocumentsPage() {
     orderBy: { createdAt: "desc" },
   });
 
+  const documentsWithStorage = documents.map((d) => ({
+    ...d,
+    storageProvider: (d as any).storageProvider,
+    storageFileId: (d as any).storageFileId,
+  }));
+
   const folders = await prisma.folder.findMany({
     where: { ownerId: userId },
     select: { id: true, name: true },
@@ -26,7 +32,7 @@ export default async function DocumentsPage() {
 
   return (
     <DocumentsClient
-      initialDocuments={JSON.parse(JSON.stringify(documents))}
+      initialDocuments={JSON.parse(JSON.stringify(documentsWithStorage))}
       folders={JSON.parse(JSON.stringify(folders))}
     />
   );

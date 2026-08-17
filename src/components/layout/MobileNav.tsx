@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, FileText, Users, Search, Plus } from "lucide-react";
+import { LayoutDashboard, FileText, Users, Search, RefreshCw, Plus } from "lucide-react";
 import { clsx } from "clsx";
 
 export function MobileNav({ onOpenUpload }: { onOpenUpload?: () => void }) {
@@ -10,7 +10,8 @@ export function MobileNav({ onOpenUpload }: { onOpenUpload?: () => void }) {
 
   const navItems = [
     { name: "Home", href: "/dashboard", icon: LayoutDashboard },
-    { name: "Documents", href: "/documents", icon: FileText },
+    { name: "Docs", href: "/documents", icon: FileText },
+    { name: "Sync", href: "/sync", icon: RefreshCw },
     { name: "Shared", href: "/shared", icon: Users },
     { name: "Search", href: "/search", icon: Search },
   ];

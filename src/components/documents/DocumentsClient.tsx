@@ -6,7 +6,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { MobileNav } from "@/components/layout/MobileNav";
 import { UploadModal } from "@/components/documents/UploadModal";
-import { FileText, Filter, Search, Tag, Upload, CheckCircle2, Loader2, AlertTriangle, Folder } from "lucide-react";
+import { FileText, Filter, Search, Tag, Upload, CheckCircle2, Loader2, AlertTriangle, Folder, Cloud, HardDrive } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export function DocumentsClient({
@@ -125,12 +125,19 @@ export function DocumentsClient({
                       )}
                     </div>
 
-                    <h3 className="font-semibold text-sm text-slate-900 dark:text-slate-200 group-hover:text-amber-600 dark:group-hover:text-white truncate mb-1">
-                      {doc.name}
-                    </h3>
-                    <p className="text-xs text-slate-500 truncate mb-3">
-                      📁 {doc.folder?.name}
-                    </p>
+                     <h3 className="font-semibold text-sm text-slate-900 dark:text-slate-200 group-hover:text-amber-600 dark:group-hover:text-white truncate mb-1">
+                       {doc.name}
+                     </h3>
+                     <p className="text-xs text-slate-500 truncate mb-3">
+                       📁 {doc.folder?.name}
+                     </p>
+
+                     {doc.storageProvider && (
+                       <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border ${doc.storageProvider === "GOOGLE_DRIVE" ? "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20" : "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"}`}>
+                         {doc.storageProvider === "GOOGLE_DRIVE" ? <Cloud className="w-3 h-3" /> : <HardDrive className="w-3 h-3" />}
+                         {doc.storageProvider === "GOOGLE_DRIVE" ? "Drive" : "Blob"}
+                       </span>
+                     )}
 
                     {doc.tags?.length > 0 && (
                       <div className="flex flex-wrap gap-1 mb-4">

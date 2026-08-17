@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { checkDocumentAccess } from "@/lib/authz";
 import { processDocumentWithGemini } from "@/lib/gemini";
+import { getProviderForDocument } from "@/lib/storage/factory";
 
 export async function POST(
   req: NextRequest,
@@ -26,14 +27,13 @@ export async function POST(
 
     const document = await prisma.document.findUnique({
       where: { id },
-      select: { id: true, name: true, mimeType: true, blobUrl: true },
+      select: { id: true, name: true, mimeType: true, blobUrl: true, storageProvider: true, storageFileId: true },
     });
 
     if (!document) {
       return NextResponse.json({ error: "Document not found." }, { status: 404 });
     }
 
-    // Upsert AiProcessing state to QUEUED
     const aiRecord = await prisma.aiProcessing.upsert({
       where: { documentId: id },
       update: {
@@ -47,18 +47,35 @@ export async function POST(
       },
     });
 
-    // Fetch the private Blob buffer using Vercel token
-    const blobToken = process.env.BLOB_READ_WRITE_TOKEN;
-    const fileRes = await fetch(document.blobUrl, {
-      headers: blobToken ? { Authorization: `Bearer ${blobToken}` } : {},
-    });
-
-    if (!fileRes.ok) {
+    let fileBuffer: Buffer;
+    try {
+      if (document.storageProvider === "GOOGLE_DRIVE" && document.storageFileId) {
+        const { provider } = await getProviderForDocument({
+          id: document.id,
+          storageProvider: document.storageProvider,
+          storageFileId: document.storageFileId,
+          ownerId: user.id,
+          folderId: "",
+        });
+        fileBuffer = await provider.downloadFile(document.storageFileId);
+      } else if (document.blobUrl) {
+        const blobToken = process.env.BLOB_READ_WRITE_TOKEN;
+        const fileRes = await fetch(document.blobUrl, {
+          headers: blobToken ? { Authorization: `Bearer ${blobToken}` } : {},
+        });
+        if (!fileRes.ok) {
+          throw new Error("Failed to download document file from storage.");
+        }
+        fileBuffer = Buffer.from(await fileRes.arrayBuffer());
+      } else {
+        throw new Error("Document file not available for AI processing.");
+      }
+    } catch (fetchErr) {
       await prisma.aiProcessing.update({
         where: { id: aiRecord.id },
         data: {
           status: "FAILED",
-          errorMessage: "Failed to download document file from storage.",
+          errorMessage: "Failed to download document file for AI processing.",
         },
       });
       return NextResponse.json(
@@ -67,10 +84,6 @@ export async function POST(
       );
     }
 
-    const arrayBuffer = await fileRes.arrayBuffer();
-    const fileBuffer = Buffer.from(arrayBuffer);
-
-    // Run AI processing asynchronously
     (async () => {
       try {
         await prisma.aiProcessing.update({
