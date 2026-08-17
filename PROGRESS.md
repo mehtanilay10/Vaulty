@@ -31,6 +31,7 @@
 
 ## Phase 5: Gemini AI Document Processing
 - [x] Integrated `@google/genai` server-side SDK (`src/lib/gemini.ts`) using `GEMINI_API_KEY`.
+- [x] Updated AI engine model to `gemini-2.0-flash`.
 - [x] Designed structured JSON output prompt for Gemini (extracted text, Markdown summary, informational interpretation with medical disclaimers and hallucination guards).
 - [x] Implemented non-blocking async AI processing workflow (`AiProcessing` status tracking: `QUEUED`, `PROCESSING`, `COMPLETED`, `FAILED`).
 - [x] Built UI tabs for AI Summary (rendered Markdown via `react-markdown`), AI Interpretation, and Extracted Text, plus owner-only AI trigger/retry controls.
@@ -38,4 +39,11 @@
 ## Phase 6: Mobile UX, PWA & Final Build
 - [x] Built responsive Mobile Navigation Bar (`MobileNav.tsx`) with quick upload action button and touch targets.
 - [x] Created PWA Web App Manifest (`public/manifest.json`).
-- [x] Executed full project build (`yarn build`) and verified zero errors or warnings.
+
+## Feedback & Enhancements Applied
+- [x] **Immediate State Updates**: Enabled instant UI feedback and re-fetching on creation/upload.
+- [x] **Gemini Model Upgrade**: Updated Gemini API calls and model references from `gemini-2.5-flash` to `gemini-2.0-flash`.
+- [x] **Light/Dark Theme Support**: Added `next-themes` theme provider and `ThemeToggle` with dark mode default.
+- [x] **User Vercel Blob Hierarchy**: Configured private Vercel Blob paths to strictly match system hierarchy (`vaulty-docs/{UserName}/{FolderPath}/{filename}`).
+- [x] **Top 5 Priority Search Suggestions**: Added live auto-suggestion dropdown panel in search bar with priority scoring (Exact Title > Prefix > Tag > Folder > AI Summary).
+- [x] **Bespoke Visual Identity Redesign**: Redesigned UI with custom materials, warm gold vault accents, glassmorphism panels, tactile cards, and luxury typography.
