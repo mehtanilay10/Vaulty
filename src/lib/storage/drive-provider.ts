@@ -1,5 +1,6 @@
 import { google } from "googleapis";
 import type { drive_v3 } from "googleapis";
+import { Readable } from "stream";
 import { StorageProvider, StorageProviderContext, UploadOptions, UploadResult, StorageFile, StorageFolder } from "./provider";
 
 export class GoogleDriveStorageProvider implements StorageProvider {
@@ -41,6 +42,16 @@ export class GoogleDriveStorageProvider implements StorageProvider {
   private async getDrive() {
     const oauth2Client = this.createOAuth2Client();
     return google.drive({ version: "v3", auth: oauth2Client });
+  }
+
+  private toStream(data: Buffer | Blob): Readable | Blob {
+    if (Buffer.isBuffer(data)) {
+      return Readable.from(data);
+    }
+    if (data instanceof Blob) {
+      return data as unknown as Blob;
+    }
+    return Readable.from(Buffer.from(data as unknown as ArrayBuffer));
   }
 
   private async ensureValidToken(): Promise<string> {
@@ -164,7 +175,7 @@ export class GoogleDriveStorageProvider implements StorageProvider {
       } as drive_v3.Schema$File,
       media: {
         mimeType: contentType,
-        body: options.data,
+        body: this.toStream(options.data),
       },
       fields: "id,name,size,modifiedTime,md5Checksum,version,webViewLink,parents",
     });
@@ -185,7 +196,7 @@ export class GoogleDriveStorageProvider implements StorageProvider {
       } as drive_v3.Schema$File,
       media: {
         mimeType: contentType,
-        body: options.data,
+        body: this.toStream(options.data),
       },
       fields: "id,name,size,modifiedTime,md5Checksum,version,webViewLink,parents",
     });
