@@ -2,8 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { StorageConnectionStatus } from "@prisma/client";
 
 const GOOGLE_DRIVE_SCOPES = [
-  "https://www.googleapis.com/auth/drive.file",
-  "https://www.googleapis.com/auth/drive",
+  "https://www.googleapis.com/auth/drive.file"
 ];
 
 export function getGoogleDriveAuthUrl(state: string): string {
