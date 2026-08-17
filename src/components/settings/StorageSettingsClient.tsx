@@ -2,9 +2,13 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Navbar } from "@/components/layout/Navbar";
-import { Sidebar } from "@/components/layout/Sidebar";
-import { MobileNav } from "@/components/layout/MobileNav";
+import { AppShell } from "@/components/shell/AppShell";
+import { PageHeader } from "@/components/shell/PageHeader";
+import { Button } from "@/components/ui/Button";
+import { RadioGroup } from "@/components/ui/RadioGroup";
+import { Card } from "@/components/ui/Card";
+import { Alert } from "@/components/ui/Alert";
+import { Badge } from "@/components/ui/Badge";
 import {
   HardDrive,
   Cloud,
@@ -118,195 +122,162 @@ export function StorageSettingsClient({ user }: { user: { id: string; defaultSto
   const isConnected = connection && connection.status === "CONNECTED";
 
   return (
-    <div className="min-h-screen bg-bg-main text-text-primary flex flex-col transition-colors">
-      <Navbar />
+    <AppShell>
+      <PageHeader
+        title="Storage Settings"
+        description="Manage your default storage provider and Google Drive connection"
+        icon={<HardDrive className="w-7 h-7" />}
+      />
 
-      <div className="flex-1 flex overflow-hidden">
-        <Sidebar />
+      <div className="max-w-3xl space-y-6">
+        {statusMessage && (
+          <Alert variant="success">
+            <CheckCircle2 className="w-5 h-5 shrink-0" />
+            <span>{statusMessage}</span>
+          </Alert>
+        )}
 
-        <main className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 pb-24 md:pb-8">
-          <div>
-            <h1 className="text-2xl font-bold text-text-primary flex items-center gap-3">
-              <HardDrive className="w-7 h-7 text-accent-primary" />
-              <span>Storage Settings</span>
-            </h1>
-            <p className="text-text-secondary text-sm mt-1">
-              Manage your default storage provider and Google Drive connection
+        {errorMessage && (
+          <Alert variant="danger">
+            <AlertTriangle className="w-5 h-5 shrink-0" />
+            <span>{errorMessage}</span>
+          </Alert>
+        )}
+
+        <Card>
+          <h2 className="text-base font-semibold text-text-primary flex items-center gap-2 mb-4">
+            <Cloud className="w-5 h-5 text-brand" />
+            <span>Default Storage for New Uploads</span>
+          </h2>
+
+          <div className="flex flex-col sm:flex-row gap-4 mb-4">
+            <label className={`flex-1 p-4 rounded-lg border-2 cursor-pointer transition-all ${selectedProvider === "GOOGLE_DRIVE" ? "border-brand bg-brand-subtle" : "border-border-subtle hover:border-border"}`}>
+              <input
+                type="radio"
+                name="storageProvider"
+                value="GOOGLE_DRIVE"
+                checked={selectedProvider === "GOOGLE_DRIVE"}
+                onChange={(e) => setSelectedProvider(e.target.value as any)}
+                className="sr-only"
+              />
+              <div className="flex items-start gap-3">
+                <div className="p-2.5 rounded-lg bg-brand-subtle text-brand">
+                  <Cloud className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="font-semibold text-sm text-text-primary">Google Drive</p>
+                  <p className="text-xs text-text-muted mt-1">Store documents in your Google Drive</p>
+                </div>
+              </div>
+            </label>
+
+            <label className={`flex-1 p-4 rounded-lg border-2 cursor-pointer transition-all ${selectedProvider === "VERCEL_BLOB" ? "border-brand bg-brand-subtle" : "border-border-subtle hover:border-border"}`}>
+              <input
+                type="radio"
+                name="storageProvider"
+                value="VERCEL_BLOB"
+                checked={selectedProvider === "VERCEL_BLOB"}
+                onChange={(e) => setSelectedProvider(e.target.value as any)}
+                className="sr-only"
+              />
+              <div className="flex items-start gap-3">
+                <div className="p-2.5 rounded-lg bg-brand-subtle text-brand">
+                  <HardDrive className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="font-semibold text-sm text-text-primary">Vercel Blob</p>
+                  <p className="text-xs text-text-muted mt-1">Store documents in private Vercel Blob</p>
+                </div>
+              </div>
+            </label>
+          </div>
+
+          <Button
+            onClick={handleProviderChange}
+            disabled={selectedProvider === user.defaultStorageProvider}
+          >
+            Save Default Provider
+          </Button>
+        </Card>
+
+        <Card>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-semibold text-text-primary flex items-center gap-2">
+              <Cloud className="w-5 h-5 text-brand" />
+              <span>Google Drive</span>
+            </h2>
+            {isConnected ? (
+              <Badge variant="success">Connected</Badge>
+            ) : (
+              <Badge variant="default">Not Connected</Badge>
+            )}
+          </div>
+
+          {isConnected ? (
+            <div className="space-y-4">
+              <div className="p-4 rounded-lg bg-surface-muted border border-border-subtle space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-text-muted">Root Folder</span>
+                  <span className="text-text-secondary font-mono">{connection.rootFolderId || "—"}</span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-text-muted">Docs Folder</span>
+                  <span className="text-text-secondary font-mono">{connection.docsFolderId || "—"}</span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-text-muted">Last Sync</span>
+                  <span className="text-text-secondary">{connection.lastSyncedAt ? new Date(connection.lastSyncedAt).toLocaleString() : "Never"}</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Button onClick={handleSync} disabled={syncing}>
+                  {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                  {syncing ? "Syncing..." : "Sync Now"}
+                </Button>
+
+                <a
+                  href={`https://drive.google.com/drive/folders/${connection.docsFolderId || connection.rootFolderId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-secondary text-xs cursor-pointer"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  <span>Open Drive</span>
+                </a>
+
+                <Button variant="danger" onClick={handleDisconnect} disabled={disconnecting}>
+                  {disconnecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Unplug className="w-4 h-4" />}
+                  {disconnecting ? "Disconnecting..." : "Disconnect"}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-xs text-text-secondary">
+                Connect your Google Drive to store documents directly in your Drive. Vaulty will create a Vaulty folder with Docs, Summary, and Text subfolders.
+              </p>
+              <Button onClick={handleConnect} disabled={connecting}>
+                {connecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Cloud className="w-4 h-4" />}
+                {connecting ? "Connecting..." : "Connect Google Drive"}
+              </Button>
+            </div>
+          )}
+        </Card>
+
+        <Card>
+          <h2 className="text-base font-semibold text-text-primary flex items-center gap-2 mb-4">
+            <HardDrive className="w-5 h-5 text-brand" />
+            <span>Vercel Blob</span>
+          </h2>
+
+          <div className="p-4 rounded-lg bg-surface-muted border border-border-subtle">
+            <p className="text-xs text-text-secondary">
+              Vercel Private Blob storage is always available as an alternative storage provider. Existing Blob documents remain accessible.
             </p>
           </div>
-
-          <div className="max-w-3xl space-y-6">
-            {statusMessage && (
-              <div className="p-4 rounded-2xl bg-accent-emerald-soft border border-accent-emerald/20 text-accent-emerald text-sm flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 shrink-0" />
-                <span>{statusMessage}</span>
-              </div>
-            )}
-
-            {errorMessage && (
-              <div className="p-4 rounded-2xl bg-accent-rose-soft border border-accent-rose/20 text-accent-rose text-sm flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 shrink-0" />
-                <span>{errorMessage}</span>
-              </div>
-            )}
-
-            <div className="vault-card p-6 space-y-4">
-              <h2 className="text-base font-bold text-text-primary flex items-center gap-2">
-                <Cloud className="w-5 h-5 text-accent-primary" />
-                <span>Default Storage for New Uploads</span>
-              </h2>
-
-              <div className="flex flex-col sm:flex-row gap-4">
-                <label className={`flex-1 p-4 rounded-2xl border-2 cursor-pointer transition-all ${selectedProvider === "GOOGLE_DRIVE" ? "border-accent-primary bg-accent-primary-soft" : "border-border-subtle hover:border-border-subtle"}`}>
-                  <input
-                    type="radio"
-                    name="storageProvider"
-                    value="GOOGLE_DRIVE"
-                    checked={selectedProvider === "GOOGLE_DRIVE"}
-                    onChange={(e) => setSelectedProvider(e.target.value as any)}
-                    className="sr-only"
-                  />
-                  <div className="flex items-start gap-3">
-                    <div className="p-2.5 rounded-xl bg-accent-primary-soft text-accent-primary">
-                      <Cloud className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <p className="font-bold text-sm text-text-primary">Google Drive</p>
-                      <p className="text-xs text-text-muted mt-1">Store documents in your Google Drive</p>
-                    </div>
-                  </div>
-                </label>
-
-                <label className={`flex-1 p-4 rounded-2xl border-2 cursor-pointer transition-all ${selectedProvider === "VERCEL_BLOB" ? "border-accent-primary bg-accent-primary-soft" : "border-border-subtle hover:border-border-subtle"}`}>
-                  <input
-                    type="radio"
-                    name="storageProvider"
-                    value="VERCEL_BLOB"
-                    checked={selectedProvider === "VERCEL_BLOB"}
-                    onChange={(e) => setSelectedProvider(e.target.value as any)}
-                    className="sr-only"
-                  />
-                  <div className="flex items-start gap-3">
-                    <div className="p-2.5 rounded-xl bg-accent-primary-soft text-accent-primary">
-                      <HardDrive className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <p className="font-bold text-sm text-text-primary">Vercel Blob</p>
-                      <p className="text-xs text-text-muted mt-1">Store documents in private Vercel Blob</p>
-                    </div>
-                  </div>
-                </label>
-              </div>
-
-              <button
-                onClick={handleProviderChange}
-                className="px-5 py-2.5 rounded-xl vault-btn-primary text-xs disabled:opacity-50 cursor-pointer"
-                disabled={selectedProvider === user.defaultStorageProvider}
-              >
-                Save Default Provider
-              </button>
-            </div>
-
-            <div className="vault-card p-6 space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-base font-bold text-text-primary flex items-center gap-2">
-                  <Cloud className="w-5 h-5 text-accent-primary" />
-                  <span>Google Drive</span>
-                </h2>
-                {isConnected ? (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent-emerald-soft text-accent-emerald text-xs font-semibold border border-accent-emerald/20">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    Connected
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-bg-muted text-text-muted text-xs font-semibold border border-border-subtle">
-                    <XCircle className="w-3.5 h-3.5" />
-                    Not Connected
-                  </span>
-                )}
-              </div>
-
-              {isConnected ? (
-                <div className="space-y-4">
-                  <div className="p-4 rounded-2xl bg-bg-muted border border-border-subtle space-y-2">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-text-muted">Root Folder</span>
-                      <span className="text-text-secondary font-mono">{connection.rootFolderId || "—"}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-text-muted">Docs Folder</span>
-                      <span className="text-text-secondary font-mono">{connection.docsFolderId || "—"}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-text-muted">Last Sync</span>
-                      <span className="text-text-secondary">{connection.lastSyncedAt ? new Date(connection.lastSyncedAt).toLocaleString() : "Never"}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={handleSync}
-                      disabled={syncing}
-                      className="flex items-center gap-2 px-4 py-2.5 rounded-xl vault-btn-primary text-xs disabled:opacity-50 cursor-pointer"
-                    >
-                      {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-                      <span>{syncing ? "Syncing..." : "Sync Now"}</span>
-                    </button>
-
-                    <a
-                      href={`https://drive.google.com/drive/folders/${connection.docsFolderId || connection.rootFolderId}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 px-4 py-2.5 rounded-xl vault-btn-secondary text-xs cursor-pointer"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                      <span>Open Drive</span>
-                    </a>
-
-                    <button
-                      onClick={handleDisconnect}
-                      disabled={disconnecting}
-                      className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-accent-rose-soft hover:bg-accent-rose-soft border border-accent-rose/20 text-accent-rose text-xs font-medium transition-colors disabled:opacity-50 cursor-pointer"
-                    >
-                      {disconnecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Unplug className="w-4 h-4" />}
-                      <span>{disconnecting ? "Disconnecting..." : "Disconnect"}</span>
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <p className="text-xs text-text-secondary">
-                    Connect your Google Drive to store documents directly in your Drive. Vaulty will create a Vaulty folder with Docs, Summary, and Text subfolders.
-                  </p>
-                  <button
-                    onClick={handleConnect}
-                    disabled={connecting}
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl vault-btn-primary text-sm disabled:opacity-50 cursor-pointer"
-                  >
-                    {connecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Cloud className="w-4 h-4" />}
-                    <span>{connecting ? "Connecting..." : "Connect Google Drive"}</span>
-                  </button>
-                </div>
-              )}
-            </div>
-
-            <div className="vault-card p-6 space-y-4">
-              <h2 className="text-base font-bold text-text-primary flex items-center gap-2">
-                <HardDrive className="w-5 h-5 text-accent-primary" />
-                <span>Vercel Blob</span>
-              </h2>
-
-              <div className="p-4 rounded-2xl bg-bg-muted border border-border-subtle">
-                <p className="text-xs text-text-secondary">
-                  Vercel Private Blob storage is always available as an alternative storage provider. Existing Blob documents remain accessible.
-                </p>
-              </div>
-            </div>
-          </div>
-        </main>
+        </Card>
       </div>
-
-      <MobileNav />
-    </div>
+    </AppShell>
   );
 }

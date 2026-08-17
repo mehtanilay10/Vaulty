@@ -18,7 +18,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning className="h-full antialiased">
-      <body className={`${inter.className} min-h-full bg-bg-main text-text-primary flex flex-col transition-colors duration-200`}>
+      <body className={`${inter.className} min-h-full bg-background text-text-primary flex flex-col`}>
         <ThemeProvider>
           <SessionProvider>{children}</SessionProvider>
         </ThemeProvider>

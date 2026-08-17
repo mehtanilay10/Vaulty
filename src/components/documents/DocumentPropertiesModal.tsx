@@ -3,6 +3,14 @@
 import { useState, useEffect } from "react";
 import { X, FileText, Edit3, Trash2, Tag, Folder, AlertTriangle, Sparkles, Check, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
+import { Label } from "@/components/ui/Label";
+import { Alert } from "@/components/ui/Alert";
+import { Card } from "@/components/ui/Card";
+import { Badge } from "@/components/ui/Badge";
 
 export function DocumentPropertiesModal({
   isOpen,
@@ -110,175 +118,144 @@ export function DocumentPropertiesModal({
     }
   };
 
-  if (!isOpen || !document) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-bg-main/80 backdrop-blur-md animate-in fade-in">
-      <div className="w-full max-w-lg bg-bg-surface border border-border-subtle rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-        <div className="flex items-center justify-between p-6 border-b border-border-subtle">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-accent-primary-soft text-accent-primary">
-              <FileText className="w-5 h-5" />
-            </div>
+    <Modal
+      open={isOpen}
+      onClose={onClose}
+      title={document?.name || "Document Properties"}
+      description="Document Properties & Settings"
+      footer={
+        isOwner ? (
+          <>
+            <Button variant="secondary" onClick={onClose}>
+              Close
+            </Button>
+            <Button onClick={handleUpdate}>
+              Save Changes
+            </Button>
+          </>
+        ) : (
+          <Button variant="secondary" onClick={onClose}>
+            Close
+          </Button>
+        )
+      }
+    >
+      <div className="space-y-5">
+        {error && (
+          <Alert variant="danger">
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+            <span>{error}</span>
+          </Alert>
+        )}
+
+        {successMsg && (
+          <Alert variant="success">
+            <Check className="w-4 h-4 shrink-0" />
+            <span>{successMsg}</span>
+          </Alert>
+        )}
+
+        {!isOwner ? (
+          <Card>
+            <p className="text-xs text-text-secondary">You are viewing a shared document. Only the owner can rename, move, re-tag, or delete this file.</p>
+          </Card>
+        ) : (
+          <form onSubmit={handleUpdate} className="space-y-4">
             <div>
-              <h2 className="text-lg font-bold text-text-primary truncate max-w-xs">{document.name}</h2>
-              <p className="text-xs text-text-muted">Document Properties &amp; Settings</p>
+              <Label>Document Name</Label>
+              <Input
+                value={docName}
+                onChange={(e) => setDocName(e.target.value)}
+              />
             </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-xl text-text-muted hover:text-text-primary hover:bg-bg-muted transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
 
-        <div className="p-6 overflow-y-auto space-y-5 flex-1">
-          {error && (
-            <div className="p-3 rounded-xl bg-accent-rose-soft border border-accent-rose/20 text-accent-rose text-xs flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 shrink-0" />
-              <span>{error}</span>
-            </div>
-          )}
-
-          {successMsg && (
-            <div className="p-3 rounded-xl bg-accent-emerald-soft border border-accent-emerald/20 text-accent-emerald text-xs flex items-center gap-2">
-              <Check className="w-4 h-4 shrink-0" />
-              <span>{successMsg}</span>
-            </div>
-          )}
-
-          {!isOwner ? (
-            <div className="p-4 rounded-2xl bg-bg-muted border border-border-subtle text-xs text-text-secondary space-y-2">
-              <p className="font-semibold text-text-primary">Read Only Document</p>
-              <p>You are viewing a shared document. Only the owner can rename, move, re-tag, or delete this file.</p>
-            </div>
-          ) : (
-            <form onSubmit={handleUpdate} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-text-secondary mb-1">
-                  Document Name
-                </label>
-                <input
-                  type="text"
-                  value={docName}
-                  onChange={(e) => setDocName(e.target.value)}
-                  className="vault-input w-full px-4 py-2.5 text-sm"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-text-secondary mb-1">
-                  Folder Location
-                </label>
-                <select
-                  value={targetFolderId}
-                  onChange={(e) => setTargetFolderId(e.target.value)}
-                  className="vault-input w-full px-4 py-2.5 text-sm text-text-secondary"
-                >
-                  {folders.map((f) => (
-                    <option key={f.id} value={f.id}>
-                      📁 {f.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-text-secondary mb-1">
-                  Tags (Comma separated)
-                </label>
-                <input
-                  type="text"
-                  value={tagsStr}
-                  onChange={(e) => setTagsStr(e.target.value)}
-                  placeholder="e.g. medical, prescription, 2026"
-                  className="vault-input w-full px-4 py-2.5 text-sm placeholder:text-text-muted"
-                />
-              </div>
-
-              <div className="flex justify-end pt-2">
-                <button
-                  type="submit"
-                  className="px-5 py-2 rounded-xl vault-btn-primary text-xs cursor-pointer"
-                >
-                  Save Changes
-                </button>
-              </div>
-            </form>
-          )}
-
-          {isOwner && (
-            <div className="p-4 rounded-2xl bg-accent-primary-soft border border-accent-primary/20 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-accent-primary font-semibold text-xs">
-                  <Sparkles className="w-4 h-4 text-accent-primary" />
-                  <span>Gemini AI Processing</span>
-                </div>
-                <span className="text-[10px] uppercase font-bold text-accent-primary px-2 py-0.5 rounded bg-accent-primary-soft border border-accent-primary/20">
-                  {document.aiProcessing?.status || "NOT_REQUESTED"}
-                </span>
-              </div>
-
-              <p className="text-[11px] text-text-muted">
-                Trigger or re-run Gemini AI document analysis to generate structured summaries and text extraction.
-              </p>
-
-              <button
-                onClick={handleRetryAi}
-                disabled={isAiRetrying}
-                className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-accent-primary hover:bg-accent-primary-hover text-white text-xs font-medium transition-colors disabled:opacity-50 cursor-pointer"
+            <div>
+              <Label>Folder Location</Label>
+              <Select
+                value={targetFolderId}
+                onChange={(e) => setTargetFolderId(e.target.value)}
+                className="w-full"
               >
-                <RefreshCw className={`w-3.5 h-3.5 ${isAiRetrying ? "animate-spin" : ""}`} />
-                <span>
-                  {document.aiProcessing?.status === "FAILED"
-                    ? "Retry Failed AI Processing"
-                    : "Re-run Gemini AI Analysis"}
-                </span>
-              </button>
+                {folders.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.name}
+                  </option>
+                ))}
+              </Select>
             </div>
-          )}
 
-          {isOwner && (
-            <div className="pt-4 border-t border-border-subtle">
-              {!confirmDelete ? (
-                <button
-                  onClick={() => setConfirmDelete(true)}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-accent-rose-soft hover:bg-accent-rose-soft border border-accent-rose/20 text-accent-rose font-medium text-xs transition-colors cursor-pointer"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  <span>Delete Document</span>
-                </button>
-              ) : (
-                <div className="p-4 rounded-2xl bg-accent-rose-soft border border-accent-rose/20 space-y-3">
-                  <div className="flex items-center gap-2 text-accent-rose font-semibold text-xs">
-                    <AlertTriangle className="w-4 h-4" />
-                    <span>Confirm Document Deletion</span>
-                  </div>
-                  <p className="text-[11px] text-text-secondary leading-relaxed">
-                    Are you sure you want to delete &quot;{document.name}&quot;? The file will be permanently removed from {storageLabel}.
-                  </p>
-                  <div className="flex items-center gap-2 pt-1">
-                    <button
-                      onClick={() => setConfirmDelete(false)}
-                      className="flex-1 py-2 rounded-xl bg-bg-muted text-text-secondary text-xs font-medium hover:bg-border-subtle transition-colors"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={handleDelete}
-                      disabled={isDeleting}
-                      className="flex-1 py-2 rounded-xl bg-accent-rose hover:bg-accent-rose text-white text-xs font-semibold transition-colors disabled:opacity-50 cursor-pointer"
-                    >
-                      {isDeleting ? "Deleting..." : "Permanently Delete"}
-                    </button>
-                  </div>
-                </div>
-              )}
+            <div>
+              <Label>Tags (Comma separated)</Label>
+              <Input
+                value={tagsStr}
+                onChange={(e) => setTagsStr(e.target.value)}
+                placeholder="e.g. medical, prescription, 2026"
+              />
             </div>
-          )}
-        </div>
+          </form>
+        )}
+
+        {isOwner && (
+          <Card>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2 text-brand font-semibold text-xs">
+                <Sparkles className="w-4 h-4" />
+                <span>Gemini AI Processing</span>
+              </div>
+              <Badge variant="info" className="text-[10px]">
+                {document.aiProcessing?.status || "NOT_REQUESTED"}
+              </Badge>
+            </div>
+
+            <p className="text-[11px] text-text-muted mb-3">
+              Trigger or re-run Gemini AI document analysis to generate structured summaries and text extraction.
+            </p>
+
+            <Button
+              onClick={handleRetryAi}
+              disabled={isAiRetrying}
+              className="w-full"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isAiRetrying ? "animate-spin" : ""}`} />
+              <span>
+                {document.aiProcessing?.status === "FAILED"
+                  ? "Retry Failed AI Processing"
+                  : "Re-run Gemini AI Analysis"}
+              </span>
+            </Button>
+          </Card>
+        )}
+
+        {isOwner && (
+          <div className="pt-4 border-t border-border-subtle">
+            {!confirmDelete ? (
+              <Button variant="danger" onClick={() => setConfirmDelete(true)} className="w-full">
+                <Trash2 className="w-4 h-4" />
+                Delete Document
+              </Button>
+            ) : (
+              <Card className="bg-danger-subtle border-danger/20">
+                <div className="flex items-center gap-2 text-danger font-semibold text-xs mb-2">
+                  <AlertTriangle className="w-4 h-4" />
+                  <span>Confirm Document Deletion</span>
+                </div>
+                <p className="text-[11px] text-text-secondary leading-relaxed mb-3">
+                  Are you sure you want to delete &quot;{document.name}&quot;? The file will be permanently removed from {storageLabel}.
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button variant="secondary" onClick={() => setConfirmDelete(false)} className="flex-1">
+                    Cancel
+                  </Button>
+                  <Button variant="danger" onClick={handleDelete} disabled={isDeleting} className="flex-1">
+                    {isDeleting ? "Deleting..." : "Permanently Delete"}
+                  </Button>
+                </div>
+              </Card>
+            )}
+          </div>
+        )}
       </div>
-    </div>
+    </Modal>
   );
 }

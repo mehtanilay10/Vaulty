@@ -1,6 +1,5 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import Link from "next/link";
 import { DashboardClient } from "@/components/dashboard/DashboardClient";
 
 export default async function DashboardPage() {
@@ -9,7 +8,6 @@ export default async function DashboardPage() {
 
   const userId = session.user.id;
 
-  // 1. Fetch recent documents owned by user
   const recentDocuments = await prisma.document.findMany({
     where: { ownerId: userId },
     include: {
@@ -21,7 +19,6 @@ export default async function DashboardPage() {
     take: 8,
   });
 
-  // 2. Fetch top-level folders owned by user
   const myFolders = await prisma.folder.findMany({
     where: { ownerId: userId, parentId: null },
     include: {
@@ -31,7 +28,6 @@ export default async function DashboardPage() {
     orderBy: { name: "asc" },
   });
 
-  // 3. Fetch folders shared with user
   const sharedShares = await prisma.folderShare.findMany({
     where: { sharedWithUserId: userId },
     include: {
@@ -47,7 +43,6 @@ export default async function DashboardPage() {
 
   const sharedFolders = sharedShares.map((s) => s.folder);
 
-  // 4. Statistics
   const totalDocumentsCount = await prisma.document.count({ where: { ownerId: userId } });
   const totalFoldersCount = await prisma.folder.count({ where: { ownerId: userId } });
   const aiCompletedCount = await prisma.aiProcessing.count({

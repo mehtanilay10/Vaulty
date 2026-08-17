@@ -2,10 +2,15 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Navbar } from "@/components/layout/Navbar";
-import { Sidebar } from "@/components/layout/Sidebar";
-import { MobileNav } from "@/components/layout/MobileNav";
-import { Search, FileText, Folder, Tag, Sparkles, CheckCircle2, Shield } from "lucide-react";
+import { AppShell } from "@/components/shell/AppShell";
+import { PageHeader } from "@/components/shell/PageHeader";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Card } from "@/components/ui/Card";
+import { Badge } from "@/components/ui/Badge";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { Search, FileText, Sparkles } from "lucide-react";
 
 export function SearchClient({ initialQuery }: { initialQuery: string }) {
   const [query, setQuery] = useState(initialQuery);
@@ -41,118 +46,93 @@ export function SearchClient({ initialQuery }: { initialQuery: string }) {
   };
 
   return (
-    <div className="min-h-screen bg-bg-main text-text-primary flex flex-col transition-colors">
-      <Navbar />
+    <AppShell>
+      <PageHeader
+        title="Search Private Vault"
+        description="Search across filenames, folders, tags, and AI summary text"
+        icon={<Search className="w-7 h-7" />}
+      />
 
-      <div className="flex-1 flex overflow-hidden">
-        <Sidebar />
+      <form onSubmit={handleSearchSubmit} className="flex gap-3">
+        <div className="relative flex-1">
+          <Search className="w-5 h-5 text-text-muted absolute left-4 top-3.5 pointer-events-none" />
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search e.g. passport, blood test, insurance..."
+            className="w-full pl-12 pr-4 py-2.5 text-base"
+          />
+        </div>
+        <Button type="submit" disabled={loading || !query.trim()}>
+          {loading ? "Searching..." : "Search"}
+        </Button>
+      </form>
 
-        <main className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 pb-24 md:pb-8">
-          <div className="space-y-1">
-            <h1 className="text-2xl font-bold text-text-primary flex items-center gap-3">
-              <Search className="w-7 h-7 text-accent-primary" />
-              <span>Search Private Vault</span>
-            </h1>
-            <p className="text-text-secondary text-sm">
-              Search across filenames, folders, tags, and AI summary text (Permission Scoped)
-            </p>
-          </div>
+      {results.length > 0 && (
+        <p className="text-xs text-text-muted">
+          Found {results.length} document match{results.length === 1 ? "" : "es"} for &quot;{query}&quot;
+        </p>
+      )}
 
-          <form onSubmit={handleSearchSubmit} className="relative">
-            <Search className="w-5 h-5 text-text-muted absolute left-4 top-3.5 pointer-events-none" />
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search e.g. passport, blood test, insurance..."
-              className="vault-input w-full pl-12 pr-24 py-3 text-base placeholder:text-text-muted"
-            />
-            <button
-              type="submit"
-              disabled={loading || !query.trim()}
-              className="absolute right-2 top-2 px-5 py-1.5 rounded-xl vault-btn-primary text-xs font-semibold disabled:opacity-50 cursor-pointer"
-            >
-              {loading ? "Searching..." : "Search"}
-            </button>
-          </form>
+      {loading && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1, 2, 3].map((i) => (
+            <Card key={i} className="p-5">
+              <Skeleton className="h-4 w-3/4 mb-3" />
+              <Skeleton className="h-3 w-1/2" />
+            </Card>
+          ))}
+        </div>
+      )}
 
-          {results.length > 0 && (
-            <p className="text-xs text-text-muted">
-              Found {results.length} document match{results.length === 1 ? "" : "es"} for &quot;{query}&quot;
-            </p>
-          )}
+      {results.length === 0 && query.trim() && !loading && (
+        <Card>
+          <EmptyState
+            icon={<Search className="w-10 h-10" />}
+            title="No matching documents"
+            description="No documents match your query or you do not have permission to view them."
+          />
+        </Card>
+      )}
 
-          {results.length === 0 && query.trim() && !loading && (
-            <div className="vault-card p-12 text-center space-y-2">
-              <Search className="w-10 h-10 text-text-muted mx-auto" />
-              <h3 className="text-base font-semibold text-text-secondary">No matching documents</h3>
-              <p className="text-xs text-text-muted">
-                No documents match your query or you do not have permission to view them.
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {results.map((doc) => (
+          <Link
+            key={doc.id}
+            href={`/documents/${doc.id}`}
+            className="card card-hover p-5 flex flex-col justify-between"
+          >
+            <div>
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <div className="p-2.5 rounded-lg bg-brand-subtle text-brand">
+                  <FileText className="w-5 h-5" />
+                </div>
+                <Badge variant={doc.ownershipType === "Owned by me" ? "default" : "info"}>
+                  {doc.ownershipType}
+                </Badge>
+              </div>
+
+              <h3 className="font-semibold text-sm text-text-primary truncate mb-1">
+                {doc.name}
+              </h3>
+              <p className="text-xs text-text-muted truncate mb-2">
+                {doc.folder?.name}
               </p>
+
+              {doc.aiProcessing?.summaryMarkdown && (
+                <p className="text-xs text-text-muted line-clamp-2 bg-surface-muted p-2.5 rounded-md border border-border-subtle">
+                  {doc.aiProcessing.summaryMarkdown.replace(/#/g, "")}
+                </p>
+              )}
             </div>
-          )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {results.map((doc) => (
-              <Link
-                key={doc.id}
-                href={`/documents/${doc.id}`}
-                className="vault-card vault-card-hover p-5 flex flex-col justify-between"
-              >
-                <div>
-                  <div className="flex items-center justify-between gap-2 mb-3">
-                    <div className="p-2.5 rounded-xl bg-accent-primary-soft text-accent-primary">
-                      <FileText className="w-5 h-5" />
-                    </div>
-                    <span
-                      className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold border ${
-                        doc.ownershipType === "Owned by me"
-                          ? "bg-accent-primary-soft text-accent-primary border-accent-primary/20"
-                          : "bg-accent-emerald-soft text-accent-emerald border-accent-emerald/20"
-                      }`}
-                    >
-                      {doc.ownershipType}
-                    </span>
-                  </div>
-
-                  <h3 className="font-semibold text-sm text-text-primary truncate mb-1">
-                    {doc.name}
-                  </h3>
-                  <p className="text-xs text-text-muted truncate mb-2">
-                    📁 {doc.folder?.name}
-                  </p>
-
-                  {doc.tags?.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mb-3">
-                      {doc.tags.map((t: any) => (
-                        <span
-                          key={t.tag.id}
-                          className="px-2 py-0.5 rounded-md bg-bg-muted text-text-secondary text-[10px] font-medium"
-                        >
-                          #{t.tag.name}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-
-                  {doc.aiProcessing?.summaryMarkdown && (
-                    <p className="text-xs text-text-muted line-clamp-2 bg-bg-muted p-2.5 rounded-xl border border-border-subtle font-mono">
-                      {doc.aiProcessing.summaryMarkdown.replace(/#/g, "")}
-                    </p>
-                  )}
-                </div>
-
-                <div className="flex items-center justify-between pt-3 mt-3 border-t border-border-subtle text-[11px] text-text-muted">
-                  <span>Owner: {doc.owner?.name || doc.owner?.email}</span>
-                  <span>{new Date(doc.createdAt).toLocaleDateString()}</span>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </main>
+            <div className="flex items-center justify-between pt-3 mt-3 border-t border-border-subtle text-[11px] text-text-muted">
+              <span>Owner: {doc.owner?.name || doc.owner?.email}</span>
+              <span>{new Date(doc.createdAt).toLocaleDateString()}</span>
+            </div>
+          </Link>
+        ))}
       </div>
-
-      <MobileNav />
-    </div>
+    </AppShell>
   );
 }
