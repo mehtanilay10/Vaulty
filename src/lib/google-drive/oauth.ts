@@ -1,3 +1,4 @@
+import { google } from "googleapis";
 import { prisma } from "@/lib/prisma";
 import { StorageConnectionStatus } from "@prisma/client";
 
@@ -43,28 +44,12 @@ export async function exchangeCodeForTokens(code: string): Promise<{
     throw new Error("Google OAuth credentials not configured.");
   }
 
-  const params = new URLSearchParams();
-  params.append("client_id", clientId);
-  params.append("client_secret", clientSecret);
-  params.append("code", code);
-  params.append("redirect_uri", redirectUri);
-  params.append("grant_type", "authorization_code");
+  const oauth2Client = new google.auth.OAuth2(clientId, clientSecret, redirectUri);
+  const { tokens } = await oauth2Client.getToken(code);
 
-  const res = await fetch("https://oauth2.googleapis.com/token", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: params.toString(),
-  });
-
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Failed to exchange code for tokens: ${res.status} ${text}`);
-  }
-
-  const data = await res.json();
-  const accessToken = data.access_token as string;
-  const refreshToken = data.refresh_token as string;
-  const expiresIn = data.expires_in as number;
+  const accessToken = tokens.access_token || "";
+  const refreshToken = tokens.refresh_token || "";
+  const expiresIn = tokens.expiry_date ? Math.floor((tokens.expiry_date - Date.now()) / 1000) : 3600;
 
   return {
     accessToken,
@@ -74,45 +59,34 @@ export async function exchangeCodeForTokens(code: string): Promise<{
 }
 
 export async function createVaultyRootFolder(accessToken: string): Promise<string> {
-  const searchRes = await fetch(
-    "https://www.googleapis.com/drive/v3/files?q=name%3D%27Vaulty%27+and+trashed%3Dfalse+and+%27root%27+in+parents+and+mimeType%3D%27application%2Fvnd.google-apps.folder%27&fields=files(id%2Cname)",
-    {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    }
-  );
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+  const oauth2Client = new google.auth.OAuth2(clientId, clientSecret);
+  oauth2Client.setCredentials({ access_token: accessToken });
 
-  if (!searchRes.ok) {
-    const text = await searchRes.text();
-    throw new Error(`Failed to search for Vaulty folder: ${searchRes.status} ${text}`);
-  }
+  const drive = google.drive({ version: "v3", auth: oauth2Client });
 
-  const searchData = await searchRes.json() as { files?: Array<{ id: string; name: string }> };
-  const existing = searchData.files?.find((f) => f.name === "Vaulty");
+  const searchRes = await drive.files.list({
+    q: "name='Vaulty' and trashed=false and 'root' in parents and mimeType='application/vnd.google-apps.folder'",
+    fields: "files(id,name)",
+    pageSize: 10,
+  });
 
+  const existing = searchRes.data.files?.find((f) => f.name === "Vaulty");
   if (existing) {
-    return existing.id;
+    return existing.id || "";
   }
 
-  const createRes = await fetch("https://www.googleapis.com/drive/v3/files?fields=id,name", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
+  const folder = await drive.files.create({
+    requestBody: {
       name: "Vaulty",
       mimeType: "application/vnd.google-apps.folder",
       parents: ["root"],
-    }),
+    },
+    fields: "id,name",
   });
 
-  if (!createRes.ok) {
-    const text = await createRes.text();
-    throw new Error(`Failed to create Vaulty folder: ${createRes.status} ${text}`);
-  }
-
-  const folder = await createRes.json();
-  return folder.id;
+  return folder.data.id || "";
 }
 
 export async function createVaultySubFolders(accessToken: string, rootFolderId: string): Promise<{
@@ -128,39 +102,32 @@ export async function createVaultySubFolders(accessToken: string, rootFolderId: 
 }
 
 async function createSubFolder(accessToken: string, parentId: string, name: string): Promise<string> {
-  const searchRes = await fetch(
-    `https://www.googleapis.com/drive/v3/files?q=name%3D%27${encodeURIComponent(name)}%27+and+trashed%3Dfalse+and+%27${parentId}%27+in+parents+and+mimeType%3D%27application%2Fvnd.google-apps.folder%27&fields=files(id%2Cname)`,
-    {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    }
-  );
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+  const oauth2Client = new google.auth.OAuth2(clientId, clientSecret);
+  oauth2Client.setCredentials({ access_token: accessToken });
 
-  if (searchRes.ok) {
-    const searchData = await searchRes.json() as { files?: Array<{ id: string; name: string }> };
-    const existing = searchData.files?.find((f) => f.name === name);
-    if (existing) return existing.id;
-  }
+  const drive = google.drive({ version: "v3", auth: oauth2Client });
 
-  const createRes = await fetch("https://www.googleapis.com/drive/v3/files?fields=id,name", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
+  const searchRes = await drive.files.list({
+    q: `name='${name}' and trashed=false and '${parentId}' in parents and mimeType='application/vnd.google-apps.folder'`,
+    fields: "files(id,name)",
+    pageSize: 10,
+  });
+
+  const existing = searchRes.data.files?.find((f) => f.name === name);
+  if (existing) return existing.id || "";
+
+  const folder = await drive.files.create({
+    requestBody: {
       name,
       mimeType: "application/vnd.google-apps.folder",
       parents: [parentId],
-    }),
+    },
+    fields: "id,name",
   });
 
-  if (!createRes.ok) {
-    const text = await createRes.text();
-    throw new Error(`Failed to create ${name} folder: ${createRes.status} ${text}`);
-  }
-
-  const folder = await createRes.json();
-  return folder.id;
+  return folder.data.id || "";
 }
 
 export async function setupGoogleDriveConnection(userId: string, tokens: {
