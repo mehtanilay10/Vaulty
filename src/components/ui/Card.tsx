@@ -16,6 +16,7 @@ export function Card({
       className={cn(
         elevated ? "card-elevated" : "card",
         hover && "card-hover",
+        "p-5",
         className
       )}
     >
@@ -32,7 +33,7 @@ export function CardHeader({
   children: React.ReactNode;
 }) {
   return (
-    <div className={cn("px-5 py-4", className)}>{children}</div>
+    <div className={cn("pb-4", className)}>{children}</div>
   );
 }
 
@@ -44,7 +45,7 @@ export function CardContent({
   children: React.ReactNode;
 }) {
   return (
-    <div className={cn("px-5 py-4", className)}>{children}</div>
+    <div className={cn("py-4", className)}>{children}</div>
   );
 }
 
@@ -56,7 +57,7 @@ export function CardFooter({
   children: React.ReactNode;
 }) {
   return (
-    <div className={cn("px-5 py-4 border-t border-border-subtle", className)}>
+    <div className={cn("pt-4 border-t border-border-subtle", className)}>
       {children}
     </div>
   );

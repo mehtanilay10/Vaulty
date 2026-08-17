@@ -3,13 +3,13 @@
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
-import { Search, LogOut, User, Upload, ChevronDown, Menu, FileText } from "lucide-react";
+import { LogOut, User, Upload, ChevronDown, Search, FileText } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ThemeToggle } from "./ThemeToggle";
 import { VaultLogo } from "@/components/icons/VaultLogo";
 import { Dropdown, DropdownItem } from "@/components/ui/Dropdown";
 
-export function Navbar({ onOpenUpload, onToggleSidebar }: { onOpenUpload?: () => void; onToggleSidebar?: () => void }) {
+export function Navbar({ onOpenUpload }: { onOpenUpload?: () => void }) {
   const { data: session } = useSession();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
@@ -24,14 +24,12 @@ export function Navbar({ onOpenUpload, onToggleSidebar }: { onOpenUpload?: () =>
     const handleClickOutside = (e: MouseEvent) => {
       if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
         setShowSuggestions(false);
-      }
-      if (showProfileMenu) {
         setShowProfileMenu(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [showProfileMenu]);
+  }, []);
 
   useEffect(() => {
     if (!searchQuery.trim() || searchQuery.trim().length < 2) {
@@ -70,13 +68,6 @@ export function Navbar({ onOpenUpload, onToggleSidebar }: { onOpenUpload?: () =>
   return (
     <header className="sticky top-0 z-30 bg-surface/80 backdrop-blur-xl border-b border-border-subtle px-4 lg:px-6 py-3 flex items-center justify-between gap-4">
       <div className="flex items-center gap-3">
-        <button
-          onClick={onToggleSidebar}
-          className="md:hidden p-2 rounded-md hover:bg-surface-muted transition-colors cursor-pointer"
-          aria-label="Toggle menu"
-        >
-          <Menu className="w-5 h-5 text-text-secondary" />
-        </button>
         <Link href="/dashboard" className="flex items-center gap-2.5 group">
           <VaultLogo size={32} className="shrink-0" />
           <div className="hidden sm:flex flex-col">

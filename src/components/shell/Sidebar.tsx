@@ -6,23 +6,15 @@ import { cn } from "@/lib/utils";
 import { VaultLogo } from "@/components/icons/VaultLogo";
 import {
   LayoutDashboard,
-  FileText,
   Users,
   Folder,
-  Search,
-  Settings,
-  RefreshCw,
   ShieldCheck,
 } from "lucide-react";
 
 const navItems = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Documents", href: "/documents", icon: FileText },
   { name: "Shared", href: "/shared", icon: Users },
   { name: "Folders", href: "/folders", icon: Folder },
-  { name: "Sync", href: "/sync", icon: RefreshCw },
-  { name: "Search", href: "/search", icon: Search },
-  { name: "Settings", href: "/settings", icon: Settings },
 ];
 
 export function Sidebar() {

@@ -13,7 +13,7 @@ interface AppShellProps {
 export function AppShell({ children, onOpenUpload }: AppShellProps) {
   return (
     <div className="min-h-screen bg-background text-text-primary flex flex-col">
-      <Navbar onOpenUpload={onOpenUpload} onToggleSidebar={() => {}} />
+      <Navbar onOpenUpload={onOpenUpload} />
 
       <div className="flex-1 flex overflow-hidden">
         <Sidebar />
