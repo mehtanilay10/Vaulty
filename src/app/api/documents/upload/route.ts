@@ -3,7 +3,7 @@ import { getCurrentUser } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { checkFolderAccess } from "@/lib/authz";
 import { validateFileTypeAndExtension, getMaxUploadSize, uploadPrivateBlob } from "@/lib/blob";
-import { processDocumentWithGemini } from "@/lib/gemini";
+import { processDocumentWithGemini, GEMINI_MODEL } from "@/lib/gemini";
 import { getProviderForUser } from "@/lib/storage/factory";
 import type { StorageProviderType } from "@/lib/storage/provider";
 
@@ -92,7 +92,7 @@ export async function POST(req: NextRequest) {
 
     if (storageProvider === "GOOGLE_DRIVE") {
       try {
-        const { provider } = await getProviderForUser(user.id, "GOOGLE_DRIVE");
+        const { provider } = await getProviderForUser(user.id, storageProvider);
         const folderPath = await getFolderHierarchyPath(folderId);
         const cleanFileName = docName.replace(/[/\\?%*:|"<>]/g, "_");
         
@@ -108,17 +108,16 @@ export async function POST(req: NextRequest) {
         storageChecksum = uploadResult.checksum || null;
         storageVersion = uploadResult.version || null;
         storageWebViewLink = uploadResult.webViewLink || null;
-      } catch (driveError) {
-        console.error("Google Drive upload failed, falling back to Blob:", driveError);
-        const cleanUserName = (user.name || user.email || user.id)
-          .replace(/[/\\?%*:|"<>]/g, "_")
-          .trim();
-        const folderPath = await getFolderHierarchyPath(folderId);
-        const cleanFileName = docName.replace(/[/\\?%*:|"<>]/g, "_");
-        const fullBlobPath = `vaulty-docs/${cleanUserName}/${folderPath}/${cleanFileName}`;
-        const blobResult = await uploadPrivateBlob(file.name, fileBuffer, fullBlobPath);
-        blobUrl = blobResult.url;
-        blobPath = blobResult.pathname;
+      } catch (driveError: any) {
+        console.error("Google Drive upload failed:", driveError);
+        const message = driveError?.message || "";
+        if (message.includes("not connected")) {
+          return NextResponse.json(
+            { error: "Google Drive is not connected. Please connect your Google Drive account in settings, or switch your default storage provider to Vercel Blob." },
+            { status: 400 }
+          );
+        }
+        throw new Error(driveError?.message || "Google Drive upload failed. Please check your Drive connection or switch your default storage provider to Vercel Blob.");
       }
     } else {
       const cleanUserName = (user.name || user.email || user.id)
@@ -180,7 +179,7 @@ export async function POST(req: NextRequest) {
         data: {
           documentId: document.id,
           status: "QUEUED",
-          modelUsed: "gemini-2.0-flash",
+          modelUsed: GEMINI_MODEL,
         },
       });
 

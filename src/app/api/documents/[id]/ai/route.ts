@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { checkDocumentAccess } from "@/lib/authz";
-import { processDocumentWithGemini } from "@/lib/gemini";
+import { processDocumentWithGemini, GEMINI_MODEL } from "@/lib/gemini";
 import { getProviderForDocument } from "@/lib/storage/factory";
 
 export async function POST(
@@ -43,7 +43,7 @@ export async function POST(
       create: {
         documentId: id,
         status: "QUEUED",
-        modelUsed: "gemini-2.0-flash",
+        modelUsed: GEMINI_MODEL,
       },
     });
 

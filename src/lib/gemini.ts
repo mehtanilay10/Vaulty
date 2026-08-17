@@ -1,6 +1,7 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
 const apiKey = process.env.GEMINI_API_KEY || "";
+export const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.6-flash";
 const ai = new GoogleGenAI({ apiKey });
 
 export interface GeminiProcessResult {
@@ -36,7 +37,7 @@ export async function processDocumentWithGemini(
   const base64Data = fileBuffer.toString("base64");
 
   const response = await ai.models.generateContent({
-    model: "gemini-2.0-flash",
+    model: GEMINI_MODEL,
     contents: [
       {
         role: "user",
