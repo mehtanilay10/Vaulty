@@ -56,8 +56,36 @@ export async function syncGoogleDriveForUser(userId: string): Promise<SyncResult
     };
 
     const provider = new GoogleDriveStorageProvider(context);
-    const folders = await provider.listFolders(connection.docsFolderId || undefined);
-    const files = await provider.listFiles(connection.docsFolderId || undefined);
+    const docsFolderId = connection.docsFolderId;
+
+    if (!docsFolderId) {
+      result.errors.push("Docs folder ID not configured.");
+      return result;
+    }
+
+    async function discoverDriveFolders(parentId: string | undefined): Promise<StorageFolder[]> {
+      const folders = await provider.listFolders(parentId || docsFolderId);
+      let collected = [...folders];
+      for (const folder of folders) {
+        const children = await discoverDriveFolders(folder.id);
+        collected.push(...children);
+      }
+      return collected;
+    }
+
+    async function discoverDriveFiles(parentId: string | undefined): Promise<StorageFile[]> {
+      const files = await provider.listFiles(parentId || docsFolderId);
+      const subfolders = await provider.listFolders(parentId || docsFolderId);
+      let collected = [...files];
+      for (const folder of subfolders) {
+        const nested = await discoverDriveFiles(folder.id);
+        collected.push(...nested);
+      }
+      return collected;
+    }
+
+    const allDriveFolders = await discoverDriveFolders(docsFolderId);
+    const allDriveFiles = await discoverDriveFiles(docsFolderId);
 
     const existingFolderMappings = new Map(
       (await prisma.folder.findMany({
@@ -73,7 +101,7 @@ export async function syncGoogleDriveForUser(userId: string): Promise<SyncResult
       })).filter((d) => d.storageFileId).map((d) => [d.storageFileId!, d.id])
     );
 
-    for (const driveFolder of folders) {
+    for (const driveFolder of allDriveFolders) {
       if (existingFolderMappings.has(driveFolder.id)) {
         const vaultyFolderId = existingFolderMappings.get(driveFolder.id)!;
         const vaultyFolder = await prisma.folder.findUnique({
@@ -109,6 +137,8 @@ export async function syncGoogleDriveForUser(userId: string): Promise<SyncResult
           },
         });
 
+        existingFolderMappings.set(driveFolder.id, vaultyFolder.id);
+
         await prisma.syncEvent.create({
           data: {
             userId,
@@ -125,7 +155,7 @@ export async function syncGoogleDriveForUser(userId: string): Promise<SyncResult
       }
     }
 
-    for (const driveFile of files) {
+    for (const driveFile of allDriveFiles) {
       if (existingFileMappings.has(driveFile.id)) {
         const vaultyDocId = existingFileMappings.get(driveFile.id)!;
         const doc = await prisma.document.findUnique({
