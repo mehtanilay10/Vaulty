@@ -185,7 +185,7 @@ export function SettingsClient({ user }: { user: any }) {
                   href={`https://drive.google.com/drive/folders/${connection.docsFolderId || connection.rootFolderId}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="btn btn-secondary text-xs"
+                  className="btn btn-secondary h-9 px-4 text-xs sm:text-sm rounded-md"
                 >
                   <ExternalLink className="w-4 h-4" />
                   <span>Open Drive</span>

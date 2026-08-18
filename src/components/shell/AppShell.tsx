@@ -4,6 +4,8 @@ import { Navbar } from "@/components/shell/Navbar";
 import { Sidebar } from "@/components/shell/Sidebar";
 import { MobileNav } from "@/components/shell/MobileNav";
 import { cn } from "@/lib/utils";
+import { useGoogleDriveStatus } from "@/hooks/useGoogleDriveStatus";
+import { useRouter } from "next/navigation";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -11,9 +13,20 @@ interface AppShellProps {
 }
 
 export function AppShell({ children, onOpenUpload }: AppShellProps) {
+  const { isConnected } = useGoogleDriveStatus();
+  const router = useRouter();
+
+  const handleUploadClick = () => {
+    if (onOpenUpload) {
+      onOpenUpload();
+    } else {
+      router.push("/documents");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background text-text-primary flex flex-col">
-      <Navbar onOpenUpload={onOpenUpload} />
+      <Navbar onOpenUpload={handleUploadClick} isDriveConnected={isConnected} />
 
       <div className="flex-1 flex overflow-hidden">
         <Sidebar />
@@ -23,7 +36,7 @@ export function AppShell({ children, onOpenUpload }: AppShellProps) {
         </main>
       </div>
 
-      <MobileNav onOpenUpload={onOpenUpload} />
+      <MobileNav onOpenUpload={handleUploadClick} isDriveConnected={isConnected} />
     </div>
   );
 }

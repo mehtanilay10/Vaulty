@@ -23,6 +23,7 @@ import {
   HardDrive,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useGoogleDriveStatus } from "@/hooks/useGoogleDriveStatus";
 
 export function DocumentsClient({
   initialDocuments,
@@ -36,6 +37,7 @@ export function DocumentsClient({
   const [filterFolderId, setFilterFolderId] = useState("");
   const [searchFilter, setSearchFilter] = useState("");
   const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const { isConnected } = useGoogleDriveStatus();
 
   const filteredDocs = documents.filter((doc) => {
     const matchesFolder = filterFolderId ? doc.folderId === filterFolderId : true;
@@ -53,7 +55,7 @@ export function DocumentsClient({
         description={`All private documents in your personal vault (${documents.length})`}
         icon={<FileText className="w-7 h-7" />}
         actions={
-          <Button onClick={() => setIsUploadOpen(true)}>
+          <Button onClick={() => setIsUploadOpen(true)} disabled={!isConnected}>
             <Upload className="w-4 h-4" />
             Upload Document
           </Button>

@@ -21,6 +21,7 @@ import {
   Clock,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useGoogleDriveStatus } from "@/hooks/useGoogleDriveStatus";
 
 export function DashboardClient({
   user,
@@ -38,6 +39,7 @@ export function DashboardClient({
   const router = useRouter();
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false);
+  const { isConnected } = useGoogleDriveStatus();
 
   const refreshData = () => {
     router.refresh();
@@ -50,11 +52,11 @@ export function DashboardClient({
         description="Your private document vault is secured and up to date."
         actions={
           <>
-            <Button variant="secondary" onClick={() => setIsCreateFolderOpen(true)}>
+            <Button variant="secondary" onClick={() => setIsCreateFolderOpen(true)} disabled={!isConnected}>
               <FolderPlus className="w-4 h-4" />
               New Folder
             </Button>
-            <Button onClick={() => setIsUploadOpen(true)}>
+            <Button onClick={() => setIsUploadOpen(true)} disabled={!isConnected}>
               <Upload className="w-4 h-4" />
               Upload Document
             </Button>
@@ -115,7 +117,7 @@ export function DashboardClient({
             title="No documents uploaded yet"
             description="Upload your medical reports, passports, or certificates to get started."
             action={
-              <Button onClick={() => setIsUploadOpen(true)}>
+              <Button onClick={() => setIsUploadOpen(true)} disabled={!isConnected}>
                 <Upload className="w-4 h-4" />
                 Upload First Document
               </Button>
@@ -185,7 +187,7 @@ export function DashboardClient({
               title="No folders created yet"
               description="Create custom folders like Medical, Government, Education, or Financial to organize files."
               action={
-                <Button onClick={() => setIsCreateFolderOpen(true)}>
+                <Button onClick={() => setIsCreateFolderOpen(true)} disabled={!isConnected}>
                   <FolderPlus className="w-4 h-4" />
                   Create Root Folder
                 </Button>

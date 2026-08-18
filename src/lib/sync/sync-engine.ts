@@ -202,18 +202,12 @@ export async function syncGoogleDriveForUser(userId: string): Promise<SyncResult
         result.documentsProcessed++;
       } else {
         const parentDriveId = driveFile.parentId;
-        const folderMatch = Array.from(existingFolderMappings.entries()).find(
-          ([mappedDriveId]) => {
-            const f = folders.find((df) => df.id === parentDriveId);
-            return f && existingFolderMappings.has(f.id);
-          }
-        );
 
-        const targetFolderId = folderMatch ? folderMatch[1] : null;
-
-        if (!targetFolderId) {
+        if (!parentDriveId || !existingFolderMappings.has(parentDriveId)) {
           continue;
         }
+
+        const targetFolderId = existingFolderMappings.get(parentDriveId)!;
 
         const vaultyDoc = await prisma.document.create({
           data: {

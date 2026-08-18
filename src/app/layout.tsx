@@ -33,6 +33,11 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className="h-full antialiased">
       <body className={`${inter.className} min-h-full bg-background text-text-primary flex flex-col`}>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem("theme");if(!t){t=window.matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light"}if(t==="dark"){document.documentElement.classList.add("dark")}else{document.documentElement.classList.remove("dark")}}catch(e){}})();`,
+          }}
+        />
         <ThemeProvider>
           <SessionProvider>{children}</SessionProvider>
         </ThemeProvider>

@@ -128,7 +128,7 @@ export function DocumentDetailClient({
                 href={document.storageWebViewLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="btn btn-secondary text-xs"
+                className="btn btn-secondary h-9 px-4 text-xs sm:text-sm rounded-md"
               >
                 <ExternalLink className="w-4 h-4" />
                 <span>Open in Drive</span>
@@ -137,7 +137,7 @@ export function DocumentDetailClient({
             <a
               href={fileProxyUrl}
               download={document.name}
-              className="btn btn-secondary text-xs"
+              className="btn btn-secondary h-9 px-4 text-xs sm:text-sm rounded-md"
             >
               <Download className="w-4 h-4 text-brand" />
               <span>Download</span>
@@ -160,7 +160,7 @@ export function DocumentDetailClient({
             <div className="flex items-center gap-3">
               <Sparkles className="w-4 h-4 text-warning shrink-0" />
               <div>
-                <span className="font-bold text-text-primary">Gemini 2.0 AI Status: </span>
+                <span className="font-bold text-text-primary">Gemini 3.6 AI Status: </span>
                 <span className="text-text-secondary font-mono uppercase font-semibold">
                   {document.aiProcessing.status}
                 </span>
@@ -224,7 +224,7 @@ export function DocumentDetailClient({
                   <a
                     href={fileProxyUrl}
                     download={document.name}
-                    className="btn btn-primary text-xs"
+                    className="btn btn-primary h-9 px-4 text-xs sm:text-sm rounded-md"
                   >
                     <Download className="w-3.5 h-3.5" />
                     <span>Download to view ({document.mimeType})</span>
@@ -238,7 +238,7 @@ export function DocumentDetailClient({
             <div className="space-y-4">
               <Alert variant="info" className="text-xs">
                 <Sparkles className="w-4 h-4 shrink-0" />
-                <span>AI-Generated Summary via Gemini 2.0 Flash</span>
+                <span>AI-Generated Summary via Gemini 3.6 Flash</span>
               </Alert>
 
               {document.aiProcessing?.summaryMarkdown ? (

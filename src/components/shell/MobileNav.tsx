@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { LayoutDashboard, Folder, Users, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export function MobileNav({ onOpenUpload }: { onOpenUpload?: () => void }) {
+export function MobileNav({ onOpenUpload, isDriveConnected }: { onOpenUpload?: () => void; isDriveConnected?: boolean }) {
   const pathname = usePathname();
 
   const navItems = [
@@ -37,7 +37,8 @@ export function MobileNav({ onOpenUpload }: { onOpenUpload?: () => void }) {
       {onOpenUpload && (
         <button
           onClick={onOpenUpload}
-          className="flex items-center justify-center w-12 h-12 rounded-full bg-brand text-white shadow-lg shadow-brand/30 -mt-8 ring-4 ring-background active:scale-90 transition-transform cursor-pointer"
+          disabled={!isDriveConnected}
+          className="flex items-center justify-center w-12 h-12 rounded-full bg-brand text-white shadow-lg shadow-brand/30 -mt-8 ring-4 ring-background active:scale-90 transition-transform cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           aria-label="Upload document"
         >
           <Plus className="w-6 h-6 stroke-[3]" />

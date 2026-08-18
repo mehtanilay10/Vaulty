@@ -9,7 +9,7 @@ import { ThemeToggle } from "./ThemeToggle";
 import { VaultLogo } from "@/components/icons/VaultLogo";
 import { Dropdown, DropdownItem } from "@/components/ui/Dropdown";
 
-export function Navbar({ onOpenUpload }: { onOpenUpload?: () => void }) {
+export function Navbar({ onOpenUpload, isDriveConnected }: { onOpenUpload?: () => void; isDriveConnected?: boolean }) {
   const { data: session } = useSession();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
@@ -145,7 +145,8 @@ export function Navbar({ onOpenUpload }: { onOpenUpload?: () => void }) {
         {onOpenUpload && (
           <button
             onClick={onOpenUpload}
-            className="btn btn-primary hidden sm:flex items-center gap-2 px-4 py-2 text-sm"
+            disabled={!isDriveConnected}
+            className="btn btn-primary hidden sm:flex items-center gap-2 px-4 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Upload className="w-4 h-4" />
             <span>Upload</span>

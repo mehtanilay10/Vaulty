@@ -33,6 +33,7 @@ export async function GET(
         blobUrl: true,
         storageProvider: true,
         storageFileId: true,
+        ownerId: true,
       },
     });
 
@@ -46,7 +47,7 @@ export async function GET(
           id: doc.id,
           storageProvider: doc.storageProvider,
           storageFileId: doc.storageFileId,
-          ownerId: user.id,
+          ownerId: doc.ownerId,
           folderId: "",
         });
 

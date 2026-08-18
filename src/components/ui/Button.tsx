@@ -21,9 +21,9 @@ export function Button({
   };
 
   const sizes = {
-    sm: "h-8 px-3 text-xs rounded-md",
-    md: "h-9 px-4 text-sm rounded-md",
-    lg: "h-11 px-6 text-base rounded-md",
+    sm: "h-8 px-3 text-[11px] sm:text-xs rounded-md",
+    md: "h-9 px-4 text-xs sm:text-sm rounded-md",
+    lg: "h-11 px-6 text-sm sm:text-base rounded-md",
   };
 
   return (

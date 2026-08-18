@@ -23,6 +23,7 @@ import {
   Lock,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useGoogleDriveStatus } from "@/hooks/useGoogleDriveStatus";
 
 export function FolderDetailClient({
   folder,
@@ -39,6 +40,7 @@ export function FolderDetailClient({
   const [isCreateSubfolderOpen, setIsCreateSubfolderOpen] = useState(false);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [isPropertiesOpen, setIsPropertiesOpen] = useState(false);
+  const { isConnected } = useGoogleDriveStatus();
 
   const refreshData = () => {
     router.refresh();
@@ -94,7 +96,7 @@ export function FolderDetailClient({
               <Settings className="w-4 h-4" />
             </button>
 
-            {isOwner && (
+            {isOwner && isConnected && (
               <>
                 <Button variant="secondary" onClick={() => setIsCreateSubfolderOpen(true)}>
                   <FolderPlus className="w-4 h-4 text-brand" />
@@ -148,7 +150,7 @@ export function FolderDetailClient({
               icon={<FileText className="w-10 h-10" />}
               title="This folder is empty"
               action={
-                isOwner && (
+                isOwner && isConnected && (
                   <Button onClick={() => setIsUploadOpen(true)}>
                     <Upload className="w-4 h-4" />
                     Upload Document to {folder.name}

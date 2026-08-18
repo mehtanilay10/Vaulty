@@ -3,6 +3,7 @@ import { Shield, FolderTree, FileCheck, Sparkles, ArrowRight, Lock, Users } from
 import { VaultLogo } from "@/components/icons/VaultLogo";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { SignInButton } from "@/components/auth/SignInButton";
 
 export default async function LandingPage() {
   const session = await import("@/auth").then(m => m.auth());
@@ -24,13 +25,17 @@ export default async function LandingPage() {
         </Link>
 
         <div>
-          <Link
-            href={isLoggedIn ? "/dashboard" : "/auth/signin"}
-            className="btn btn-primary px-5 py-2.5 text-sm whitespace-nowrap"
-          >
-            {isLoggedIn ? "Go to Vault" : "Sign In with Google"}
-            <ArrowRight className="w-4 h-4" />
-          </Link>
+          {isLoggedIn ? (
+            <Link
+              href="/dashboard"
+              className="btn btn-primary px-5 py-2.5 text-sm whitespace-nowrap"
+            >
+              Go to Vault
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          ) : (
+            <SignInButton />
+          )}
         </div>
       </header>
 
@@ -54,13 +59,17 @@ export default async function LandingPage() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link
-              href={isLoggedIn ? "/dashboard" : "/auth/signin"}
-              className="btn btn-primary px-8 py-3 text-base w-full sm:w-auto whitespace-nowrap"
-            >
-              {isLoggedIn ? "Open My Private Vault" : "Initialize Google Vault"}
-              <ArrowRight className="w-5 h-5" />
-            </Link>
+            {isLoggedIn ? (
+              <Link
+                href="/dashboard"
+                className="btn btn-primary px-8 py-3 text-base w-full sm:w-auto whitespace-nowrap"
+              >
+                Open My Private Vault
+                <ArrowRight className="w-5 h-5" />
+              </Link>
+            ) : (
+              <SignInButton />
+            )}
           </div>
 
           <div className="grid md:grid-cols-3 gap-6 text-left pt-8">
@@ -93,7 +102,7 @@ export default async function LandingPage() {
                 <Sparkles className="w-6 h-6" />
               </div>
               <h3 className="text-lg font-semibold text-text-primary mb-2">
-                Gemini 2.0 AI Summaries
+                 Gemini 3.6 AI Summaries
               </h3>
               <p className="text-sm text-text-secondary leading-relaxed">
                 OCR text extraction, Markdown summaries, and factual interpretations generated automatically from scanned PDFs and medical or government images.
@@ -104,7 +113,7 @@ export default async function LandingPage() {
       </main>
 
       <footer className="border-t border-border-subtle p-6 text-center text-xs text-text-muted">
-        Vaulty Private Family Vault &bull; Built with Next.js App Router, Prisma, PostgreSQL &amp; Gemini 2.0 Flash AI.
+        Vaulty Private Family Vault &bull; Built with Next.js App Router, Prisma, PostgreSQL &amp; Gemini 3.6 Flash AI.
       </footer>
     </div>
   );

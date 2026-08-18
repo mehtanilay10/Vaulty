@@ -19,12 +19,14 @@ import {
   Users,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useGoogleDriveStatus } from "@/hooks/useGoogleDriveStatus";
 
 export function FoldersClient({ initialFolders }: { initialFolders: any[] }) {
   const router = useRouter();
   const [folders, setFolders] = useState(initialFolders);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const { isConnected } = useGoogleDriveStatus();
 
   useEffect(() => {
     setFolders(initialFolders);
@@ -37,7 +39,7 @@ export function FoldersClient({ initialFolders }: { initialFolders: any[] }) {
         description={`Root folder hierarchy in your vault (${folders.length})`}
         icon={<Folder className="w-7 h-7" />}
         actions={
-          <Button onClick={() => setIsCreateOpen(true)}>
+          <Button onClick={() => setIsCreateOpen(true)} disabled={!isConnected}>
             <FolderPlus className="w-4 h-4" />
             Create Folder
           </Button>
@@ -51,7 +53,7 @@ export function FoldersClient({ initialFolders }: { initialFolders: any[] }) {
             title="No folders created yet"
             description="Create custom folders like Medical, Government, Education, or Financial to organize files."
             action={
-              <Button onClick={() => setIsCreateOpen(true)}>
+              <Button onClick={() => setIsCreateOpen(true)} disabled={!isConnected}>
                 <FolderPlus className="w-4 h-4" />
                 Create Root Folder
               </Button>
