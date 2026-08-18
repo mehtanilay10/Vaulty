@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { checkFolderAccess } from "@/lib/authz";
 import { validateFileTypeAndExtension, getMaxUploadSize, uploadPrivateBlob } from "@/lib/blob";
 import { processDocumentWithGemini, GEMINI_MODEL } from "@/lib/gemini";
-import { getProviderForUser } from "@/lib/storage/factory";
+import { getProviderForUser, getProviderForDocument } from "@/lib/storage/factory";
 import type { StorageProviderType } from "@/lib/storage/provider";
 
 async function getFolderHierarchyPath(folderId: string): Promise<string> {
@@ -231,6 +231,42 @@ export async function POST(req: NextRequest) {
             docName
           );
 
+          let textFileId: string | null = null;
+          let summaryFileId: string | null = null;
+          let interpretationFileId: string | null = null;
+
+          try {
+            const { provider } = await getProviderForUser(user.id, "GOOGLE_DRIVE");
+            const vaultyFolders = await provider.ensureVaultyFolders();
+            const baseName = docName.replace(/[/\\?%*:|"<>]/g, "_");
+
+            const textUpload = await provider.uploadFile({
+              filename: `${baseName}.txt`,
+              mimeType: "text/plain",
+              data: Buffer.from(geminiResult.extractedText),
+              parentId: vaultyFolders.text,
+            });
+            textFileId = textUpload.id;
+
+            const summaryUpload = await provider.uploadFile({
+              filename: `${baseName}.md`,
+              mimeType: "text/markdown",
+              data: Buffer.from(geminiResult.summaryMarkdown),
+              parentId: vaultyFolders.summary,
+            });
+            summaryFileId = summaryUpload.id;
+
+            const interpretationUpload = await provider.uploadFile({
+              filename: `${baseName}.md`,
+              mimeType: "text/markdown",
+              data: Buffer.from(geminiResult.interpretationMarkdown),
+              parentId: vaultyFolders.interpretation,
+            });
+            interpretationFileId = interpretationUpload.id;
+          } catch (driveAiErr) {
+            console.error("Failed to upload AI files to Google Drive:", driveAiErr);
+          }
+
           await prisma.aiProcessing.update({
             where: { id: aiRecord.id },
             data: {
@@ -241,6 +277,17 @@ export async function POST(req: NextRequest) {
               processedAt: new Date(),
             },
           });
+
+          if (textFileId || summaryFileId || interpretationFileId) {
+            await prisma.document.update({
+              where: { id: document.id },
+              data: {
+                googleDriveSummaryFileId: summaryFileId,
+                googleDriveTextFileId: textFileId,
+                googleDriveInterpretationFileId: interpretationFileId,
+              },
+            });
+          }
         } catch (aiErr: any) {
           console.error("Async Gemini processing error:", aiErr);
           await prisma.aiProcessing.update({

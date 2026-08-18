@@ -92,13 +92,15 @@ export async function createVaultyRootFolder(accessToken: string): Promise<strin
 export async function createVaultySubFolders(accessToken: string, rootFolderId: string): Promise<{
   docs: string;
   summary: string;
+  interpretation: string;
   text: string;
 }> {
   const docs = await createSubFolder(accessToken, rootFolderId, "Docs");
   const summary = await createSubFolder(accessToken, rootFolderId, "Summary");
+  const interpretation = await createSubFolder(accessToken, rootFolderId, "Interpretation");
   const text = await createSubFolder(accessToken, rootFolderId, "Text");
 
-  return { docs, summary, text };
+  return { docs, summary, interpretation, text };
 }
 
 async function createSubFolder(accessToken: string, parentId: string, name: string): Promise<string> {
@@ -138,10 +140,11 @@ export async function setupGoogleDriveConnection(userId: string, tokens: {
   rootFolderId: string;
   docsFolderId: string;
   summaryFolderId: string;
+  interpretationFolderId: string;
   textFolderId: string;
 }> {
   const rootFolderId = await createVaultyRootFolder(tokens.accessToken);
-  const { docs, summary, text } = await createVaultySubFolders(tokens.accessToken, rootFolderId);
+  const { docs, summary, interpretation, text } = await createVaultySubFolders(tokens.accessToken, rootFolderId);
 
   await prisma.storageConnection.upsert({
     where: {
@@ -158,6 +161,7 @@ export async function setupGoogleDriveConnection(userId: string, tokens: {
       rootFolderId,
       docsFolderId: docs,
       summaryFolderId: summary,
+      interpretationFolderId: interpretation,
       textFolderId: text,
     },
     create: {
@@ -170,9 +174,10 @@ export async function setupGoogleDriveConnection(userId: string, tokens: {
       rootFolderId,
       docsFolderId: docs,
       summaryFolderId: summary,
+      interpretationFolderId: interpretation,
       textFolderId: text,
     },
   });
 
-  return { rootFolderId, docsFolderId: docs, summaryFolderId: summary, textFolderId: text };
+  return { rootFolderId, docsFolderId: docs, summaryFolderId: summary, interpretationFolderId: interpretation, textFolderId: text };
 }

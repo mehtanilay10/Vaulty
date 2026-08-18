@@ -56,8 +56,8 @@ export interface StorageProvider {
   deleteFile(fileId: string): Promise<void>;
   listFiles(parentId?: string): Promise<StorageFile[]>;
 
-  getRootFolderStructure(): Promise<{ docs: string; summary: string; text: string }>;
-  ensureVaultyFolders(): Promise<{ docs: string; summary: string; text: string }>;
+  getRootFolderStructure(): Promise<{ docs: string; summary: string; interpretation: string; text: string }>;
+  ensureVaultyFolders(): Promise<{ docs: string; summary: string; interpretation: string; text: string }>;
   createFolderPath(folderNames: string[], rootId: string): Promise<string>;
 }
 
@@ -72,6 +72,7 @@ export interface StorageProviderContext {
     docsFolderId?: string;
     summaryFolderId?: string;
     textFolderId?: string;
+    interpretationFolderId?: string;
     pageToken?: string;
   };
 }

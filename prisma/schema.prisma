@@ -142,6 +142,7 @@ model Document {
   storageStatus DocumentStorageStatus @default(ACTIVE)
   googleDriveSummaryFileId String?
   googleDriveTextFileId String?
+  googleDriveInterpretationFileId String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -239,6 +240,7 @@ model StorageConnection {
   docsFolderId        String?
   summaryFolderId     String?
   textFolderId        String?
+  interpretationFolderId String?
   accessToken         String?                 @db.Text
   refreshToken        String?                 @db.Text
   expiresAt           DateTime?

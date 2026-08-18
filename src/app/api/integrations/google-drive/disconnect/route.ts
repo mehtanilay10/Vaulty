@@ -24,6 +24,7 @@ export async function DELETE(req: NextRequest) {
         docsFolderId: null,
         summaryFolderId: null,
         textFolderId: null,
+        interpretationFolderId: null,
         pageToken: null,
         channelId: null,
         channelResourceId: null,

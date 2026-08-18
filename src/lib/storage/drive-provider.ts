@@ -278,15 +278,16 @@ export class GoogleDriveStorageProvider implements StorageProvider {
     return (files.data.files || []).map(this.mapDriveFile);
   }
 
-  async getRootFolderStructure(): Promise<{ docs: string; summary: string; text: string }> {
+  async getRootFolderStructure(): Promise<{ docs: string; summary: string; interpretation: string; text: string }> {
     return {
       docs: this.context.connection?.docsFolderId || "",
       summary: this.context.connection?.summaryFolderId || "",
+      interpretation: this.context.connection?.interpretationFolderId || "",
       text: this.context.connection?.textFolderId || "",
     };
   }
 
-  async ensureVaultyFolders(): Promise<{ docs: string; summary: string; text: string }> {
+  async ensureVaultyFolders(): Promise<{ docs: string; summary: string; interpretation: string; text: string }> {
     const connection = this.context.connection;
     if (!connection) throw new Error("No Google Drive connection available.");
 
@@ -302,6 +303,11 @@ export class GoogleDriveStorageProvider implements StorageProvider {
       connection.summaryFolderId = summaryFolder.id;
     }
 
+    if (!connection.interpretationFolderId) {
+      const interpretationFolder = await this.createFolder("Interpretation", rootFolderId);
+      connection.interpretationFolderId = interpretationFolder.id;
+    }
+
     if (!connection.textFolderId) {
       const textFolder = await this.createFolder("Text", rootFolderId);
       connection.textFolderId = textFolder.id;
@@ -310,6 +316,7 @@ export class GoogleDriveStorageProvider implements StorageProvider {
     return {
       docs: connection.docsFolderId,
       summary: connection.summaryFolderId,
+      interpretation: connection.interpretationFolderId,
       text: connection.textFolderId,
     };
   }

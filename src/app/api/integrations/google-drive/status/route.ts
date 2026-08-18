@@ -21,6 +21,7 @@ export async function GET(req: NextRequest) {
         docsFolderId: true,
         summaryFolderId: true,
         textFolderId: true,
+        interpretationFolderId: true,
         lastSyncedAt: true,
         createdAt: true,
         updatedAt: true,

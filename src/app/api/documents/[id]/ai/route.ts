@@ -3,7 +3,7 @@ import { getCurrentUser } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { checkDocumentAccess } from "@/lib/authz";
 import { processDocumentWithGemini, GEMINI_MODEL } from "@/lib/gemini";
-import { getProviderForDocument } from "@/lib/storage/factory";
+import { getProviderForDocument, getProviderForUser } from "@/lib/storage/factory";
 
 export async function POST(
   req: NextRequest,
@@ -27,7 +27,7 @@ export async function POST(
 
     const document = await prisma.document.findUnique({
       where: { id },
-      select: { id: true, name: true, mimeType: true, blobUrl: true, storageProvider: true, storageFileId: true },
+      select: { id: true, name: true, mimeType: true, blobUrl: true, storageProvider: true, storageFileId: true, googleDriveSummaryFileId: true, googleDriveTextFileId: true, googleDriveInterpretationFileId: true },
     });
 
     if (!document) {
@@ -97,6 +97,42 @@ export async function POST(
           document.name
         );
 
+        let textFileId: string | null = document.googleDriveTextFileId || null;
+        let summaryFileId: string | null = document.googleDriveSummaryFileId || null;
+        let interpretationFileId: string | null = document.googleDriveInterpretationFileId || null;
+
+        try {
+          const { provider } = await getProviderForUser(user.id, "GOOGLE_DRIVE");
+          const vaultyFolders = await provider.ensureVaultyFolders();
+          const baseName = document.name.replace(/[/\\?%*:|"<>]/g, "_");
+
+          const textUpload = await provider.uploadFile({
+            filename: `${baseName}.txt`,
+            mimeType: "text/plain",
+            data: Buffer.from(result.extractedText),
+            parentId: vaultyFolders.text,
+          });
+          textFileId = textUpload.id;
+
+          const summaryUpload = await provider.uploadFile({
+            filename: `${baseName}.md`,
+            mimeType: "text/markdown",
+            data: Buffer.from(result.summaryMarkdown),
+            parentId: vaultyFolders.summary,
+          });
+          summaryFileId = summaryUpload.id;
+
+          const interpretationUpload = await provider.uploadFile({
+            filename: `${baseName}.md`,
+            mimeType: "text/markdown",
+            data: Buffer.from(result.interpretationMarkdown),
+            parentId: vaultyFolders.interpretation,
+          });
+          interpretationFileId = interpretationUpload.id;
+        } catch (driveAiErr) {
+          console.error("Failed to upload AI files to Google Drive:", driveAiErr);
+        }
+
         await prisma.aiProcessing.update({
           where: { id: aiRecord.id },
           data: {
@@ -106,6 +142,15 @@ export async function POST(
             interpretationMarkdown: result.interpretationMarkdown,
             processedAt: new Date(),
             errorMessage: null,
+          },
+        });
+
+        await prisma.document.update({
+          where: { id: document.id },
+          data: {
+            googleDriveSummaryFileId: summaryFileId,
+            googleDriveTextFileId: textFileId,
+            googleDriveInterpretationFileId: interpretationFileId,
           },
         });
       } catch (err: any) {

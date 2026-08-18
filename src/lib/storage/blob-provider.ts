@@ -124,12 +124,12 @@ export class VercelBlobStorageProvider implements StorageProvider {
     return [];
   }
 
-  async getRootFolderStructure(): Promise<{ docs: string; summary: string; text: string }> {
-    return { docs: "", summary: "", text: "" };
+  async getRootFolderStructure(): Promise<{ docs: string; summary: string; interpretation: string; text: string }> {
+    return { docs: "", summary: "", interpretation: "", text: "" };
   }
 
-  async ensureVaultyFolders(): Promise<{ docs: string; summary: string; text: string }> {
-    return { docs: "", summary: "", text: "" };
+  async ensureVaultyFolders(): Promise<{ docs: string; summary: string; interpretation: string; text: string }> {
+    return { docs: "", summary: "", interpretation: "", text: "" };
   }
 
   async createFolderPath(_folderNames: string[], _rootId: string): Promise<string> {

@@ -53,6 +53,7 @@ export async function getProviderForUser(userId: string, providerType?: StorageP
         docsFolderId: connection.docsFolderId || undefined,
         summaryFolderId: connection.summaryFolderId || undefined,
         textFolderId: connection.textFolderId || undefined,
+        interpretationFolderId: connection.interpretationFolderId || undefined,
         pageToken: connection.pageToken || undefined,
       },
     };
@@ -102,6 +103,7 @@ export async function getProviderForDocument(document: {
         docsFolderId: connection.docsFolderId || undefined,
         summaryFolderId: connection.summaryFolderId || undefined,
         textFolderId: connection.textFolderId || undefined,
+        interpretationFolderId: connection.interpretationFolderId || undefined,
         pageToken: connection.pageToken || undefined,
       },
     };

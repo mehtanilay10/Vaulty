@@ -50,6 +50,7 @@ export async function syncGoogleDriveForUser(userId: string): Promise<SyncResult
         docsFolderId: connection.docsFolderId || undefined,
         summaryFolderId: connection.summaryFolderId || undefined,
         textFolderId: connection.textFolderId || undefined,
+        interpretationFolderId: connection.interpretationFolderId || undefined,
         pageToken: connection.pageToken || undefined,
       },
     };
