@@ -128,7 +128,7 @@ export function DocumentDetailClient({
                 href={document.storageWebViewLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="btn-secondary text-xs cursor-pointer"
+                className="btn btn-secondary text-xs"
               >
                 <ExternalLink className="w-4 h-4" />
                 <span>Open in Drive</span>
@@ -137,7 +137,7 @@ export function DocumentDetailClient({
             <a
               href={fileProxyUrl}
               download={document.name}
-              className="btn-secondary text-xs cursor-pointer"
+              className="btn btn-secondary text-xs"
             >
               <Download className="w-4 h-4 text-brand" />
               <span>Download</span>
@@ -224,7 +224,7 @@ export function DocumentDetailClient({
                   <a
                     href={fileProxyUrl}
                     download={document.name}
-                    className="btn-primary text-xs cursor-pointer"
+                    className="btn btn-primary text-xs"
                   >
                     <Download className="w-3.5 h-3.5" />
                     <span>Download to view ({document.mimeType})</span>

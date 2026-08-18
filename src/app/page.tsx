@@ -26,7 +26,7 @@ export default async function LandingPage() {
         <div>
           <Link
             href={isLoggedIn ? "/dashboard" : "/auth/signin"}
-            className="btn-primary px-5 py-2.5 text-sm whitespace-nowrap"
+            className="btn btn-primary px-5 py-2.5 text-sm whitespace-nowrap"
           >
             {isLoggedIn ? "Go to Vault" : "Sign In with Google"}
             <ArrowRight className="w-4 h-4" />
@@ -56,7 +56,7 @@ export default async function LandingPage() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               href={isLoggedIn ? "/dashboard" : "/auth/signin"}
-              className="btn-primary px-8 py-3 text-base w-full sm:w-auto whitespace-nowrap"
+              className="btn btn-primary px-8 py-3 text-base w-full sm:w-auto whitespace-nowrap"
             >
               {isLoggedIn ? "Open My Private Vault" : "Initialize Google Vault"}
               <ArrowRight className="w-5 h-5" />

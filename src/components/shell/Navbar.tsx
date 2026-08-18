@@ -145,7 +145,7 @@ export function Navbar({ onOpenUpload }: { onOpenUpload?: () => void }) {
         {onOpenUpload && (
           <button
             onClick={onOpenUpload}
-            className="hidden sm:flex items-center gap-2 px-4 py-2 btn-primary text-sm cursor-pointer"
+            className="btn btn-primary hidden sm:flex items-center gap-2 px-4 py-2 text-sm"
           >
             <Upload className="w-4 h-4" />
             <span>Upload</span>

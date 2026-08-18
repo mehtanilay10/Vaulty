@@ -26,6 +26,10 @@ export function FoldersClient({ initialFolders }: { initialFolders: any[] }) {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
 
+  useEffect(() => {
+    setFolders(initialFolders);
+  }, [initialFolders]);
+
   return (
     <AppShell onOpenUpload={() => setIsUploadOpen(true)}>
       <PageHeader
