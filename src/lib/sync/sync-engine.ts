@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { StorageConnectionStatus, User } from "@prisma/client";
 import { GoogleDriveStorageProvider } from "@/lib/storage/drive-provider";
 import { getProviderForDocument } from "@/lib/storage/factory";
+import { StorageFile, StorageFolder } from "@/lib/storage/provider";
 
 export interface SyncResult {
   success: boolean;
@@ -56,7 +57,7 @@ export async function syncGoogleDriveForUser(userId: string): Promise<SyncResult
     };
 
     const provider = new GoogleDriveStorageProvider(context);
-    const docsFolderId = connection.docsFolderId;
+    const docsFolderId = connection.docsFolderId ?? undefined;
 
     if (!docsFolderId) {
       result.errors.push("Docs folder ID not configured.");
@@ -64,7 +65,7 @@ export async function syncGoogleDriveForUser(userId: string): Promise<SyncResult
     }
 
     async function discoverDriveFolders(parentId: string | undefined): Promise<StorageFolder[]> {
-      const folders = await provider.listFolders(parentId || docsFolderId);
+      const folders = await provider.listFolders(parentId);
       let collected = [...folders];
       for (const folder of folders) {
         const children = await discoverDriveFolders(folder.id);
@@ -74,8 +75,8 @@ export async function syncGoogleDriveForUser(userId: string): Promise<SyncResult
     }
 
     async function discoverDriveFiles(parentId: string | undefined): Promise<StorageFile[]> {
-      const files = await provider.listFiles(parentId || docsFolderId);
-      const subfolders = await provider.listFolders(parentId || docsFolderId);
+      const files = await provider.listFiles(parentId);
+      const subfolders = await provider.listFolders(parentId);
       let collected = [...files];
       for (const folder of subfolders) {
         const nested = await discoverDriveFiles(folder.id);
