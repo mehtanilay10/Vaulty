@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { SessionProvider } from "@/components/providers/SessionProvider";
@@ -6,9 +6,23 @@ import { ThemeProvider } from "@/components/providers/ThemeProvider";
 
 const inter = Inter({ subsets: ["latin"], display: "swap" });
 
+export const viewport: Viewport = {
+  themeColor: "#2563eb",
+};
+
 export const metadata: Metadata = {
   title: "Vaulty - Private Family Document Vault",
   description: "Secure, private personal and family document storage with AI-powered summaries and granular recursive folder sharing.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    title: "Vaulty",
+    statusBarStyle: "default",
+  },
+  icons: {
+    icon: "/favicon.svg",
+    apple: "/vaulty-icon.svg",
+  },
 };
 
 export default function RootLayout({

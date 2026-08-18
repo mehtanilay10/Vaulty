@@ -1,14 +1,21 @@
 <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="grad" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
-      <stop stopColor="#6366f1"/>
-      <stop offset="1" stopColor="#8b5cf6"/>
+      <stop stopColor="#2563eb"/>
+      <stop offset="1" stopColor="#1d4ed8"/>
     </linearGradient>
   </defs>
   <rect width="64" height="64" rx="16" fill="url(#grad)"/>
-  <g transform="translate(32, 32)">
-    <circle r="12" fill="white" fill-opacity="0.95"/>
-    <circle r="6" fill="url(#grad)"/>
-    <rect x="-2" y="4" width="4" height="10" rx="2" fill="white"/>
+  <g transform="translate(32, 32)" stroke="white" stroke-width="5" fill="none">
+    <path d="M0 -16L-16 -8V8C-16 20 0 32 0 32C0 32 16 20 16 8V-8L0 -16Z" stroke-linejoin="round"/>
+    <rect x="-7" y="-4" width="14" height="20" rx="3"/>
+  </g>
+  <g transform="translate(32, 32)" stroke="white" stroke-width="4" stroke-linecap="round">
+    <line x1="-4" y1="2" x2="4" y2="2"/>
+    <line x1="-4" y1="8" x2="4" y2="8"/>
+    <line x1="-4" y1="14" x2="2" y2="14"/>
+  </g>
+  <g transform="translate(44, 22)" fill="white" fill-opacity="0.95">
+    <path d="M0 -3L2.5 -1.5L4 0L2.5 1.5L0 3L-2.5 1.5L-4 0L-2.5 -1.5L0 -3Z"/>
   </g>
 </svg>
