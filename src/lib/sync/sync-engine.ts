@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { StorageConnectionStatus, User } from "@prisma/client";
 import { GoogleDriveStorageProvider } from "@/lib/storage/drive-provider";
 import { getProviderForDocument } from "@/lib/storage/factory";
+import { StorageFile, StorageFolder } from "@/lib/storage/provider";
 
 export interface SyncResult {
   success: boolean;
@@ -56,7 +57,11 @@ export async function syncGoogleDriveForUser(userId: string): Promise<SyncResult
     };
 
     const provider = new GoogleDriveStorageProvider(context);
+<<<<<<< ours
     const docsFolderId = connection.docsFolderId;
+=======
+    const docsFolderId = connection.docsFolderId ?? undefined;
+>>>>>>> theirs
 
     if (!docsFolderId) {
       result.errors.push("Docs folder ID not configured.");
@@ -64,7 +69,11 @@ export async function syncGoogleDriveForUser(userId: string): Promise<SyncResult
     }
 
     async function discoverDriveFolders(parentId: string | undefined): Promise<StorageFolder[]> {
+<<<<<<< ours
       const folders = await provider.listFolders(parentId || docsFolderId);
+=======
+      const folders = await provider.listFolders(parentId);
+>>>>>>> theirs
       let collected = [...folders];
       for (const folder of folders) {
         const children = await discoverDriveFolders(folder.id);
@@ -74,8 +83,13 @@ export async function syncGoogleDriveForUser(userId: string): Promise<SyncResult
     }
 
     async function discoverDriveFiles(parentId: string | undefined): Promise<StorageFile[]> {
+<<<<<<< ours
       const files = await provider.listFiles(parentId || docsFolderId);
       const subfolders = await provider.listFolders(parentId || docsFolderId);
+=======
+      const files = await provider.listFiles(parentId);
+      const subfolders = await provider.listFolders(parentId);
+>>>>>>> theirs
       let collected = [...files];
       for (const folder of subfolders) {
         const nested = await discoverDriveFiles(folder.id);
@@ -127,11 +141,16 @@ export async function syncGoogleDriveForUser(userId: string): Promise<SyncResult
           });
         }
       } else {
+        const parentDriveId = driveFolder.parentId || null;
+        const targetParentId = parentDriveId
+          ? existingFolderMappings.get(parentDriveId) || null
+          : null;
+
         const vaultyFolder = await prisma.folder.create({
           data: {
             name: driveFolder.name,
             ownerId: userId,
-            parentId: null,
+            parentId: targetParentId,
             storageProvider: "GOOGLE_DRIVE",
             storageFolderId: driveFolder.id,
           },
@@ -170,7 +189,7 @@ export async function syncGoogleDriveForUser(userId: string): Promise<SyncResult
           continue;
         }
 
-        if (doc && doc.storageChecksum && doc.storageChecksum === driveFile.checksum) {
+        if (doc && doc.storageChecksum && doc.storageChecksum === driveFile.checksum && doc.name === driveFile.name) {
           continue;
         }
 
@@ -233,11 +252,34 @@ export async function syncGoogleDriveForUser(userId: string): Promise<SyncResult
       } else {
         const parentDriveId = driveFile.parentId;
 
-        if (!parentDriveId || !existingFolderMappings.has(parentDriveId)) {
+        if (!parentDriveId) {
           continue;
         }
 
-        const targetFolderId = existingFolderMappings.get(parentDriveId)!;
+        let targetFolderId = existingFolderMappings.get(parentDriveId);
+
+        if (!targetFolderId && parentDriveId === docsFolderId) {
+          const rootFolder = await prisma.folder.findFirst({
+            where: { ownerId: userId, parentId: null },
+          });
+
+          if (rootFolder) {
+            targetFolderId = rootFolder.id;
+          } else {
+            const newRoot = await prisma.folder.create({
+              data: {
+                name: "Vaulty Docs",
+                ownerId: userId,
+                parentId: null,
+              },
+            });
+            targetFolderId = newRoot.id;
+          }
+        }
+
+        if (!targetFolderId) {
+          continue;
+        }
 
         const vaultyDoc = await prisma.document.create({
           data: {
