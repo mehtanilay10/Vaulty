@@ -171,7 +171,7 @@ export async function syncGoogleDriveForUser(userId: string): Promise<SyncResult
           continue;
         }
 
-        if (doc && doc.storageChecksum && doc.storageChecksum === driveFile.checksum) {
+        if (doc && doc.storageChecksum && doc.storageChecksum === driveFile.checksum && doc.name === driveFile.name) {
           continue;
         }
 
