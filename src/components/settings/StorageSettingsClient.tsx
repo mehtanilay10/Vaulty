@@ -240,7 +240,7 @@ export function StorageSettingsClient({ user }: { user: { id: string; defaultSto
                   href={`https://drive.google.com/drive/folders/${connection.docsFolderId || connection.rootFolderId}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="btn-secondary text-xs cursor-pointer"
+                  className="btn btn-secondary text-xs"
                 >
                   <ExternalLink className="w-4 h-4" />
                   <span>Open Drive</span>

@@ -204,6 +204,7 @@ export function UploadModal({
             value={docName}
             onChange={(e) => setDocName(e.target.value)}
             placeholder="e.g. Blood Test Report Aug 2026"
+            className="w-full"
           />
         </div>
 
@@ -232,6 +233,7 @@ export function UploadModal({
             value={tags}
             onChange={(e) => setTags(e.target.value)}
             placeholder="e.g. medical, blood-test, 2026"
+            className="w-full"
           />
         </div>
 

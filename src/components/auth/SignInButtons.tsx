@@ -22,7 +22,7 @@ export function SignInButtons({ callbackUrl = "/dashboard" }: { callbackUrl?: st
       <button
         onClick={handleGoogleSignIn}
         disabled={loading}
-        className="w-full flex items-center justify-center gap-3 py-3.5 px-6 rounded-xl bg-bg-surface hover:bg-bg-muted text-text-primary font-semibold border border-border-subtle hover:border-border-subtle transition-all duration-200 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed group cursor-pointer"
+        className="w-full flex items-center justify-center gap-3 py-3.5 px-6 rounded-xl bg-surface hover:bg-surface-muted text-text-primary font-semibold border border-border-subtle hover:border-border transition-all duration-200 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed group cursor-pointer"
       >
         <svg className="w-5 h-5" viewBox="0 0 24 24">
           <path
@@ -45,7 +45,7 @@ export function SignInButtons({ callbackUrl = "/dashboard" }: { callbackUrl?: st
         <span>{loading ? "Connecting to Google..." : "Continue with Google"}</span>
       </button>
       <div className="flex items-center gap-1.5 text-xs text-text-muted">
-        <ShieldCheck className="w-4 h-4 text-accent-emerald" />
+        <ShieldCheck className="w-4 h-4 text-success" />
         <span>End-to-End Auth via Google OAuth 2.0</span>
       </div>
     </div>
