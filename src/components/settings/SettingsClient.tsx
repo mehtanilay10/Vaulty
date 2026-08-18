@@ -1,22 +1,103 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { AppShell } from "@/components/shell/AppShell";
 import { PageHeader } from "@/components/shell/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { EmptyState } from "@/components/ui/EmptyState";
+import { Alert } from "@/components/ui/Alert";
 import {
   User,
   Shield,
   Lock,
   HardDrive,
-  Cpu,
+  Cloud,
   CheckCircle2,
+  Loader2,
+  RefreshCw,
+  ExternalLink,
+  Unplug,
+  AlertTriangle,
 } from "lucide-react";
 
 export function SettingsClient({ user }: { user: any }) {
+  const [connecting, setConnecting] = useState(false);
+  const [disconnecting, setDisconnecting] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [connection, setConnection] = useState<any>(null);
+
+  useEffect(() => {
+    fetchConnectionStatus();
+  }, []);
+
+  const fetchConnectionStatus = async () => {
+    try {
+      const res = await fetch("/api/integrations/google-drive/status");
+      if (res.ok) {
+        const data = await res.json();
+        setConnection(data.connection);
+      }
+    } catch (err) {
+      console.error("Failed to fetch connection status:", err);
+    }
+  };
+
+  const handleConnect = async () => {
+    setConnecting(true);
+    setErrorMessage(null);
+    setStatusMessage(null);
+    try {
+      const res = await fetch("/api/integrations/google-drive/connect");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to connect.");
+      if (data.authUrl) {
+        window.location.href = data.authUrl;
+      }
+    } catch (err: any) {
+      setErrorMessage(err?.message || "Failed to connect Google Drive.");
+      setConnecting(false);
+    }
+  };
+
+  const handleDisconnect = async () => {
+    setDisconnecting(true);
+    setErrorMessage(null);
+    setStatusMessage(null);
+    try {
+      const res = await fetch("/api/integrations/google-drive/disconnect", { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to disconnect.");
+      setConnection(null);
+      setStatusMessage("Google Drive disconnected successfully.");
+    } catch (err: any) {
+      setErrorMessage(err?.message || "Failed to disconnect Google Drive.");
+    } finally {
+      setDisconnecting(false);
+    }
+  };
+
+  const handleSync = async () => {
+    setSyncing(true);
+    setErrorMessage(null);
+    setStatusMessage(null);
+    try {
+      const res = await fetch("/api/integrations/google-drive/sync", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Sync failed.");
+      setStatusMessage(`Sync completed: ${data.result.documentsProcessed} documents, ${data.result.foldersProcessed} folders processed.`);
+      fetchConnectionStatus();
+    } catch (err: any) {
+      setErrorMessage(err?.message || "Sync failed.");
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const isConnected = connection && connection.status === "CONNECTED";
+
   return (
     <AppShell>
       <PageHeader
@@ -26,6 +107,20 @@ export function SettingsClient({ user }: { user: any }) {
       />
 
       <div className="max-w-3xl space-y-6">
+        {statusMessage && (
+          <Alert variant="success">
+            <CheckCircle2 className="w-5 h-5 shrink-0" />
+            <span>{statusMessage}</span>
+          </Alert>
+        )}
+
+        {errorMessage && (
+          <Alert variant="danger">
+            <AlertTriangle className="w-5 h-5 shrink-0" />
+            <span>{errorMessage}</span>
+          </Alert>
+        )}
+
         <Card>
           <div className="flex items-center gap-2 mb-4">
             <Shield className="w-5 h-5 text-brand" />
@@ -51,54 +146,68 @@ export function SettingsClient({ user }: { user: any }) {
         </Card>
 
         <Card>
-          <div className="flex items-center gap-2 mb-4">
-            <HardDrive className="w-5 h-5 text-brand" />
-            <h2 className="text-base font-semibold text-text-primary">Storage</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-semibold text-text-primary flex items-center gap-2">
+              <Cloud className="w-5 h-5 text-brand" />
+              <span>Google Drive</span>
+            </h2>
+            {isConnected ? (
+              <Badge variant="success">Connected</Badge>
+            ) : (
+              <Badge variant="default">Not Connected</Badge>
+            )}
           </div>
 
-          <p className="text-xs text-text-secondary mb-4">
-            Manage your Google Drive connection and default storage provider.
-          </p>
+          {isConnected ? (
+            <div className="space-y-4">
+              <div className="p-4 rounded-lg bg-surface-muted border border-border-subtle space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-text-muted">Root Folder</span>
+                  <span className="text-text-secondary font-mono">{connection.rootFolderId || "—"}</span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-text-muted">Docs Folder</span>
+                  <span className="text-text-secondary font-mono">{connection.docsFolderId || "—"}</span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-text-muted">Last Sync</span>
+                  <span className="text-text-secondary">{connection.lastSyncedAt ? new Date(connection.lastSyncedAt).toLocaleString() : "Never"}</span>
+                </div>
+              </div>
 
-          <Link href="/settings/storage">
-            <Button>
-              <HardDrive className="w-4 h-4" />
-              Storage Settings
-            </Button>
-          </Link>
-        </Card>
+              <div className="flex items-center gap-3">
+                <Button onClick={handleSync} disabled={syncing}>
+                  {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                  {syncing ? "Syncing..." : "Sync Now"}
+                </Button>
 
-        <Card>
-          <div className="flex items-center gap-2 mb-4">
-            <Cpu className="w-5 h-5 text-brand" />
-            <h2 className="text-base font-semibold text-text-primary">Storage & AI Configuration</h2>
-          </div>
+                <a
+                  href={`https://drive.google.com/drive/folders/${connection.docsFolderId || connection.rootFolderId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-secondary text-xs"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  <span>Open Drive</span>
+                </a>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-text-secondary">
-            <div className="p-4 rounded-lg bg-surface-muted border border-border-subtle space-y-1">
-              <span className="text-text-muted font-medium">Storage Provider</span>
-              <p className="font-bold text-text-primary text-sm">Google Drive</p>
-              <p className="text-text-muted">Private vault with strict access control.</p>
+                <Button variant="danger" onClick={handleDisconnect} disabled={disconnecting}>
+                  {disconnecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Unplug className="w-4 h-4" />}
+                  {disconnecting ? "Disconnecting..." : "Disconnect"}
+                </Button>
+              </div>
             </div>
-
-            <div className="p-4 rounded-lg bg-surface-muted border border-border-subtle space-y-1">
-              <span className="text-text-muted font-medium">Max File Limit</span>
-              <p className="font-bold text-text-primary text-sm">50 MB per document</p>
-              <p className="text-text-muted">Supports PDF, JPEG, PNG, WebP.</p>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-xs text-text-secondary">
+                Connect your Google Drive to store documents directly in your Drive. Vaulty will create a Vaulty folder with Docs, Summary, and Text subfolders.
+              </p>
+              <Button onClick={handleConnect} disabled={connecting}>
+                {connecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Cloud className="w-4 h-4" />}
+                {connecting ? "Connecting..." : "Connect Google Drive"}
+              </Button>
             </div>
-
-            <div className="p-4 rounded-lg bg-surface-muted border border-border-subtle space-y-1">
-              <span className="text-text-muted font-medium">AI Engine</span>
-              <p className="font-bold text-text-primary text-sm">Google Gemini 2.5 Flash</p>
-              <p className="text-text-muted">OCR text extraction & Markdown summary.</p>
-            </div>
-
-            <div className="p-4 rounded-lg bg-surface-muted border border-border-subtle space-y-1">
-              <span className="text-text-muted font-medium">Database Engine</span>
-              <p className="font-bold text-text-primary text-sm">Supabase / Neon PostgreSQL</p>
-              <p className="text-text-muted">Prisma ORM with recursive permissions.</p>
-            </div>
-          </div>
+          )}
         </Card>
       </div>
     </AppShell>

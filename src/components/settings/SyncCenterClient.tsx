@@ -104,7 +104,7 @@ export function SyncCenterClient({
         description="Monitor and manage your Google Drive synchronization"
         icon={<RefreshCw className="w-7 h-7" />}
         actions={
-          <Link href="/settings/storage">
+          <Link href="/settings">
             <Button variant="secondary">
               <ShieldCheck className="w-4 h-4" />
               Storage Settings
