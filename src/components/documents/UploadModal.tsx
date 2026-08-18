@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Upload, FileText, Sparkles, AlertCircle, Camera, HardDrive } from "lucide-react";
+import { Upload, FileText, Sparkles, AlertCircle, Camera } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
@@ -35,7 +35,6 @@ export function UploadModal({
   const [generateAi, setGenerateAi] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const storageProvider = "GOOGLE_DRIVE";
 
   useEffect(() => {
     if (isOpen) {
@@ -215,23 +214,6 @@ export function UploadModal({
             className="w-full"
           />
         </div>
-
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <HardDrive className="w-5 h-5 text-brand shrink-0" />
-              <div>
-                <p className="text-xs font-semibold text-text-primary">Storage Provider</p>
-                <p className="text-[11px] text-text-muted">
-                  Google Drive
-                </p>
-              </div>
-            </div>
-            <span className="text-[10px] uppercase font-bold text-brand px-2 py-0.5 rounded bg-brand-subtle border border-brand/20">
-              Drive
-            </span>
-          </div>
-        </Card>
 
         <Card className="p-4">
           <div className="flex items-center justify-between">

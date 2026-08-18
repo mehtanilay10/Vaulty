@@ -74,6 +74,9 @@ export function DocumentPropertiesModal({
 
       setSuccessMsg("Document properties updated successfully.");
       if (onDocumentUpdated) onDocumentUpdated();
+      setTimeout(() => {
+        onClose();
+      }, 600);
     } catch (err: any) {
       setError(err?.message || "Failed to update document.");
     }

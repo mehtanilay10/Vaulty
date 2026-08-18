@@ -2,7 +2,7 @@
 
 import { signIn } from "next-auth/react";
 import { useState } from "react";
-import { ShieldCheck, LogIn } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 
 export function SignInButtons({ callbackUrl = "/dashboard" }: { callbackUrl?: string }) {
   const [loading, setLoading] = useState(false);
@@ -19,10 +19,11 @@ export function SignInButtons({ callbackUrl = "/dashboard" }: { callbackUrl?: st
 
   return (
     <div className="flex flex-col items-center gap-4 w-full max-w-sm">
-      <button
+      <Button
         onClick={handleGoogleSignIn}
         disabled={loading}
-        className="w-full flex items-center justify-center gap-3 py-3.5 px-6 rounded-xl bg-surface hover:bg-surface-muted text-text-primary font-semibold border border-border-subtle hover:border-border transition-all duration-200 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed group cursor-pointer"
+        className="w-full py-3.5 px-6 rounded-xl bg-surface hover:bg-surface-muted text-text-primary font-semibold border border-border-subtle hover:border-border transition-all duration-200 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
+        variant="secondary"
       >
         <svg className="w-5 h-5" viewBox="0 0 24 24">
           <path
@@ -43,9 +44,11 @@ export function SignInButtons({ callbackUrl = "/dashboard" }: { callbackUrl?: st
           />
         </svg>
         <span>{loading ? "Setting up Google & Drive..." : "Continue with Google"}</span>
-      </button>
+      </Button>
       <div className="flex items-center gap-1.5 text-xs text-text-muted">
-        <ShieldCheck className="w-4 h-4 text-success" />
+        <svg className="w-4 h-4 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+        </svg>
         <span>Sign in + Google Drive in one step</span>
       </div>
     </div>

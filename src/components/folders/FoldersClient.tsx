@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { AppShell } from "@/components/shell/AppShell";
-import { MobileNav } from "@/components/shell/MobileNav";
 import { PageHeader } from "@/components/shell/PageHeader";
 import { CreateFolderModal } from "@/components/folders/CreateFolderModal";
 import { UploadModal } from "@/components/documents/UploadModal";
@@ -96,8 +95,6 @@ export function FoldersClient({ initialFolders }: { initialFolders: any[] }) {
           ))}
         </div>
       )}
-
-      <MobileNav onOpenUpload={() => setIsUploadOpen(true)} />
 
       <CreateFolderModal
         isOpen={isCreateOpen}

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Shield, FolderTree, FileCheck, Sparkles, ArrowRight, Lock, Users } from "lucide-react";
+import { Shield, FolderTree, FileCheck, Sparkles, ArrowRight, Lock, Users, EyeOff, Key, Database, Cloud, Zap, Globe, LockIcon } from "lucide-react";
 import { VaultLogo } from "@/components/icons/VaultLogo";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -40,7 +40,7 @@ export default async function LandingPage() {
       </header>
 
       <main className="flex-1 flex flex-col justify-center items-center text-center px-6 py-16 md:py-24">
-        <div className="max-w-3xl mx-auto space-y-8">
+        <div className="max-w-5xl mx-auto space-y-8">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-subtle border border-brand/20 text-brand text-xs font-semibold">
             <Shield className="w-3.5 h-3.5" />
             <span>Zero Public URLs &bull; Isolated Server Authorization</span>
@@ -54,8 +54,10 @@ export default async function LandingPage() {
             Documents.
           </h1>
 
-          <p className="text-lg text-text-secondary max-w-2xl mx-auto leading-relaxed">
+          <p className="text-lg text-text-secondary max-w-3xl mx-auto leading-relaxed">
             Engineered with strict Google OAuth access, Google Drive storage, and Gemini AI analysis.
+            Government credentials, health diagnostics, education certificates, and financial records.
+            Every file is encrypted, permission-verified, and streamed through authorized server proxies.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -75,13 +77,13 @@ export default async function LandingPage() {
           <div className="grid md:grid-cols-3 gap-6 text-left pt-8">
             <Card hover className="p-6">
               <div className="p-3 rounded-lg bg-brand-subtle text-brand w-fit mb-4">
-                 <Shield className="w-6 h-6" />
+                <EyeOff className="w-6 h-6" />
               </div>
               <h3 className="text-lg font-semibold text-text-primary mb-2">
-                Private Family Vault
+                Private Blob Vault
               </h3>
               <p className="text-sm text-text-secondary leading-relaxed">
-                Files are stored in private Google Drive storage with strict access control. Every view or download streams through authorized server verification.
+                Files are stored in private Google Drive with strict access control. Raw URLs are never exposed to clients. Every view or download streams through authorized server verification.
               </p>
             </Card>
 
@@ -93,7 +95,7 @@ export default async function LandingPage() {
                 Family Folder Sharing
               </h3>
               <p className="text-sm text-text-secondary leading-relaxed">
-                Share folders with registered family members. Permissions are strictly read-only and automatically inherit across subfolder trees.
+                Share folders with registered family members. Permissions are strictly read-only and automatically inherit across subfolder trees. Owner maintains full control.
               </p>
             </Card>
 
@@ -102,10 +104,48 @@ export default async function LandingPage() {
                 <Sparkles className="w-6 h-6" />
               </div>
               <h3 className="text-lg font-semibold text-text-primary mb-2">
-                 Gemini 3.6 AI Summaries
+                Gemini 2.0 AI Summaries
               </h3>
               <p className="text-sm text-text-secondary leading-relaxed">
                 OCR text extraction, Markdown summaries, and factual interpretations generated automatically from scanned PDFs and medical or government images.
+              </p>
+            </Card>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6 text-left pt-4">
+            <Card hover className="p-6">
+              <div className="p-3 rounded-lg bg-brand-subtle text-brand w-fit mb-4">
+                <LockIcon className="w-6 h-6" />
+              </div>
+              <h3 className="text-lg font-semibold text-text-primary mb-2">
+                Zero Public Exposure
+              </h3>
+              <p className="text-sm text-text-secondary leading-relaxed">
+                No public URLs. No client-side tokens. All files served through strict server-side permission checks against PostgreSQL.
+              </p>
+            </Card>
+
+            <Card hover className="p-6">
+              <div className="p-3 rounded-lg bg-brand-subtle text-brand w-fit mb-4">
+                <Cloud className="w-6 h-6" />
+              </div>
+              <h3 className="text-lg font-semibold text-text-primary mb-2">
+                Google Drive Integration
+              </h3>
+              <p className="text-sm text-text-secondary leading-relaxed">
+                Seamless two-way sync with your Google Drive. Vaulty creates a dedicated folder structure with Docs, Summary, and Text subfolders.
+              </p>
+            </Card>
+
+            <Card hover className="p-6">
+              <div className="p-3 rounded-lg bg-brand-subtle text-brand w-fit mb-4">
+                <Zap className="w-6 h-6" />
+              </div>
+              <h3 className="text-lg font-semibold text-text-primary mb-2">
+                AI-Powered Analysis
+              </h3>
+              <p className="text-sm text-text-secondary leading-relaxed">
+                Automatic OCR, summarization, and interpretation using Google Gemini 2.0 Flash. Extract insights from scanned documents in seconds.
               </p>
             </Card>
           </div>
@@ -113,7 +153,7 @@ export default async function LandingPage() {
       </main>
 
       <footer className="border-t border-border-subtle p-6 text-center text-xs text-text-muted">
-        Vaulty Private Family Vault &bull; Built with Next.js App Router, Prisma, PostgreSQL &amp; Gemini 3.6 Flash AI.
+        Vaulty Private Family Vault &bull; Built with Next.js App Router, Prisma, PostgreSQL &amp; Gemini 2.0 Flash AI.
       </footer>
     </div>
   );

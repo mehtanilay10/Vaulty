@@ -66,7 +66,7 @@ export function Navbar({ onOpenUpload, isDriveConnected }: { onOpenUpload?: () =
   };
 
   return (
-    <header className="sticky top-0 z-30 bg-surface/80 backdrop-blur-xl border-b border-border-subtle px-4 lg:px-6 py-3 flex items-center justify-between gap-4">
+    <header className="fixed top-0 left-0 right-0 z-40 bg-surface/80 backdrop-blur-xl border-b border-border-subtle px-4 lg:px-6 h-14 flex items-center justify-between gap-4">
       <div className="flex items-center gap-3">
         <Link href="/dashboard" className="flex items-center gap-2.5 group">
           <VaultLogo size={32} className="shrink-0" />
