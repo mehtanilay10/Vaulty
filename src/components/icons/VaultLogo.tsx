@@ -12,30 +12,37 @@ export function VaultLogo({ className, size = 32 }: { className?: string; size?:
         width="32"
         height="32"
         rx="8"
-        fill="url(#logo-gradient)"
+        fill="currentColor"
+        fillOpacity="0.08"
       />
       <path
-        d="M16 10C13.24 10 11 12.24 11 15C11 17.76 13.24 20 16 20C18.76 20 21 17.76 21 15C21 12.24 18.76 10 16 10Z"
-        fill="white"
-        fillOpacity="0.95"
-      />
-      <path
-        d="M16 13C14.9 13 14 13.9 14 15C14 16.1 14.9 17 16 17C17.1 17 18 16.1 18 15C18 13.9 17.1 13 16 13Z"
-        fill="url(#logo-gradient)"
-      />
-      <path
-        d="M14.5 19.5L14.5 22.5L17.5 22.5L17.5 19.5"
-        stroke="white"
-        strokeWidth="1.5"
-        strokeLinecap="round"
+        d="M16 4L7 9.5V15C7 20.5 16 28 16 28C16 28 25 20.5 25 15V9.5L16 4Z"
+        stroke="currentColor"
+        strokeWidth="2"
         strokeLinejoin="round"
       />
-      <defs>
-        <linearGradient id="logo-gradient" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#6366f1" />
-          <stop offset="1" stopColor="#8b5cf6" />
-        </linearGradient>
-      </defs>
+      <rect
+        x="12.5"
+        y="11.5"
+        width="7"
+        height="9"
+        rx="1.5"
+        fill="currentColor"
+        fillOpacity="0.15"
+        stroke="currentColor"
+        strokeWidth="1.2"
+      />
+      <path
+        d="M14 15H18M14 17H18M14 19H16"
+        stroke="currentColor"
+        strokeWidth="1"
+        strokeLinecap="round"
+      />
+      <path
+        d="M22.5 6.5L23.5 8.5L22.5 10.5L21.5 8.5L22.5 6.5Z"
+        fill="currentColor"
+        fillOpacity="0.5"
+      />
     </svg>
   );
 }
@@ -50,30 +57,33 @@ export function VaultLogoMark({ className, size = 32 }: { className?: string; si
       xmlns="http://www.w3.org/2000/svg"
       className={className}
     >
-      <rect
-        x="2"
-        y="2"
-        width="28"
-        height="28"
-        rx="7"
+      <path
+        d="M16 4L7 9.5V15C7 20.5 16 28 16 28C16 28 25 20.5 25 15V9.5L16 4Z"
         stroke="currentColor"
         strokeWidth="2"
-      />
-      <path
-        d="M16 9C13.79 9 12 10.79 12 13C12 15.21 13.79 17 16 17C18.21 17 20 15.21 20 13C20 10.79 18.21 9 16 9Z"
-        fill="currentColor"
-        fillOpacity="0.2"
-      />
-      <path
-        d="M16 12C15.45 12 15 12.45 15 13C15 13.55 15.45 14 16 14C16.55 14 17 13.55 17 13C17 12.45 16.55 12 16 12Z"
-        fill="currentColor"
-      />
-      <path
-        d="M14.5 18.5L14.5 22L17.5 22L17.5 18.5"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
         strokeLinejoin="round"
+      />
+      <rect
+        x="12.5"
+        y="11.5"
+        width="7"
+        height="9"
+        rx="1.5"
+        fill="currentColor"
+        fillOpacity="0.15"
+        stroke="currentColor"
+        strokeWidth="1.2"
+      />
+      <path
+        d="M14 15H18M14 17H18M14 19H16"
+        stroke="currentColor"
+        strokeWidth="1"
+        strokeLinecap="round"
+      />
+      <path
+        d="M22.5 6.5L23.5 8.5L22.5 10.5L21.5 8.5L22.5 6.5Z"
+        fill="currentColor"
+        fillOpacity="0.5"
       />
     </svg>
   );
