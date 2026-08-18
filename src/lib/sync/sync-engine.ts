@@ -128,11 +128,16 @@ export async function syncGoogleDriveForUser(userId: string): Promise<SyncResult
           });
         }
       } else {
+        const parentDriveId = driveFolder.parentId || null;
+        const targetParentId = parentDriveId
+          ? existingFolderMappings.get(parentDriveId) || null
+          : null;
+
         const vaultyFolder = await prisma.folder.create({
           data: {
             name: driveFolder.name,
             ownerId: userId,
-            parentId: null,
+            parentId: targetParentId,
             storageProvider: "GOOGLE_DRIVE",
             storageFolderId: driveFolder.id,
           },
@@ -234,11 +239,34 @@ export async function syncGoogleDriveForUser(userId: string): Promise<SyncResult
       } else {
         const parentDriveId = driveFile.parentId;
 
-        if (!parentDriveId || !existingFolderMappings.has(parentDriveId)) {
+        if (!parentDriveId) {
           continue;
         }
 
-        const targetFolderId = existingFolderMappings.get(parentDriveId)!;
+        let targetFolderId = existingFolderMappings.get(parentDriveId);
+
+        if (!targetFolderId && parentDriveId === docsFolderId) {
+          const rootFolder = await prisma.folder.findFirst({
+            where: { ownerId: userId, parentId: null },
+          });
+
+          if (rootFolder) {
+            targetFolderId = rootFolder.id;
+          } else {
+            const newRoot = await prisma.folder.create({
+              data: {
+                name: "Vaulty Docs",
+                ownerId: userId,
+                parentId: null,
+              },
+            });
+            targetFolderId = newRoot.id;
+          }
+        }
+
+        if (!targetFolderId) {
+          continue;
+        }
 
         const vaultyDoc = await prisma.document.create({
           data: {
