@@ -36,7 +36,7 @@ export default async function SignInPage({
             Access Your Private Vault
           </h1>
           <p className="text-sm text-text-secondary mb-8 leading-relaxed">
-            Secure, end-to-end access control for personal and family documents. Sign in with your Google account to get started.
+            Secure, end-to-end access control for personal and family documents. Sign in with your Google account to get started and automatically connect Google Drive.
           </p>
 
           <SignInButtons callbackUrl={callbackUrl || "/dashboard"} />

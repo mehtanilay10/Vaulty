@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
+import { setupGoogleDriveConnection } from "@/lib/google-drive/oauth";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
@@ -9,6 +10,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+      authorization: {
+        params: {
+          scope: "openid profile email https://www.googleapis.com/auth/drive.file",
+          access_type: "offline",
+          prompt: "consent",
+        },
+      },
     }),
   ],
   session: {
@@ -22,7 +30,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.id = user.id;
       }
-      // Ensure user ID exists in Prisma if fetched by email
       if (!token.id && token.email) {
         const dbUser = await prisma.user.findUnique({
           where: { email: token.email },
@@ -31,6 +38,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.id = dbUser.id;
         }
       }
+
+      if (account?.provider === "google" && account.refresh_token && token.id) {
+        const existing = await prisma.storageConnection.findFirst({
+          where: { userId: token.id as string, provider: "GOOGLE_DRIVE" },
+        });
+        if (!existing) {
+          try {
+            await setupGoogleDriveConnection(token.id as string, {
+              accessToken: account.access_token || "",
+              refreshToken: account.refresh_token,
+              expiresAt: new Date((account.expires_at || 0) * 1000),
+            });
+          } catch (error) {
+            console.error("Failed to auto-setup Google Drive:", error);
+          }
+        }
+      }
+
       return token;
     },
     async session({ session, token }) {
