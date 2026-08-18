@@ -20,7 +20,6 @@ import {
   Loader2,
   AlertTriangle,
   Folder,
-  Cloud,
   HardDrive,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -110,9 +109,9 @@ export function DocumentsClient({
                   <div className="p-2.5 rounded-lg bg-brand-subtle text-brand">
                     <FileText className="w-5 h-5" />
                   </div>
-                  {doc.storageProvider && (
+                  {doc.storageProvider === "GOOGLE_DRIVE" && (
                     <Badge variant="info" className="text-[10px]">
-                      {doc.storageProvider === "GOOGLE_DRIVE" ? "Drive" : "Blob"}
+                      Drive
                     </Badge>
                   )}
                 </div>

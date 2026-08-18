@@ -1,5 +1,5 @@
 import { SignInButtons } from "@/components/auth/SignInButtons";
-import { Shield, Lock, FileText, Sparkles } from "lucide-react";
+import { Shield, Lock, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { VaultLogo } from "@/components/icons/VaultLogo";
 
@@ -45,10 +45,6 @@ export default async function SignInPage({
             <div className="flex flex-col items-center gap-1">
               <Shield className="w-4 h-4 text-brand" />
               <span>Isolated Storage</span>
-            </div>
-            <div className="flex flex-col items-center gap-1">
-              <FileText className="w-4 h-4 text-brand" />
-              <span>Private Blobs</span>
             </div>
             <div className="flex flex-col items-center gap-1">
               <Sparkles className="w-4 h-4 text-brand" />

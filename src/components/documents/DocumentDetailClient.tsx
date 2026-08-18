@@ -46,7 +46,7 @@ export function DocumentDetailClient({
   );
   const [isPropertiesOpen, setIsPropertiesOpen] = useState(false);
   const [isRetryingAi, setIsRetryingAi] = useState(false);
-  const storageLabel = document?.storageProvider === "GOOGLE_DRIVE" ? "Google Drive" : "Vercel Blob";
+  const storageLabel = "Google Drive";
 
   const fileProxyUrl = `/api/documents/${document.id}/file`;
   const isPdf = document.mimeType === "application/pdf";

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Upload, FileText, Sparkles, Folder, Tag, AlertCircle, Camera, Check, HardDrive } from "lucide-react";
+import { Upload, FileText, Sparkles, AlertCircle, Camera, HardDrive } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
@@ -35,28 +35,7 @@ export function UploadModal({
   const [generateAi, setGenerateAi] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [storageProvider, setStorageProvider] = useState<"GOOGLE_DRIVE" | "VERCEL_BLOB">("GOOGLE_DRIVE");
-
-  useEffect(() => {
-    if (isOpen) {
-      fetchFolders();
-      fetchDefaultProvider();
-    }
-  }, [isOpen]);
-
-  const fetchDefaultProvider = async () => {
-    try {
-      const res = await fetch("/api/user/settings");
-      if (res.ok) {
-        const data = await res.json();
-        if (data.defaultStorageProvider) {
-          setStorageProvider(data.defaultStorageProvider);
-        }
-      }
-    } catch (err) {
-      console.error("Failed to fetch default provider:", err);
-    }
-  };
+  const storageProvider = "GOOGLE_DRIVE";
 
   useEffect(() => {
     if (isOpen) {
@@ -244,12 +223,12 @@ export function UploadModal({
               <div>
                 <p className="text-xs font-semibold text-text-primary">Storage Provider</p>
                 <p className="text-[11px] text-text-muted">
-                  {storageProvider === "GOOGLE_DRIVE" ? "Google Drive" : "Vercel Blob"}
+                  Google Drive
                 </p>
               </div>
             </div>
             <span className="text-[10px] uppercase font-bold text-brand px-2 py-0.5 rounded bg-brand-subtle border border-brand/20">
-              {storageProvider === "GOOGLE_DRIVE" ? "Drive" : "Blob"}
+              Drive
             </span>
           </div>
         </Card>

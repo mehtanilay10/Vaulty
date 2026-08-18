@@ -38,7 +38,7 @@ export function DocumentPropertiesModal({
   const [isAiRetrying, setIsAiRetrying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
-  const storageLabel = document?.storageProvider === "GOOGLE_DRIVE" ? "Google Drive" : "Vercel Blob";
+  const storageLabel = "Google Drive";
 
   useEffect(() => {
     if (document) {

@@ -150,54 +150,11 @@ export function StorageSettingsClient({ user }: { user: { id: string; defaultSto
             <span>Default Storage for New Uploads</span>
           </h2>
 
-          <div className="flex flex-col sm:flex-row gap-4 mb-4">
-            <label className={`flex-1 p-4 rounded-lg border-2 cursor-pointer transition-all ${selectedProvider === "GOOGLE_DRIVE" ? "border-brand bg-brand-subtle" : "border-border-subtle hover:border-border"}`}>
-              <input
-                type="radio"
-                name="storageProvider"
-                value="GOOGLE_DRIVE"
-                checked={selectedProvider === "GOOGLE_DRIVE"}
-                onChange={(e) => setSelectedProvider(e.target.value as any)}
-                className="sr-only"
-              />
-              <div className="flex items-start gap-3">
-                <div className="p-2.5 rounded-lg bg-brand-subtle text-brand">
-                  <Cloud className="w-5 h-5" />
-                </div>
-                <div>
-                  <p className="font-semibold text-sm text-text-primary">Google Drive</p>
-                  <p className="text-xs text-text-muted mt-1">Store documents in your Google Drive</p>
-                </div>
-              </div>
-            </label>
-
-            <label className={`flex-1 p-4 rounded-lg border-2 cursor-pointer transition-all ${selectedProvider === "VERCEL_BLOB" ? "border-brand bg-brand-subtle" : "border-border-subtle hover:border-border"}`}>
-              <input
-                type="radio"
-                name="storageProvider"
-                value="VERCEL_BLOB"
-                checked={selectedProvider === "VERCEL_BLOB"}
-                onChange={(e) => setSelectedProvider(e.target.value as any)}
-                className="sr-only"
-              />
-              <div className="flex items-start gap-3">
-                <div className="p-2.5 rounded-lg bg-brand-subtle text-brand">
-                  <HardDrive className="w-5 h-5" />
-                </div>
-                <div>
-                  <p className="font-semibold text-sm text-text-primary">Vercel Blob</p>
-                  <p className="text-xs text-text-muted mt-1">Store documents in private Vercel Blob</p>
-                </div>
-              </div>
-            </label>
+          <div className="p-4 rounded-lg bg-surface-muted border border-border-subtle">
+            <p className="text-xs text-text-secondary">
+              Google Drive is the default and only storage provider.
+            </p>
           </div>
-
-          <Button
-            onClick={handleProviderChange}
-            disabled={selectedProvider === user.defaultStorageProvider}
-          >
-            Save Default Provider
-          </Button>
         </Card>
 
         <Card>
@@ -268,12 +225,12 @@ export function StorageSettingsClient({ user }: { user: { id: string; defaultSto
         <Card>
           <h2 className="text-base font-semibold text-text-primary flex items-center gap-2 mb-4">
             <HardDrive className="w-5 h-5 text-brand" />
-            <span>Vercel Blob</span>
+            <span>Storage</span>
           </h2>
 
           <div className="p-4 rounded-lg bg-surface-muted border border-border-subtle">
             <p className="text-xs text-text-secondary">
-              Vercel Private Blob storage is always available as an alternative storage provider. Existing Blob documents remain accessible.
+              Google Drive is the active storage provider. Connect your Google Drive to store and access documents.
             </p>
           </div>
         </Card>

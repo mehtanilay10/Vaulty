@@ -76,9 +76,9 @@ export function SettingsClient({ user }: { user: any }) {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-text-secondary">
             <div className="p-4 rounded-lg bg-surface-muted border border-border-subtle space-y-1">
-              <span className="text-text-muted font-medium">Blob Storage Mode</span>
-              <p className="font-bold text-text-primary text-sm">Vercel Private Blob</p>
-              <p className="text-text-muted">Authorized server streaming proxy active.</p>
+              <span className="text-text-muted font-medium">Storage Provider</span>
+              <p className="font-bold text-text-primary text-sm">Google Drive</p>
+              <p className="text-text-muted">Private vault with strict access control.</p>
             </div>
 
             <div className="p-4 rounded-lg bg-surface-muted border border-border-subtle space-y-1">

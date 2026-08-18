@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Shield, FolderTree, FileCheck, Sparkles, ArrowRight, Lock, Users, EyeOff } from "lucide-react";
+import { Shield, FolderTree, FileCheck, Sparkles, ArrowRight, Lock, Users } from "lucide-react";
 import { VaultLogo } from "@/components/icons/VaultLogo";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -50,7 +50,7 @@ export default async function LandingPage() {
           </h1>
 
           <p className="text-lg text-text-secondary max-w-2xl mx-auto leading-relaxed">
-            Government credentials, health diagnostics, education certificates, and financial records. Engineered with strict Google OAuth access, private Vercel Blob storage, and Gemini AI analysis.
+            Engineered with strict Google OAuth access, Google Drive storage, and Gemini AI analysis.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -66,13 +66,13 @@ export default async function LandingPage() {
           <div className="grid md:grid-cols-3 gap-6 text-left pt-8">
             <Card hover className="p-6">
               <div className="p-3 rounded-lg bg-brand-subtle text-brand w-fit mb-4">
-                <EyeOff className="w-6 h-6" />
+                 <Shield className="w-6 h-6" />
               </div>
               <h3 className="text-lg font-semibold text-text-primary mb-2">
-                Private Blob Vault
+                Private Family Vault
               </h3>
               <p className="text-sm text-text-secondary leading-relaxed">
-                Files are stored in private storage. Raw URLs are never exposed to clients. Every view or download streams through authorized server verification.
+                Files are stored in private Google Drive storage with strict access control. Every view or download streams through authorized server verification.
               </p>
             </Card>
 
