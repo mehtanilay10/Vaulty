@@ -133,11 +133,24 @@ export class GoogleDriveStorageProvider implements StorageProvider {
   async moveFolder(folderId: string, newParentId: string | null): Promise<StorageFolder> {
     const drive = await this.getDrive();
 
+    let oldParentId: string | undefined;
+    if (newParentId) {
+      try {
+        const file = await drive.files.get({
+          fileId: folderId,
+          fields: "parents",
+        });
+        oldParentId = file.data.parents?.[0];
+      } catch {
+        // proceed without removing old parent
+      }
+    }
+
     const folder = await drive.files.update({
       fileId: folderId,
       requestBody: {},
       addParents: newParentId || undefined,
-      removeParents: newParentId ? undefined : "root",
+      removeParents: newParentId ? oldParentId : undefined,
       fields: "id,name,modifiedTime,parents",
     });
 
@@ -299,6 +312,24 @@ export class GoogleDriveStorageProvider implements StorageProvider {
       summary: connection.summaryFolderId,
       text: connection.textFolderId,
     };
+  }
+
+  async createFolderPath(folderNames: string[], rootId: string): Promise<string> {
+    let currentParentId = rootId;
+
+    for (const name of folderNames) {
+      const existing = await this.listFolders(currentParentId);
+      const existingFolder = existing.find((f) => f.name === name);
+
+      if (existingFolder) {
+        currentParentId = existingFolder.id;
+      } else {
+        const newFolder = await this.createFolder(name, currentParentId);
+        currentParentId = newFolder.id;
+      }
+    }
+
+    return currentParentId;
   }
 
   private mapDriveFile(file: drive_v3.Schema$File): StorageFile {

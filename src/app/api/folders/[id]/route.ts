@@ -138,12 +138,42 @@ export async function PATCH(
           if (newParentId) {
             const newParentFolder = await prisma.folder.findUnique({
               where: { id: newParentId },
-              select: { storageFolderId: true },
+              select: { storageFolderId: true, name: true, parentId: true },
             });
-            newDriveParentId = newParentFolder?.storageFolderId || undefined;
+
+            if (newParentFolder?.storageFolderId) {
+              newDriveParentId = newParentFolder.storageFolderId;
+            } else if (newParentFolder) {
+              const pathNames: string[] = [];
+              let current: { name: string; parentId: string | null } = newParentFolder;
+
+              while (current) {
+                pathNames.unshift(current.name);
+                if (!current.parentId) break;
+                const ancestor: { name: string; parentId: string | null } | null = await prisma.folder.findUnique({
+                  where: { id: current.parentId },
+                  select: { name: true, parentId: true },
+                });
+                current = ancestor!;
+              }
+
+              const vaultyFolders = await provider.ensureVaultyFolders();
+              newDriveParentId = await provider.createFolderPath(pathNames, vaultyFolders.docs);
+              await prisma.folder.update({
+                where: { id: newParentId },
+                data: { storageFolderId: newDriveParentId },
+              });
+            }
           }
 
-          await provider.moveFolder(folder.storageFolderId, newDriveParentId || null);
+          if (newDriveParentId === undefined && newParentId === null) {
+            const vaultyFolders = await provider.ensureVaultyFolders();
+            newDriveParentId = vaultyFolders.docs;
+          }
+
+          if (newDriveParentId !== undefined) {
+            await provider.moveFolder(folder.storageFolderId, newDriveParentId);
+          }
         }
       } catch (driveError) {
         console.error("Failed to sync folder change to Drive:", driveError);

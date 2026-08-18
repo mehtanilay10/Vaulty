@@ -93,13 +93,48 @@ export async function POST(req: NextRequest) {
     if (storageProvider === "GOOGLE_DRIVE") {
       try {
         const { provider } = await getProviderForUser(user.id, storageProvider);
-        const folderPath = await getFolderHierarchyPath(folderId);
+        const vaultyFolders = await provider.ensureVaultyFolders();
+        const docsFolderId = vaultyFolders.docs;
+
+        let targetDriveParentId = docsFolderId;
+
+        if (folderId) {
+          const vaultyFolder = await prisma.folder.findUnique({
+            where: { id: folderId },
+            select: { name: true, parentId: true, storageFolderId: true },
+          });
+
+          if (vaultyFolder?.storageFolderId) {
+            targetDriveParentId = vaultyFolder.storageFolderId;
+          } else if (vaultyFolder) {
+            const pathNames: string[] = [];
+            let current: { name: string; parentId: string | null } | null = vaultyFolder;
+
+            while (current) {
+              pathNames.unshift(current.name);
+              if (!current.parentId) break;
+              const ancestor: { name: string; parentId: string | null } | null = await prisma.folder.findUnique({
+                where: { id: current.parentId },
+                select: { name: true, parentId: true },
+              });
+              current = ancestor;
+            }
+
+            targetDriveParentId = await provider.createFolderPath(pathNames, docsFolderId);
+            await prisma.folder.update({
+              where: { id: folderId },
+              data: { storageFolderId: targetDriveParentId },
+            });
+          }
+        }
+
         const cleanFileName = docName.replace(/[/\\?%*:|"<>]/g, "_");
-        
+
         const uploadResult = await provider.uploadFile({
           filename: cleanFileName,
           mimeType: file.type || "application/octet-stream",
           data: fileBuffer,
+          parentId: targetDriveParentId,
         });
 
         storageFileId = uploadResult.id;

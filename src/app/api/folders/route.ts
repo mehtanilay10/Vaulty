@@ -68,16 +68,43 @@ export async function POST(req: NextRequest) {
     if (userRecord?.defaultStorageProvider === "GOOGLE_DRIVE") {
       try {
         const { provider } = await getProviderForUser(user.id, "GOOGLE_DRIVE");
+        const vaultyFolders = await provider.ensureVaultyFolders();
+        const docsFolderId = vaultyFolders.docs;
+
         let parentDriveId: string | undefined;
 
         if (parentId) {
           const parentFolder = await prisma.folder.findUnique({
             where: { id: parentId },
-            select: { storageFolderId: true },
+            select: { storageFolderId: true, name: true, parentId: true },
           });
+
           if (parentFolder?.storageFolderId) {
             parentDriveId = parentFolder.storageFolderId;
+          } else if (parentFolder) {
+            const pathNames: string[] = [];
+            let current: { name: string; parentId: string | null } = parentFolder;
+
+            while (current) {
+              pathNames.unshift(current.name);
+              if (!current.parentId) break;
+              const ancestor: { name: string; parentId: string | null } | null = await prisma.folder.findUnique({
+                where: { id: current.parentId },
+                select: { name: true, parentId: true },
+              });
+              current = ancestor!;
+            }
+
+            parentDriveId = await provider.createFolderPath(pathNames, docsFolderId);
+            await prisma.folder.update({
+              where: { id: parentId },
+              data: { storageFolderId: parentDriveId },
+            });
           }
+        }
+
+        if (!parentDriveId) {
+          parentDriveId = docsFolderId;
         }
 
         const driveFolder = await provider.createFolder(folder.name, parentDriveId);

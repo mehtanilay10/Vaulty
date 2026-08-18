@@ -58,6 +58,7 @@ export interface StorageProvider {
 
   getRootFolderStructure(): Promise<{ docs: string; summary: string; text: string }>;
   ensureVaultyFolders(): Promise<{ docs: string; summary: string; text: string }>;
+  createFolderPath(folderNames: string[], rootId: string): Promise<string>;
 }
 
 export interface StorageProviderContext {

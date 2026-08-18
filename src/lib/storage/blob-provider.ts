@@ -132,6 +132,10 @@ export class VercelBlobStorageProvider implements StorageProvider {
     return { docs: "", summary: "", text: "" };
   }
 
+  async createFolderPath(_folderNames: string[], _rootId: string): Promise<string> {
+    throw new Error("Vercel Blob does not support folders. Folders are virtual in Vaulty.");
+  }
+
   private resolveBlobUrl(pathname: string): string {
     if (pathname.startsWith("http")) return pathname;
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
