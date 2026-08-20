@@ -57,23 +57,15 @@ export async function syncGoogleDriveForUser(userId: string): Promise<SyncResult
     };
 
     const provider = new GoogleDriveStorageProvider(context);
-<<<<<<< ours
     const docsFolderId = connection.docsFolderId;
-=======
-    const docsFolderId = connection.docsFolderId ?? undefined;
->>>>>>> theirs
 
     if (!docsFolderId) {
       result.errors.push("Docs folder ID not configured.");
       return result;
     }
 
-    async function discoverDriveFolders(parentId: string | undefined): Promise<StorageFolder[]> {
-<<<<<<< ours
-      const folders = await provider.listFolders(parentId || docsFolderId);
-=======
+    async function discoverDriveFolders(parentId: string): Promise<StorageFolder[]> {
       const folders = await provider.listFolders(parentId);
->>>>>>> theirs
       let collected = [...folders];
       for (const folder of folders) {
         const children = await discoverDriveFolders(folder.id);
@@ -82,14 +74,9 @@ export async function syncGoogleDriveForUser(userId: string): Promise<SyncResult
       return collected;
     }
 
-    async function discoverDriveFiles(parentId: string | undefined): Promise<StorageFile[]> {
-<<<<<<< ours
-      const files = await provider.listFiles(parentId || docsFolderId);
-      const subfolders = await provider.listFolders(parentId || docsFolderId);
-=======
+    async function discoverDriveFiles(parentId: string): Promise<StorageFile[]> {
       const files = await provider.listFiles(parentId);
       const subfolders = await provider.listFolders(parentId);
->>>>>>> theirs
       let collected = [...files];
       for (const folder of subfolders) {
         const nested = await discoverDriveFiles(folder.id);
@@ -115,7 +102,14 @@ export async function syncGoogleDriveForUser(userId: string): Promise<SyncResult
       })).filter((d) => d.storageFileId).map((d) => [d.storageFileId!, d.id])
     );
 
+    console.error("[Sync Debug] docsFolderId:", docsFolderId);
+    console.error("[Sync Debug] discovered folders:", allDriveFolders.map(f => ({ id: f.id, name: f.name, parentId: f.parentId })));
+    console.error("[Sync Debug] discovered files:", allDriveFiles.map(f => ({ id: f.id, name: f.name, parentId: f.parentId })));
+    console.error("[Sync Debug] existingFolderMappings:", Array.from(existingFolderMappings.entries()));
+    console.error("[Sync Debug] existingFileMappings count:", existingFileMappings.size);
+
     for (const driveFolder of allDriveFolders) {
+      console.error("[Sync Debug] processing folder:", driveFolder.id, driveFolder.name, "parentId:", driveFolder.parentId);
       if (existingFolderMappings.has(driveFolder.id)) {
         const vaultyFolderId = existingFolderMappings.get(driveFolder.id)!;
         const vaultyFolder = await prisma.folder.findUnique({
@@ -171,10 +165,12 @@ export async function syncGoogleDriveForUser(userId: string): Promise<SyncResult
         });
 
         result.foldersProcessed++;
+        console.error("[Sync Debug] imported new folder:", driveFolder.id, driveFolder.name, "targetParentId:", targetParentId);
       }
     }
 
     for (const driveFile of allDriveFiles) {
+      console.error("[Sync Debug] processing file:", driveFile.id, driveFile.name, "parent:", driveFile.parentId);
       if (existingFileMappings.has(driveFile.id)) {
         const vaultyDocId = existingFileMappings.get(driveFile.id)!;
         const doc = await prisma.document.findUnique({
@@ -249,10 +245,12 @@ export async function syncGoogleDriveForUser(userId: string): Promise<SyncResult
         });
 
         result.documentsProcessed++;
+        console.error("[Sync Debug] updated existing file:", driveFile.id);
       } else {
         const parentDriveId = driveFile.parentId;
 
         if (!parentDriveId) {
+          console.error("[Sync Debug] skipping file (no parent):", driveFile.id, driveFile.name);
           continue;
         }
 
@@ -278,8 +276,11 @@ export async function syncGoogleDriveForUser(userId: string): Promise<SyncResult
         }
 
         if (!targetFolderId) {
+          console.error("[Sync Debug] skipping file (no target folder):", driveFile.id, driveFile.name, "parentDriveId:", parentDriveId);
           continue;
         }
+
+        console.error("[Sync Debug] importing new file:", driveFile.id, driveFile.name, "targetFolderId:", targetFolderId);
 
         const vaultyDoc = await prisma.document.create({
           data: {
