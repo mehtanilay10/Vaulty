@@ -11,7 +11,6 @@ import { Alert } from "@/components/ui/Alert";
 import {
   User,
   Shield,
-  Lock,
   HardDrive,
   Cloud,
   CheckCircle2,
@@ -20,18 +19,31 @@ import {
   ExternalLink,
   Unplug,
   AlertTriangle,
+  FolderOpen,
+  FileText,
+  Sparkles,
+  AlertCircle,
 } from "lucide-react";
 
 export function SettingsClient({ user }: { user: any }) {
   const [connecting, setConnecting] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [processingAi, setProcessingAi] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [connection, setConnection] = useState<any>(null);
+  const [stats, setStats] = useState<{
+    totalFolders: number;
+    totalDocuments: number;
+    aiProcessed: number;
+    aiPending: number;
+    aiFailed: number;
+  } | null>(null);
 
   useEffect(() => {
     fetchConnectionStatus();
+    fetchStats();
   }, []);
 
   const fetchConnectionStatus = async () => {
@@ -43,6 +55,18 @@ export function SettingsClient({ user }: { user: any }) {
       }
     } catch (err) {
       console.error("Failed to fetch connection status:", err);
+    }
+  };
+
+  const fetchStats = async () => {
+    try {
+      const res = await fetch("/api/user/stats");
+      if (res.ok) {
+        const data = await res.json();
+        setStats(data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch stats:", err);
     }
   };
 
@@ -89,10 +113,32 @@ export function SettingsClient({ user }: { user: any }) {
       if (!res.ok) throw new Error(data.error || "Sync failed.");
       setStatusMessage(`Sync completed: ${data.result.documentsProcessed} documents, ${data.result.foldersProcessed} folders processed.`);
       fetchConnectionStatus();
+      fetchStats();
     } catch (err: any) {
       setErrorMessage(err?.message || "Sync failed.");
     } finally {
       setSyncing(false);
+    }
+  };
+
+  const handleBatchAi = async (targetStatus: "FAILED" | "PENDING" | "ALL") => {
+    setProcessingAi(true);
+    setErrorMessage(null);
+    setStatusMessage(null);
+    try {
+      const res = await fetch("/api/documents/ai/batch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: targetStatus }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Batch AI processing failed.");
+      setStatusMessage(`AI processing queued for ${data.results.length} documents.`);
+      fetchStats();
+    } catch (err: any) {
+      setErrorMessage(err?.message || "Batch AI processing failed.");
+    } finally {
+      setProcessingAi(false);
     }
   };
 
@@ -119,6 +165,83 @@ export function SettingsClient({ user }: { user: any }) {
             <AlertTriangle className="w-5 h-5 shrink-0" />
             <span>{errorMessage}</span>
           </Alert>
+        )}
+
+        {stats && (
+          <Card>
+            <div className="flex items-center gap-2 mb-4">
+              <Sparkles className="w-5 h-5 text-brand" />
+              <h2 className="text-base font-semibold text-text-primary">Vault Summary</h2>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div className="p-4 rounded-lg bg-surface-muted border border-border-subtle text-center">
+                <FolderOpen className="w-5 h-5 text-brand mx-auto mb-2" />
+                <p className="text-xl font-bold text-text-primary">{stats.totalFolders}</p>
+                <p className="text-xs text-text-muted">Folders</p>
+              </div>
+              <div className="p-4 rounded-lg bg-surface-muted border border-border-subtle text-center">
+                <FileText className="w-5 h-5 text-brand mx-auto mb-2" />
+                <p className="text-xl font-bold text-text-primary">{stats.totalDocuments}</p>
+                <p className="text-xs text-text-muted">Documents</p>
+              </div>
+              <div className="p-4 rounded-lg bg-surface-muted border border-border-subtle text-center">
+                <CheckCircle2 className="w-5 h-5 text-success mx-auto mb-2" />
+                <p className="text-xl font-bold text-text-primary">{stats.aiProcessed}</p>
+                <p className="text-xs text-text-muted">AI Processed</p>
+              </div>
+              <div className="p-4 rounded-lg bg-surface-muted border border-border-subtle text-center">
+                <AlertCircle className="w-5 h-5 text-warning mx-auto mb-2" />
+                <p className="text-xl font-bold text-text-primary">{stats.aiPending + stats.aiFailed}</p>
+                <p className="text-xs text-text-muted">Pending / Failed</p>
+              </div>
+            </div>
+
+            {(stats.aiFailed > 0 || stats.aiPending > 0) && (
+              <div className="flex flex-wrap items-center gap-3 mt-4">
+                {stats.aiFailed > 0 && (
+                  <Button
+                    variant="secondary"
+                    onClick={() => handleBatchAi("FAILED")}
+                    disabled={processingAi}
+                  >
+                    {processingAi ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="w-4 h-4" />
+                    )}
+                    Retry Failed AI ({stats.aiFailed})
+                  </Button>
+                )}
+                {stats.aiPending > 0 && (
+                  <Button
+                    variant="secondary"
+                    onClick={() => handleBatchAi("PENDING")}
+                    disabled={processingAi}
+                  >
+                    {processingAi ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Sparkles className="w-4 h-4" />
+                    )}
+                    Process Pending AI ({stats.aiPending})
+                  </Button>
+                )}
+                {(stats.aiFailed > 0 || stats.aiPending > 0) && (
+                  <Button
+                    onClick={() => handleBatchAi("ALL")}
+                    disabled={processingAi}
+                  >
+                    {processingAi ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Sparkles className="w-4 h-4" />
+                    )}
+                    Process All Pending & Failed
+                  </Button>
+                )}
+              </div>
+            )}
+          </Card>
         )}
 
         <Card>
