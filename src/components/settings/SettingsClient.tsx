@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/shell/AppShell";
 import { PageHeader } from "@/components/shell/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Alert } from "@/components/ui/Alert";
+import { EmptyState } from "@/components/ui/EmptyState";
 import {
   User,
   Shield,
@@ -21,9 +23,26 @@ import {
   FolderOpen,
   FileText,
   AlertCircle,
+  HardDrive,
+  Clock,
+  ShieldCheck,
+  Download,
+  Edit3,
+  Folder,
+  Trash2,
+  Import,
 } from "lucide-react";
 
-export function SettingsClient({ user }: { user: any }) {
+export function SettingsClient({
+  user,
+  recentEvents = [],
+  syncStats = { synced: 0, failed: 0, pending: 0 },
+}: {
+  user: any;
+  recentEvents?: any[];
+  syncStats?: { synced: number; failed: number; pending: number };
+}) {
+  const router = useRouter();
   const [connecting, setConnecting] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
   const [syncing, setSyncing] = useState(false);
@@ -38,6 +57,7 @@ export function SettingsClient({ user }: { user: any }) {
     aiPending: number;
     aiFailed: number;
   } | null>(null);
+  const [showSyncActivity, setShowSyncActivity] = useState(false);
 
   useEffect(() => {
     fetchConnectionStatus();
@@ -112,6 +132,7 @@ export function SettingsClient({ user }: { user: any }) {
       setStatusMessage(`Sync completed: ${data.result.documentsProcessed} documents, ${data.result.foldersProcessed} folders processed.`);
       fetchConnectionStatus();
       fetchStats();
+      router.refresh();
     } catch (err: any) {
       setErrorMessage(err?.message || "Sync failed.");
     } finally {
@@ -141,6 +162,43 @@ export function SettingsClient({ user }: { user: any }) {
   };
 
   const isConnected = connection && connection.status === "CONNECTED";
+
+  const getOperationIcon = (operation: string) => {
+    switch (operation) {
+      case "UPLOAD":
+        return <FileText className="w-4 h-4" />;
+      case "DOWNLOAD":
+        return <Download className="w-4 h-4" />;
+      case "UPDATE":
+        return <Edit3 className="w-4 h-4" />;
+      case "RENAME":
+        return <Edit3 className="w-4 h-4" />;
+      case "MOVE":
+        return <Folder className="w-4 h-4" />;
+      case "DELETE":
+        return <Trash2 className="w-4 h-4" />;
+      case "IMPORT":
+        return <Import className="w-4 h-4" />;
+      case "CONFLICT":
+        return <AlertTriangle className="w-4 h-4" />;
+      default:
+        return <FileText className="w-4 h-4" />;
+    }
+  };
+
+  const getOperationLabel = (operation: string) => {
+    const labels: Record<string, string> = {
+      UPLOAD: "Uploaded to Drive",
+      DOWNLOAD: "Downloaded from Drive",
+      UPDATE: "Updated",
+      RENAME: "Renamed",
+      MOVE: "Moved",
+      DELETE: "Deleted",
+      IMPORT: "Imported from Drive",
+      CONFLICT: "Conflict detected",
+    };
+    return labels[operation] || operation;
+  };
 
   return (
     <AppShell>
@@ -189,83 +247,6 @@ export function SettingsClient({ user }: { user: any }) {
           </div>
         </Card>
 
-        {stats && (
-          <Card>
-            <div className="flex items-center gap-2 mb-4">
-              <Sparkles className="w-5 h-5 text-brand" />
-              <h2 className="text-base font-semibold text-text-primary">Vault Summary</h2>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <div className="p-4 rounded-lg bg-surface-muted border border-border-subtle text-center">
-                <FolderOpen className="w-5 h-5 text-brand mx-auto mb-2" />
-                <p className="text-xl font-bold text-text-primary">{stats.totalFolders}</p>
-                <p className="text-xs text-text-muted">Folders</p>
-              </div>
-              <div className="p-4 rounded-lg bg-surface-muted border border-border-subtle text-center">
-                <FileText className="w-5 h-5 text-brand mx-auto mb-2" />
-                <p className="text-xl font-bold text-text-primary">{stats.totalDocuments}</p>
-                <p className="text-xs text-text-muted">Documents</p>
-              </div>
-              <div className="p-4 rounded-lg bg-surface-muted border border-border-subtle text-center">
-                <CheckCircle2 className="w-5 h-5 text-success mx-auto mb-2" />
-                <p className="text-xl font-bold text-text-primary">{stats.aiProcessed}</p>
-                <p className="text-xs text-text-muted">AI Processed</p>
-              </div>
-              <div className="p-4 rounded-lg bg-surface-muted border border-border-subtle text-center">
-                <AlertCircle className="w-5 h-5 text-warning mx-auto mb-2" />
-                <p className="text-xl font-bold text-text-primary">{stats.aiPending + stats.aiFailed}</p>
-                <p className="text-xs text-text-muted">Pending / Failed</p>
-              </div>
-            </div>
-
-            {(stats.aiFailed > 0 || stats.aiPending > 0) && (
-              <div className="flex flex-wrap items-center gap-3 mt-4">
-                {(stats.aiFailed > 0 || stats.aiPending > 0) && (
-                  <Button
-                    onClick={() => handleBatchAi("ALL")}
-                    disabled={processingAi}
-                  >
-                    {processingAi ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Sparkles className="w-4 h-4" />
-                    )}
-                    Process All Pending & Failed
-                  </Button>
-                )}
-                {stats.aiFailed > 0 && (
-                  <Button
-                    variant="secondary"
-                    onClick={() => handleBatchAi("FAILED")}
-                    disabled={processingAi}
-                  >
-                    {processingAi ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <RefreshCw className="w-4 h-4" />
-                    )}
-                    Retry Failed AI ({stats.aiFailed})
-                  </Button>
-                )}
-                {stats.aiPending > 0 && (
-                  <Button
-                    variant="secondary"
-                    onClick={() => handleBatchAi("PENDING")}
-                    disabled={processingAi}
-                  >
-                    {processingAi ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Sparkles className="w-4 h-4" />
-                    )}
-                    Process Pending AI ({stats.aiPending})
-                  </Button>
-                )}
-              </div>
-            )}
-          </Card>
-        )}
-
         <Card>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-base font-semibold text-text-primary flex items-center gap-2">
@@ -297,11 +278,6 @@ export function SettingsClient({ user }: { user: any }) {
               </div>
 
               <div className="flex items-center gap-3">
-                <Button onClick={handleSync} disabled={syncing}>
-                  {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-                  {syncing ? "Syncing..." : "Sync Now"}
-                </Button>
-
                 <a
                   href={`https://drive.google.com/drive/folders/${connection.docsFolderId || connection.rootFolderId}`}
                   target="_blank"
@@ -330,7 +306,178 @@ export function SettingsClient({ user }: { user: any }) {
             </div>
           )}
         </Card>
+
+        {stats && (
+          <Card>
+            <div className="flex items-center gap-2 mb-4">
+              <Sparkles className="w-5 h-5 text-brand" />
+              <h2 className="text-base font-semibold text-text-primary">AI Summary</h2>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div className="p-4 rounded-lg bg-surface-muted border border-border-subtle text-center">
+                <FolderOpen className="w-5 h-5 text-brand mx-auto mb-2" />
+                <p className="text-xl font-bold text-text-primary">{stats.totalFolders}</p>
+                <p className="text-xs text-text-muted">Folders</p>
+              </div>
+              <div className="p-4 rounded-lg bg-surface-muted border border-border-subtle text-center">
+                <FileText className="w-5 h-5 text-brand mx-auto mb-2" />
+                <p className="text-xl font-bold text-text-primary">{stats.totalDocuments}</p>
+                <p className="text-xs text-text-muted">Documents</p>
+              </div>
+              <div className="p-4 rounded-lg bg-surface-muted border border-border-subtle text-center">
+                <CheckCircle2 className="w-5 h-5 text-success mx-auto mb-2" />
+                <p className="text-xl font-bold text-text-primary">{stats.aiProcessed}</p>
+                <p className="text-xs text-text-muted">AI Processed</p>
+              </div>
+              <div className="p-4 rounded-lg bg-surface-muted border border-border-subtle text-center">
+                <AlertCircle className="w-5 h-5 text-warning mx-auto mb-2" />
+                <p className="text-xl font-bold text-text-primary">{stats.aiPending + stats.aiFailed}</p>
+                <p className="text-xs text-text-muted">Pending / Failed</p>
+              </div>
+            </div>
+
+            {(stats.aiFailed > 0 || stats.aiPending > 0) && (
+              <div className="flex flex-wrap items-center gap-3 mt-4">
+                {(stats.aiFailed > 0 || stats.aiPending > 0) && (
+                  <Button onClick={() => handleBatchAi("ALL")} disabled={processingAi}>
+                    {processingAi ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Sparkles className="w-4 h-4" />
+                    )}
+                    Process All Pending & Failed
+                  </Button>
+                )}
+                {stats.aiFailed > 0 && (
+                  <Button variant="secondary" onClick={() => handleBatchAi("FAILED")} disabled={processingAi}>
+                    {processingAi ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="w-4 h-4" />
+                    )}
+                    Retry Failed AI ({stats.aiFailed})
+                  </Button>
+                )}
+                {stats.aiPending > 0 && (
+                  <Button variant="secondary" onClick={() => handleBatchAi("PENDING")} disabled={processingAi}>
+                    {processingAi ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Sparkles className="w-4 h-4" />
+                    )}
+                    Process Pending AI ({stats.aiPending})
+                  </Button>
+                )}
+              </div>
+            )}
+          </Card>
+        )}
+
+        <Card>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <HardDrive className="w-5 h-5 text-brand" />
+              <h2 className="text-base font-semibold text-text-primary">Sync Status</h2>
+            </div>
+            <Badge variant={isConnected ? "success" : "default"}>
+              <div className={`w-2 h-2 rounded-full ${isConnected ? "bg-success" : "bg-text-muted"}`} />
+              {isConnected ? "Connected" : "Disconnected"}
+            </Badge>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="p-4 rounded-lg bg-surface-muted border border-border-subtle text-center">
+              <CheckCircle2 className="w-5 h-5 text-success mx-auto mb-2" />
+              <p className="text-xl font-bold text-text-primary">{syncStats.synced}</p>
+              <p className="text-xs text-text-muted">Synced</p>
+            </div>
+            <div className="p-4 rounded-lg bg-surface-muted border border-border-subtle text-center">
+              <Clock className="w-5 h-5 text-warning mx-auto mb-2" />
+              <p className="text-xl font-bold text-text-primary">{syncStats.pending}</p>
+              <p className="text-xs text-text-muted">Pending</p>
+            </div>
+            <div className="p-4 rounded-lg bg-surface-muted border border-border-subtle text-center">
+              <AlertTriangle className="w-5 h-5 text-danger mx-auto mb-2" />
+              <p className="text-xl font-bold text-text-primary">{syncStats.failed}</p>
+              <p className="text-xs text-text-muted">Failed</p>
+            </div>
+            <div className="p-4 rounded-lg bg-surface-muted border border-border-subtle text-center">
+              <ShieldCheck className="w-5 h-5 text-brand mx-auto mb-2" />
+              <p className="text-xl font-bold text-text-primary">
+                {recentEvents.filter((e) => e.operation === "CONFLICT").length}
+              </p>
+              <p className="text-xs text-text-muted">Conflicts</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 mt-4">
+            <Button onClick={handleSync} disabled={syncing || !isConnected}>
+              {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+              {syncing ? "Syncing..." : "Sync Now"}
+            </Button>
+            <Button variant="secondary" onClick={() => setShowSyncActivity(true)} disabled={recentEvents.length === 0}>
+              <Clock className="w-4 h-4" />
+              View Recent Activity
+            </Button>
+          </div>
+        </Card>
       </div>
+
+      {showSyncActivity && (
+        <div className="fixed inset-0 z-50 flex justify-end">
+          <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={() => setShowSyncActivity(false)} />
+          <div className="relative w-full max-w-md bg-surface border-l border-border-subtle shadow-2xl flex flex-col h-full">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border-subtle">
+              <h3 className="text-base font-semibold text-text-primary">Recent Sync Activity</h3>
+              <button
+                onClick={() => setShowSyncActivity(false)}
+                className="p-1.5 rounded-md text-text-muted hover:text-text-primary hover:bg-surface-muted transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 space-y-2">
+              {recentEvents.length === 0 ? (
+                <EmptyState icon={<Clock className="w-10 h-10" />} title="No sync activity yet" />
+              ) : (
+                recentEvents.map((event) => (
+                  <div
+                    key={event.id}
+                    className="p-4 rounded-lg bg-surface-muted border border-border-subtle flex items-center justify-between gap-4"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`p-2 rounded-lg ${
+                          event.status === "SUCCESS"
+                            ? "bg-success-subtle text-success"
+                            : event.status === "FAILED"
+                              ? "bg-danger-subtle text-danger"
+                              : "bg-warning-subtle text-warning"
+                        }`}
+                      >
+                        {getOperationIcon(event.operation)}
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-text-primary truncate max-w-xs">
+                          {event.document?.name || event.folder?.name || "Unknown"}
+                        </p>
+                        <p className="text-xs text-text-muted">
+                          {getOperationLabel(event.operation)} • {new Date(event.createdAt).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                    <Badge variant={event.status === "SUCCESS" ? "success" : event.status === "FAILED" ? "danger" : "warning"}>
+                      {event.status}
+                    </Badge>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </AppShell>
   );
 }
