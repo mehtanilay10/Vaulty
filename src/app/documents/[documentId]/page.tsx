@@ -51,7 +51,6 @@ export default async function DocumentDetailPage({
       document={JSON.parse(JSON.stringify(document))}
       folders={JSON.parse(JSON.stringify(folders))}
       isOwner={access.isOwner}
-      permission={access.permission}
     />
   );
 }

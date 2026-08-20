@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { AppShell } from "@/components/shell/AppShell";
-import { PageHeader } from "@/components/shell/PageHeader";
 import { CreateFolderModal } from "@/components/folders/CreateFolderModal";
 import { UploadModal } from "@/components/documents/UploadModal";
 import { FolderPropertiesModal } from "@/components/folders/FolderPropertiesModal";
@@ -18,7 +17,6 @@ import {
   FolderPlus,
   Upload,
   Settings,
-  Users,
   Lock,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -28,12 +26,10 @@ export function FolderDetailClient({
   folder,
   breadcrumbs,
   isOwner,
-  permission,
 }: {
   folder: any;
   breadcrumbs: { id: string; name: string }[];
   isOwner: boolean;
-  permission: string;
 }) {
   const router = useRouter();
   const [isCreateSubfolderOpen, setIsCreateSubfolderOpen] = useState(false);

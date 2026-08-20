@@ -10,7 +10,7 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { Search, FileText, Sparkles } from "lucide-react";
+import { Search, FileText } from "lucide-react";
 
 export function SearchClient({ initialQuery }: { initialQuery: string }) {
   const [query, setQuery] = useState(initialQuery);

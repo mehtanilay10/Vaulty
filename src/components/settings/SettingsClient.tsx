@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
 import { AppShell } from "@/components/shell/AppShell";
 import { PageHeader } from "@/components/shell/PageHeader";
 import { Card } from "@/components/ui/Card";
@@ -11,7 +10,6 @@ import { Alert } from "@/components/ui/Alert";
 import {
   User,
   Shield,
-  HardDrive,
   Cloud,
   CheckCircle2,
   Loader2,
@@ -19,9 +17,9 @@ import {
   ExternalLink,
   Unplug,
   AlertTriangle,
+  Sparkles,
   FolderOpen,
   FileText,
-  Sparkles,
   AlertCircle,
 } from "lucide-react";
 

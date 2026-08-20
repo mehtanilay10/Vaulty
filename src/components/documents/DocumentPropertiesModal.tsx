@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, FileText, Edit3, Trash2, Tag, Folder, AlertTriangle, Sparkles, Check, RefreshCw } from "lucide-react";
+import { Trash2, AlertTriangle, Check, Sparkles, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";

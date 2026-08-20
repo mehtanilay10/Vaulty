@@ -14,13 +14,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import {
   FileText,
   Search,
-  Tag,
   Upload,
-  CheckCircle2,
-  Loader2,
-  AlertTriangle,
-  Folder,
-  HardDrive,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useGoogleDriveStatus } from "@/hooks/useGoogleDriveStatus";
@@ -33,7 +27,7 @@ export function DocumentsClient({
   folders: any[];
 }) {
   const router = useRouter();
-  const [documents, setDocuments] = useState(initialDocuments);
+  const [documents] = useState(initialDocuments);
   const [filterFolderId, setFilterFolderId] = useState("");
   const [searchFilter, setSearchFilter] = useState("");
   const [isUploadOpen, setIsUploadOpen] = useState(false);

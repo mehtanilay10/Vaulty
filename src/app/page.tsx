@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { Shield, FolderTree, FileCheck, Sparkles, ArrowRight, Lock, Users, EyeOff, Key, Database, Cloud, Zap, Globe, LockIcon } from "lucide-react";
+import { Shield, Sparkles, ArrowRight, Users, EyeOff, Cloud, Zap, LockIcon } from "lucide-react";
 import { VaultLogo } from "@/components/icons/VaultLogo";
-import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { SignInButton } from "@/components/auth/SignInButton";
 

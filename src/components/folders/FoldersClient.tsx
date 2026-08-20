@@ -13,7 +13,6 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import {
   Folder,
   FolderPlus,
-  Upload,
   ChevronRight,
   Users,
 } from "lucide-react";

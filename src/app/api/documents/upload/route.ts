@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { checkFolderAccess } from "@/lib/authz";
 import { validateFileTypeAndExtension, getMaxUploadSize, uploadPrivateBlob } from "@/lib/blob";
 import { processDocumentWithGemini, GEMINI_MODEL } from "@/lib/gemini";
-import { getProviderForUser, getProviderForDocument } from "@/lib/storage/factory";
+import { getProviderForUser } from "@/lib/storage/factory";
 import type { StorageProviderType } from "@/lib/storage/provider";
 
 async function getFolderHierarchyPath(folderId: string): Promise<string> {

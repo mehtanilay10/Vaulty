@@ -70,7 +70,7 @@ export async function POST(
       } else {
         throw new Error("Document file not available for AI processing.");
       }
-    } catch (fetchErr) {
+    } catch {
       await prisma.aiProcessing.update({
         where: { id: aiRecord.id },
         data: {

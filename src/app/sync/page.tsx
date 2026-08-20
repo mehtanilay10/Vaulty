@@ -38,7 +38,6 @@ export default async function SyncCenterPage() {
 
   return (
     <SyncCenterClient
-      user={session.user}
       connection={connection}
       recentEvents={JSON.parse(JSON.stringify(recentEvents))}
       stats={{ synced: syncedCount, failed: failedCount, pending: pendingCount }}

@@ -12,7 +12,6 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import {
   HardDrive,
   CheckCircle2,
-  XCircle,
   Loader2,
   RefreshCw,
   AlertTriangle,
@@ -28,12 +27,10 @@ import {
 import { useRouter } from "next/navigation";
 
 export function SyncCenterClient({
-  user,
   connection,
   recentEvents,
   stats,
 }: {
-  user: { id: string; name?: string | null; email?: string | null };
   connection: any;
   recentEvents: any[];
   stats: { synced: number; failed: number; pending: number };

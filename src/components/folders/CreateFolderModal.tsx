@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, FolderPlus, AlertCircle } from "lucide-react";
+import { FolderPlus, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";

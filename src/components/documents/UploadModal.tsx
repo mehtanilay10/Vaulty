@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Upload, FileText, Sparkles, AlertCircle, Camera } from "lucide-react";
+import { FileText, Sparkles, AlertCircle, Camera } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";

@@ -3,9 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { AppShell } from "@/components/shell/AppShell";
-import { PageHeader } from "@/components/shell/PageHeader";
 import { DocumentPropertiesModal } from "@/components/documents/DocumentPropertiesModal";
-import { Button } from "@/components/ui/Button";
 import { Tabs, Tab } from "@/components/ui/Tabs";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -21,8 +19,6 @@ import {
   Eye,
   FileCode,
   AlertTriangle,
-  Loader2,
-  CheckCircle2,
   Lock,
   RefreshCw,
   ExternalLink,
@@ -33,12 +29,10 @@ export function DocumentDetailClient({
   document,
   folders,
   isOwner,
-  permission,
 }: {
   document: any;
   folders: any[];
   isOwner: boolean;
-  permission: string;
 }) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"preview" | "summary" | "interpretation" | "text">(

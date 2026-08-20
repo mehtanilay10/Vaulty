@@ -72,7 +72,6 @@ export default async function FolderDetailPage({
       folder={JSON.parse(JSON.stringify(folder))}
       breadcrumbs={breadcrumbs}
       isOwner={access.isOwner}
-      permission={access.permission}
     />
   );
 }

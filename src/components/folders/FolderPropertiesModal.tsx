@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Folder, Edit3, Trash2, Users, Search, UserPlus, Shield, AlertTriangle, Check, ArrowRight } from "lucide-react";
+import { X, Folder, Trash2, Users, Search, UserPlus, AlertTriangle, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export function FolderPropertiesModal({

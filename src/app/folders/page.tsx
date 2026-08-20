@@ -1,6 +1,5 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import Link from "next/link";
 import { FoldersClient } from "@/components/folders/FoldersClient";
 
 export default async function FoldersPage() {

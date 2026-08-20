@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { processDocumentWithGemini, GEMINI_MODEL } from "@/lib/gemini";
+import { processDocumentWithGemini } from "@/lib/gemini";
 import { getProviderForUser, getProviderForDocument } from "@/lib/storage/factory";
 
 export async function POST(req: NextRequest) {
