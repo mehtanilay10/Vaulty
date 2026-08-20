@@ -1,8 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { StorageConnectionStatus, User } from "@prisma/client";
 import { GoogleDriveStorageProvider } from "@/lib/storage/drive-provider";
-import { getProviderForDocument } from "@/lib/storage/factory";
+import { getProviderForDocument, getProviderForUser } from "@/lib/storage/factory";
 import { StorageFile, StorageFolder } from "@/lib/storage/provider";
+import { processDocumentWithGemini, GEMINI_MODEL } from "@/lib/gemini";
 
 export interface SyncResult {
   success: boolean;
@@ -177,15 +178,20 @@ export async function syncGoogleDriveForUser(userId: string): Promise<SyncResult
           where: { id: vaultyDocId },
         });
 
+        console.error("[Sync Debug] existing file check:", driveFile.id, "status:", doc?.storageStatus, "storageModifiedAt:", doc?.storageModifiedAt, "driveModifiedAt:", driveFile.modifiedAt, "checksumMatch:", doc?.storageChecksum === driveFile.checksum, "nameMatch:", doc?.name === driveFile.name);
+
         if (doc && doc.storageStatus === "CONFLICT") {
+          console.error("[Sync Debug] skipping due to CONFLICT status");
           continue;
         }
 
         if (doc && doc.storageModifiedAt && new Date(doc.storageModifiedAt) >= driveFile.modifiedAt) {
+          console.error("[Sync Debug] skipping due to storageModifiedAt >= driveModifiedAt");
           continue;
         }
 
         if (doc && doc.storageChecksum && doc.storageChecksum === driveFile.checksum && doc.name === driveFile.name) {
+          console.error("[Sync Debug] skipping due to checksum+name match");
           continue;
         }
 
@@ -313,6 +319,111 @@ export async function syncGoogleDriveForUser(userId: string): Promise<SyncResult
         });
 
         result.documentsProcessed++;
+
+        (async () => {
+          try {
+            const aiRecord = await prisma.aiProcessing.create({
+              data: {
+                documentId: vaultyDoc.id,
+                status: "QUEUED",
+                modelUsed: GEMINI_MODEL,
+              },
+            });
+
+            await prisma.aiProcessing.update({
+              where: { id: aiRecord.id },
+              data: { status: "PROCESSING" },
+            });
+
+            let fileBuffer: Buffer;
+            if (vaultyDoc.storageProvider === "GOOGLE_DRIVE" && driveFile.id) {
+              const { provider } = await getProviderForDocument({
+                id: vaultyDoc.id,
+                storageProvider: vaultyDoc.storageProvider,
+                storageFileId: driveFile.id,
+                ownerId: userId,
+                folderId: targetFolderId,
+              });
+              fileBuffer = await provider.downloadFile(driveFile.id);
+            } else {
+              throw new Error("Unsupported storage provider for AI processing.");
+            }
+
+            const geminiResult = await processDocumentWithGemini(
+              fileBuffer,
+              driveFile.mimeType,
+              driveFile.name
+            );
+
+            let textFileId: string | null = null;
+            let summaryFileId: string | null = null;
+            let interpretationFileId: string | null = null;
+
+            try {
+              const { provider } = await getProviderForUser(userId, "GOOGLE_DRIVE");
+              const vaultyFolders = await provider.ensureVaultyFolders();
+              const baseName = driveFile.name.replace(/[/\\?%*:|"<>]/g, "_");
+
+              const textUpload = await provider.uploadFile({
+                filename: `${baseName}.txt`,
+                mimeType: "text/plain",
+                data: Buffer.from(geminiResult.extractedText),
+                parentId: vaultyFolders.text,
+              });
+              textFileId = textUpload.id;
+
+              const summaryUpload = await provider.uploadFile({
+                filename: `${baseName}.md`,
+                mimeType: "text/markdown",
+                data: Buffer.from(geminiResult.summaryMarkdown),
+                parentId: vaultyFolders.summary,
+              });
+              summaryFileId = summaryUpload.id;
+
+              const interpretationUpload = await provider.uploadFile({
+                filename: `${baseName}.md`,
+                mimeType: "text/markdown",
+                data: Buffer.from(geminiResult.interpretationMarkdown),
+                parentId: vaultyFolders.interpretation,
+              });
+              interpretationFileId = interpretationUpload.id;
+            } catch (driveAiErr) {
+              console.error("Failed to upload AI files to Google Drive:", driveAiErr);
+            }
+
+            await prisma.aiProcessing.update({
+              where: { id: aiRecord.id },
+              data: {
+                status: "COMPLETED",
+                extractedText: geminiResult.extractedText,
+                summaryMarkdown: geminiResult.summaryMarkdown,
+                interpretationMarkdown: geminiResult.interpretationMarkdown,
+                processedAt: new Date(),
+                errorMessage: null,
+              },
+            });
+
+            if (textFileId || summaryFileId || interpretationFileId) {
+              await prisma.document.update({
+                where: { id: vaultyDoc.id },
+                data: {
+                  googleDriveSummaryFileId: summaryFileId,
+                  googleDriveTextFileId: textFileId,
+                  googleDriveInterpretationFileId: interpretationFileId,
+                },
+              });
+            }
+          } catch (aiErr: any) {
+            console.error("Gemini AI sync processing error:", aiErr);
+            await prisma.aiProcessing.create({
+              data: {
+                documentId: vaultyDoc.id,
+                status: "FAILED",
+                errorMessage: aiErr?.message || "AI processing failed.",
+              },
+            });
+          }
+        })();
       }
     }
 
