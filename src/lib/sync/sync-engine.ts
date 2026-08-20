@@ -177,15 +177,20 @@ export async function syncGoogleDriveForUser(userId: string): Promise<SyncResult
           where: { id: vaultyDocId },
         });
 
+        console.error("[Sync Debug] existing file check:", driveFile.id, "status:", doc?.storageStatus, "storageModifiedAt:", doc?.storageModifiedAt, "driveModifiedAt:", driveFile.modifiedAt, "checksumMatch:", doc?.storageChecksum === driveFile.checksum, "nameMatch:", doc?.name === driveFile.name);
+
         if (doc && doc.storageStatus === "CONFLICT") {
+          console.error("[Sync Debug] skipping due to CONFLICT status");
           continue;
         }
 
         if (doc && doc.storageModifiedAt && new Date(doc.storageModifiedAt) >= driveFile.modifiedAt) {
+          console.error("[Sync Debug] skipping due to storageModifiedAt >= driveModifiedAt");
           continue;
         }
 
         if (doc && doc.storageChecksum && doc.storageChecksum === driveFile.checksum && doc.name === driveFile.name) {
+          console.error("[Sync Debug] skipping due to checksum+name match");
           continue;
         }
 
