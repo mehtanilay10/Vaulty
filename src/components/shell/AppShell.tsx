@@ -30,7 +30,7 @@ export function AppShell({ children, onOpenUpload }: AppShellProps) {
       <div className="flex-1 flex overflow-hidden pt-14">
         <Sidebar />
 
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 pb-24 md:pb-6">
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 pb-24 md:pb-6 ml-64">
           {children}
         </main>
       </div>

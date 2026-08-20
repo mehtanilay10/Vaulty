@@ -27,7 +27,7 @@ export default async function LandingPage() {
           {isLoggedIn ? (
             <Link
               href="/dashboard"
-              className="btn btn-primary px-5 py-2.5 text-sm whitespace-nowrap"
+              className="btn btn-primary px-5 py-2.5 text-sm whitespace-nowrap rounded-md"
             >
               Go to Vault
               <ArrowRight className="w-4 h-4" />
@@ -63,7 +63,7 @@ export default async function LandingPage() {
             {isLoggedIn ? (
               <Link
                 href="/dashboard"
-                className="btn btn-primary px-8 py-3 text-base w-full sm:w-auto whitespace-nowrap"
+                className="btn btn-primary px-8 py-3 text-base w-full sm:w-auto whitespace-nowrap rounded-md"
               >
                 Open My Private Vault
                 <ArrowRight className="w-5 h-5" />
@@ -103,7 +103,7 @@ export default async function LandingPage() {
                 <Sparkles className="w-6 h-6" />
               </div>
               <h3 className="text-lg font-semibold text-text-primary mb-2">
-                Gemini 2.0 AI Summaries
+                Gemini 3.6 AI Summaries
               </h3>
               <p className="text-sm text-text-secondary leading-relaxed">
                 OCR text extraction, Markdown summaries, and factual interpretations generated automatically from scanned PDFs and medical or government images.

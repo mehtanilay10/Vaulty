@@ -165,6 +165,30 @@ export function SettingsClient({ user }: { user: any }) {
           </Alert>
         )}
 
+        <Card>
+          <div className="flex items-center gap-2 mb-4">
+            <Shield className="w-5 h-5 text-brand" />
+            <h2 className="text-base font-semibold text-text-primary">Google OAuth Identity</h2>
+          </div>
+
+          <div className="flex items-center gap-4 p-4 rounded-lg bg-surface-muted border border-border-subtle">
+            {user?.image ? (
+              <img src={user.image} alt="" className="w-14 h-14 rounded-lg ring-2 ring-brand/20" />
+            ) : (
+              <div className="w-14 h-14 rounded-lg bg-brand-subtle text-brand font-bold text-xl flex items-center justify-center">
+                {user?.name?.[0] || user?.email?.[0]}
+              </div>
+            )}
+            <div>
+              <h3 className="font-semibold text-lg text-text-primary">{user?.name || "Standard User"}</h3>
+              <p className="text-sm text-text-secondary">{user?.email}</p>
+              <span className="inline-flex items-center gap-1 mt-1 text-[11px] font-semibold text-success">
+                <CheckCircle2 className="w-3.5 h-3.5" /> Authenticated Standard User
+              </span>
+            </div>
+          </div>
+        </Card>
+
         {stats && (
           <Card>
             <div className="flex items-center gap-2 mb-4">
@@ -196,6 +220,19 @@ export function SettingsClient({ user }: { user: any }) {
 
             {(stats.aiFailed > 0 || stats.aiPending > 0) && (
               <div className="flex flex-wrap items-center gap-3 mt-4">
+                {(stats.aiFailed > 0 || stats.aiPending > 0) && (
+                  <Button
+                    onClick={() => handleBatchAi("ALL")}
+                    disabled={processingAi}
+                  >
+                    {processingAi ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Sparkles className="w-4 h-4" />
+                    )}
+                    Process All Pending & Failed
+                  </Button>
+                )}
                 {stats.aiFailed > 0 && (
                   <Button
                     variant="secondary"
@@ -224,47 +261,10 @@ export function SettingsClient({ user }: { user: any }) {
                     Process Pending AI ({stats.aiPending})
                   </Button>
                 )}
-                {(stats.aiFailed > 0 || stats.aiPending > 0) && (
-                  <Button
-                    onClick={() => handleBatchAi("ALL")}
-                    disabled={processingAi}
-                  >
-                    {processingAi ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Sparkles className="w-4 h-4" />
-                    )}
-                    Process All Pending & Failed
-                  </Button>
-                )}
               </div>
             )}
           </Card>
         )}
-
-        <Card>
-          <div className="flex items-center gap-2 mb-4">
-            <Shield className="w-5 h-5 text-brand" />
-            <h2 className="text-base font-semibold text-text-primary">Google OAuth Identity</h2>
-          </div>
-
-          <div className="flex items-center gap-4 p-4 rounded-lg bg-surface-muted border border-border-subtle">
-            {user?.image ? (
-              <img src={user.image} alt="" className="w-14 h-14 rounded-lg ring-2 ring-brand/20" />
-            ) : (
-              <div className="w-14 h-14 rounded-lg bg-brand-subtle text-brand font-bold text-xl flex items-center justify-center">
-                {user?.name?.[0] || user?.email?.[0]}
-              </div>
-            )}
-            <div>
-              <h3 className="font-semibold text-lg text-text-primary">{user?.name || "Standard User"}</h3>
-              <p className="text-sm text-text-secondary">{user?.email}</p>
-              <span className="inline-flex items-center gap-1 mt-1 text-[11px] font-semibold text-success">
-                <CheckCircle2 className="w-3.5 h-3.5" /> Authenticated Standard User
-              </span>
-            </div>
-          </div>
-        </Card>
 
         <Card>
           <div className="flex items-center justify-between mb-4">
