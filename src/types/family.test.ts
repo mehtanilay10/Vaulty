@@ -17,6 +17,7 @@ describe("family module helpers", () => {
       shareWealth: false,
       shareCredentials: false,
       shareReminders: false,
+      shareNotes: false,
     });
     expect(hasAnyFamilyModule(emptyFamilyModuleFlags())).toBe(false);
   });
@@ -33,6 +34,7 @@ describe("family module helpers", () => {
       shareWealth: false,
       shareCredentials: false,
       shareReminders: false,
+      shareNotes: false,
     });
   });
 
@@ -49,6 +51,7 @@ describe("family module helpers", () => {
       shareWealth: false,
       shareCredentials: true,
       shareReminders: false,
+      shareNotes: false,
     };
 
     expect(familyModulesFromFlags(flags)).toEqual(["documents", "credentials"]);

@@ -73,7 +73,7 @@ export async function getProviderForDocument(document: {
   storageProvider: StorageProviderType;
   storageFileId?: string | null;
   ownerId: string;
-  folderId: string;
+  folderId?: string | null;
 }): Promise<{ provider: StorageProvider; context: StorageProviderContext }> {
   if (document.storageProvider === "GOOGLE_DRIVE") {
     const [connection, user] = await Promise.all([

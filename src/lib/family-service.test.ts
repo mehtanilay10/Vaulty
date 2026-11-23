@@ -74,6 +74,7 @@ function flags(overrides: Record<string, boolean> = {}): FamilyModuleFlags {
     shareWealth: false,
     shareCredentials: false,
     shareReminders: false,
+    shareNotes: false,
     ...overrides,
   };
 }
@@ -632,6 +633,7 @@ describe("updateFamilyInvitation", () => {
         shareWealth: false,
         shareCredentials: true,
         shareReminders: false,
+        shareNotes: false,
       },
     });
     expect(result.shareDocuments).toBe(false);
@@ -764,6 +766,7 @@ describe("updateFamilyMembership", () => {
           shareWealth: false,
           shareCredentials: false,
           shareReminders: false,
+          shareNotes: false,
         },
       }),
     );
@@ -975,6 +978,39 @@ describe("getFamilySharedCredentials", () => {
     expect(result[0].wrappedKey).toBe("wrapped");
     expect(result[0].appCredentials.map((item) => item.id)).toEqual(["app-1"]);
     expect(result[0].bankCredentials.map((item) => item.id)).toEqual(["bank-1"]);
+  });
+
+  it("strictly strips totpSecret from app credentials returned to family members", async () => {
+    prismaMock.familyMembership.findMany.mockResolvedValue([
+      {
+        id: "m-1",
+        ownerId: "owner-1",
+        owner: {
+          ...owner,
+          passwordVault: { id: "vault-1" },
+        },
+        credentialKey: {
+          wrappedKey: "wrapped",
+          keyVersion: 2,
+          updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+        },
+      },
+    ]);
+    prismaMock.appCredential.findMany.mockResolvedValue([
+      {
+        id: "app-1",
+        vaultId: "vault-1",
+        totpSecret: "super-secret-2fa-token",
+      } as unknown as Awaited<ReturnType<typeof prismaMock.appCredential.findMany>>[number],
+    ]);
+    prismaMock.bankCredential.findMany.mockResolvedValue([]);
+
+    const result = await getFamilySharedCredentials("member-1");
+
+    expect(result[0].appCredentials[0].id).toBe("app-1");
+    expect(
+      (result[0].appCredentials[0] as unknown as { totpSecret?: string | null }).totpSecret,
+    ).toBeNull();
   });
 });
 

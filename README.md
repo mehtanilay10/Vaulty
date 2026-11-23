@@ -21,6 +21,7 @@ Vaulty brings personal information into one place: organize important files, und
 - [Security and privacy](#security-and-privacy)
 - [Testing](#testing)
 - [Contributing](#contributing)
+- [Security](#security-and-privacy)
 - [License](#license)
 
 ## Features
@@ -43,13 +44,24 @@ Vaulty brings personal information into one place: organize important files, und
 - Persist processing jobs with retry and stale-job recovery.
 - Store original documents and generated AI artifacts in Google Drive.
 
-### Credential vault
+### Credential vault & two-factor authenticator
 
-- Store app and bank credentials in a separate vault.
-- Protect credential payloads with browser-side Web Crypto encryption.
+- Store app and bank credentials in a separate client-side encrypted vault.
+- Built-in two-factor authenticator (TOTP / 2FA) generating live 6-digit codes with animated 30s countdown timer.
+- Scan QR codes via live camera, image upload, or manual Base32 key entry.
+- Protect credential and TOTP payloads with browser-side Web Crypto envelope encryption.
 - Protect the entire application with centralized App Lock (PIN/passkey, with the existing master-password fallback).
 - Configure offline recovery material.
-- Manage credential sharing exclusively through Family module permissions; the Credentials page has no standalone share action.
+- Manage credential sharing exclusively through Family module permissions; the Credentials page has no standalone share action (authenticator secrets are never shared).
+
+### Notes & checklists (OneNote-style pages)
+
+- Create simple, flat note pages without notebook clutter.
+- Rich text formatting: bold, italic, underline, strikethrough, highlight (yellow marker), headings, lists, blockquotes, dividing lines.
+- Interactive To-Do items: always inserted on a fresh line, pressing Enter splits text into the next todo item, pressing Backspace on empty items converts back to regular text.
+- Inline resizable images: presets (25%, 50%, 75%, 100%), floating alignments, and clipboard screenshot pasting (`Ctrl+V`).
+- Color tags and sticky top-pinning with instant debounced background auto-saving.
+- Granular family sharing (`shareNotes`) allowing family members to view read-only pages.
 
 ### Wealth tracking
 
@@ -87,9 +99,10 @@ Vaulty brings personal information into one place: organize important files, und
 | `/documents`                | Document overview                                                  |
 | `/documents/library`        | Document library                                                   |
 | `/folders`                  | Folder navigation                                                  |
-| `/credentials`              | Credential vault overview                                          |
+| `/credentials`              | Credential vault (App Pass, Bank Pass, Authenticator)              |
 | `/credentials/account`      | App login credentials                                              |
 | `/credentials/bank`         | Bank credentials                                                   |
+| `/notes`                    | OneNote-style flat notes, checklists, and resizable images         |
 | `/wealth`                   | Wealth overview                                                    |
 | `/wealth/accounts`          | Wealth accounts                                                    |
 | `/wealth/transactions`      | Transactions                                                       |
@@ -99,6 +112,7 @@ Vaulty brings personal information into one place: organize important files, und
 | `/reminders/calendar-view`  | Reminders calendar view                                            |
 | `/notifications`            | In-app notification center                                         |
 | `/family`                   | Family invitations and shared modules                              |
+| `/family/notes`             | Read-only notes shared by family members                           |
 | `/shared`                   | Items shared with the signed-in user                               |
 | `/search`                   | Search                                                             |
 | `/chat`                     | AI chat                                                            |
@@ -345,21 +359,11 @@ The repository contains 31 Vitest unit and integration test suites (238 tests) a
 
 ## Contributing
 
-Contributions should preserve the existing stack and security boundaries.
-
-1. Open an issue or discuss a significant change before starting large work.
-2. Create a focused branch.
-3. Follow [`.agents/AGENTS.md`](.agents/AGENTS.md) and [`.agents/CODING_CONVENTIONS.md`](.agents/CODING_CONVENTIONS.md).
-4. Add or update tests for behavior changes.
-5. Update `.agents/` documentation and `.env.example` when behavior/configuration changes.
-6. Run type-check, lint, tests, and build where practical.
-7. Submit a pull request with a concise description, testing evidence, migration notes, and screenshots for UI changes.
-
-Do not include secrets, real personal documents, database dumps, or production user data in issues or pull requests.
+Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow, coding conventions, and testing requirements. Report security issues privately — see [SECURITY.md](SECURITY.md). This project follows the [Contributor Covenant](CODE_OF_CONDUCT.md).
 
 ## License
 
-No `LICENSE` file is present in this repository archive. The project does not currently declare an open-source license. Do not assume permission to use, modify, or redistribute it until the maintainer adds a license.
+Vaulty is licensed under the [GNU General Public License v3.0](LICENSE) (GPL-3.0-only). You are free to use, modify, and distribute it under the terms of that license — including self-hosting and running modified versions — provided derivative works are also distributed under GPLv3 and source is made available to users interacting with it over a network.
 
 ## Recent implementation notes — PDF statements and date review
 

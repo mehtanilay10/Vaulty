@@ -7,7 +7,7 @@
 
 // Application Info
 export const APP_NAME = "Vaulty";
-export const APP_DESCRIPTION = "Personal and family information workspace";
+export const APP_DESCRIPTION = "Personal and family information space";
 
 // Crypto & Key Derivation (PBKDF2)
 export const PBKDF2_ITERATIONS = 600_000;

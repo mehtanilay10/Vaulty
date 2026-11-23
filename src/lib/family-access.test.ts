@@ -40,11 +40,13 @@ describe("family access isolation", () => {
       shareWealth: false,
       shareCredentials: true,
       shareReminders: false,
+      shareNotes: false,
     };
     expect(familyMembershipAllowsModule(membership, "documents")).toBe(true);
     expect(familyMembershipAllowsModule(membership, "wealth")).toBe(false);
     expect(familyMembershipAllowsModule(membership, "credentials")).toBe(true);
     expect(familyMembershipAllowsModule(membership, "reminders")).toBe(false);
+    expect(familyMembershipAllowsModule(membership, "notes")).toBe(false);
   });
 
   it("keeps memberships from two owners independent for the same member", async () => {

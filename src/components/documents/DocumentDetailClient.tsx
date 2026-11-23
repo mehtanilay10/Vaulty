@@ -30,6 +30,8 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Alert } from "@/components/ui/Alert";
+import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
+import { useFeedback } from "@/components/providers/FeedbackProvider";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
@@ -45,6 +47,9 @@ import {
   ExternalLink,
   Share2,
   Plus,
+  CloudOff,
+  Trash2,
+  Edit3,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { DocumentWithRelations } from "@/types";
@@ -120,6 +125,32 @@ function describeFetchError(error: unknown, fallback: string): string {
   return error instanceof Error && error.message ? error.message : fallback;
 }
 
+function safeFormatDate(dateStr: string | null | undefined, fallback = ""): string {
+  if (!dateStr) return fallback;
+  try {
+    const d = new Date(dateStr.includes("T") ? dateStr : `${dateStr}T12:00:00`);
+    if (isNaN(d.getTime())) {
+      const fallbackDate = new Date(dateStr);
+      return isNaN(fallbackDate.getTime())
+        ? fallback || dateStr
+        : fallbackDate.toLocaleDateString();
+    }
+    return d.toLocaleDateString();
+  } catch {
+    return fallback || dateStr;
+  }
+}
+
+function safeIsoDate(dateVal: string | Date | null | undefined): string {
+  if (!dateVal) return "";
+  try {
+    const d = new Date(dateVal);
+    return isNaN(d.getTime()) ? "" : d.toISOString().slice(0, 10);
+  } catch {
+    return "";
+  }
+}
+
 export function DocumentDetailClient({
   document,
   folders,
@@ -132,6 +163,7 @@ export function DocumentDetailClient({
   familyOwner?: { id: string; name: string | null; email: string | null } | null;
 }) {
   const router = useRouter();
+  const { toast, confirmAction } = useFeedback();
   const [activeTab, setActiveTab] = useState<"preview" | "summary" | "interpretation" | "text">(
     "preview",
   );
@@ -141,7 +173,35 @@ export function DocumentDetailClient({
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [isQaOpen, setIsQaOpen] = useState(false);
   const [isAddPageOpen, setIsAddPageOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const storageLabel = "Google Drive";
+
+  const handleDeleteDocument = async () => {
+    const confirmed = await confirmAction({
+      title: "Delete document?",
+      description: `Delete "${document.name}" permanently? This cannot be undone.`,
+      confirmLabel: "Delete document",
+      tone: "danger",
+    });
+    if (!confirmed) return;
+
+    setIsDeleting(true);
+    try {
+      const res = await fetch(`/api/documents/${document.id}`, {
+        method: "DELETE",
+        headers: csrfHeaders(),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to delete document.");
+      }
+      toast("Document deleted successfully.", "info");
+      router.push("/documents");
+    } catch (err) {
+      toast(err instanceof Error ? err.message : "Failed to delete document.", "error");
+      setIsDeleting(false);
+    }
+  };
 
   const aiStatus = document.aiProcessing?.status;
   const isAiPending = aiStatus === "QUEUED" || aiStatus === "PROCESSING" || isRetryingAi;
@@ -186,13 +246,16 @@ export function DocumentDetailClient({
       }
     | null
     | undefined;
-  const [reviewExpiryDate, setReviewExpiryDate] = useState(
-    extractedMetadata?.expiryDate ||
-      (document.expiryDate ? new Date(document.expiryDate).toISOString().slice(0, 10) : ""),
-  );
-  const [reviewImportantDates, setReviewImportantDates] = useState(
-    (extractedMetadata?.importantDates || []).map((item) => ({ ...item, date: item.date || "" })),
-  );
+  const [reviewExpiryDate, setReviewExpiryDate] = useState(() => {
+    if (extractedMetadata?.expiryDate) return extractedMetadata.expiryDate;
+    return safeIsoDate(document.expiryDate);
+  });
+  const [reviewImportantDates, setReviewImportantDates] = useState(() => {
+    const dates = Array.isArray(extractedMetadata?.importantDates)
+      ? extractedMetadata.importantDates
+      : [];
+    return dates.map((item) => ({ ...item, date: item?.date || "" }));
+  });
   const [savingDates, setSavingDates] = useState(false);
   const [dateReviewMessage, setDateReviewMessage] = useState<string | null>(null);
   const saveReviewedDates = async () => {
@@ -226,7 +289,7 @@ export function DocumentDetailClient({
   const extractedExpiryIsEffective = Boolean(
     extractedMetadata?.expiryDate &&
     document.expiryDate &&
-    new Date(document.expiryDate).toISOString().slice(0, 10) === extractedMetadata.expiryDate,
+    safeIsoDate(document.expiryDate) === extractedMetadata.expiryDate,
   );
 
   const refreshData = () => {
@@ -280,7 +343,7 @@ export function DocumentDetailClient({
           eyebrow="Document"
           title={document.name}
           truncateTitle
-          description={`Folder: ${document.folder?.name || "Unfiled"} · Storage: ${storageLabel} · Uploaded ${new Date(document.createdAt).toLocaleDateString()} · Owner: ${isOwner ? "You" : document.owner?.name || document.owner?.email}`}
+          description={`Folder: ${document.folder?.name || "Unfiled"} · Storage: ${storageLabel} · Uploaded ${safeFormatDate(document.createdAt ? String(document.createdAt) : null, "Recently")} · Owner: ${isOwner ? "You" : document.owner?.name || document.owner?.email || "Unknown"}`}
           icon={<FileText className="h-5 w-5" />}
           actions={
             <>
@@ -337,6 +400,29 @@ export function DocumentDetailClient({
                 <Download className="h-4 w-4 text-brand" />
                 <span>Download</span>
               </a>
+              {isOwner && (
+                <Button
+                  variant="secondary"
+                  onClick={() => setIsPropertiesOpen(true)}
+                  className="gap-1.5"
+                  title="Edit document properties"
+                >
+                  <Edit3 className="h-4 w-4" />
+                  <span>Edit</span>
+                </Button>
+              )}
+              {isOwner && (
+                <Button
+                  variant="secondary"
+                  onClick={handleDeleteDocument}
+                  disabled={isDeleting}
+                  className="gap-1.5 text-danger hover:bg-danger/10 hover:border-danger/30"
+                  title="Delete document"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  <span>{isDeleting ? "Deleting…" : "Delete"}</span>
+                </Button>
+              )}
               <Button
                 variant="ghost"
                 onClick={() => setIsPropertiesOpen(true)}
@@ -444,7 +530,7 @@ export function DocumentDetailClient({
                 </div>
               </div>
               <p className="mt-1 text-sm font-medium text-text-primary">
-                {new Date(`${extractedMetadata.expiryDate}T12:00:00`).toLocaleDateString()}
+                {safeFormatDate(extractedMetadata.expiryDate)}
               </p>
               {extractedMetadata.expiryDateEvidence && (
                 <p className="mt-1 text-[11px] text-text-muted">
@@ -517,9 +603,7 @@ export function DocumentDetailClient({
                       />
                     ) : (
                       <p className="text-xs text-text-muted">
-                        {item.date
-                          ? new Date(`${item.date}T12:00:00`).toLocaleDateString()
-                          : "Not set"}
+                        {item.date ? safeFormatDate(item.date, "Not set") : "Not set"}
                       </p>
                     )}
                   </div>
@@ -582,11 +666,68 @@ export function DocumentDetailClient({
               activeTab === "preview" ? "" : "hidden"
             }`}
           >
-            <DocumentViewer
-              fileUrl={fileProxyUrl}
-              mimeType={document.mimeType}
-              fileName={document.name}
-            />
+            <ErrorBoundary
+              fallback={
+                <div className="flex flex-col items-center justify-center p-8 text-center space-y-3 min-h-[360px]">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-danger/10 text-danger shadow-2xs">
+                    <CloudOff className="h-8 w-8" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-semibold text-text-primary">
+                      File not found on Google Drive
+                    </h3>
+                    <p className="text-xs text-text-muted max-w-md mt-1">
+                      The file for &ldquo;{document.name}&rdquo; could not be retrieved from your
+                      connected Google Drive storage. It may have been moved, renamed, or deleted in
+                      Drive.
+                    </p>
+                  </div>
+                  {document.thumbnailUrl && (
+                    <div className="mt-2 p-2 border border-border-subtle rounded-xl bg-surface max-w-xs shadow-2xs">
+                      <p className="text-[10px] text-text-muted mb-1 font-medium">
+                        Cached Thumbnail Preview
+                      </p>
+                      <img
+                        src={document.thumbnailUrl}
+                        alt={document.name}
+                        className="max-h-48 w-auto mx-auto object-contain rounded-lg border border-border-subtle"
+                      />
+                    </div>
+                  )}
+                  <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+                    <Button size="sm" variant="secondary" onClick={() => window.location.reload()}>
+                      <RefreshCw className="h-3.5 w-3.5 mr-1" />
+                      Retry Preview
+                    </Button>
+                    {isOwner && (
+                      <Button size="sm" onClick={() => setIsPropertiesOpen(true)}>
+                        <Edit3 className="h-3.5 w-3.5 mr-1" />
+                        Edit Properties
+                      </Button>
+                    )}
+                    {isOwner && (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={handleDeleteDocument}
+                        className="text-danger hover:bg-danger/10"
+                      >
+                        <Trash2 className="h-3.5 w-3.5 mr-1" />
+                        Delete Document
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              }
+            >
+              <DocumentViewer
+                fileUrl={fileProxyUrl}
+                mimeType={document.mimeType}
+                fileName={document.name}
+                thumbnailUrl={document.thumbnailUrl}
+                onEdit={isOwner ? () => setIsPropertiesOpen(true) : undefined}
+              />
+            </ErrorBoundary>
           </div>
 
           {activeTab === "summary" && (

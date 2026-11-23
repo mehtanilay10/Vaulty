@@ -14,6 +14,7 @@ export const FAMILY_MODULE_FIELD = {
   wealth: "shareWealth",
   credentials: "shareCredentials",
   reminders: "shareReminders",
+  notes: "shareNotes",
 } as const;
 
 export interface FamilyMembershipAccess {
@@ -23,6 +24,7 @@ export interface FamilyMembershipAccess {
   shareWealth: boolean;
   shareCredentials: boolean;
   shareReminders: boolean;
+  shareNotes: boolean;
 }
 
 export type FamilyAccessDenialReason = "NOT_FOUND" | "MODULE_NOT_SHARED";
@@ -36,7 +38,7 @@ export interface FamilyModuleAccessResult {
 export function familyMembershipAllowsModule(
   membership: Pick<
     FamilyMembershipAccess,
-    "shareDocuments" | "shareWealth" | "shareCredentials" | "shareReminders"
+    "shareDocuments" | "shareWealth" | "shareCredentials" | "shareReminders" | "shareNotes"
   >,
   module: FamilyModule,
 ): boolean {
@@ -56,6 +58,7 @@ export async function getFamilyMembershipForOwner(memberId: string, ownerId: str
       shareWealth: true,
       shareCredentials: true,
       shareReminders: true,
+      shareNotes: true,
     },
   });
 
@@ -69,6 +72,7 @@ export async function getFamilyMembershipForOwner(memberId: string, ownerId: str
     shareWealth: membership.shareWealth,
     shareCredentials: membership.shareCredentials,
     shareReminders: membership.shareReminders,
+    shareNotes: membership.shareNotes,
   };
 }
 

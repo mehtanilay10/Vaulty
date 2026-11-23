@@ -87,14 +87,30 @@ export class GoogleDriveStorageProvider implements StorageProvider {
     return google.drive({ version: "v3", auth: oauth2Client });
   }
 
-  private toStream(data: Buffer | Blob): Readable | Blob {
+  private async toStream(data: Buffer | Blob): Promise<Readable> {
     if (Buffer.isBuffer(data)) {
       return Readable.from(data);
     }
-    if (data instanceof Blob) {
-      return data as unknown as Blob;
+    if (data instanceof Uint8Array) {
+      return Readable.from(Buffer.from(data.buffer, data.byteOffset, data.byteLength));
     }
-    return Readable.from(Buffer.from(data as unknown as ArrayBuffer));
+    if (data instanceof ArrayBuffer) {
+      return Readable.from(Buffer.from(data));
+    }
+    const streamData = data as unknown as { stream?: () => unknown };
+    const readableWithWeb = Readable as unknown as { fromWeb?: (stream: unknown) => Readable };
+    if (typeof streamData?.stream === "function" && typeof readableWithWeb.fromWeb === "function") {
+      try {
+        return readableWithWeb.fromWeb((data as Blob).stream());
+      } catch {
+        // Fallback to arrayBuffer below
+      }
+    }
+    if (typeof (data as Blob)?.arrayBuffer === "function") {
+      const ab = await (data as Blob).arrayBuffer();
+      return Readable.from(Buffer.from(ab));
+    }
+    return Readable.from(Buffer.from(data as unknown as Uint8Array | string));
   }
 
   private async ensureValidToken(): Promise<string> {
@@ -334,7 +350,7 @@ export class GoogleDriveStorageProvider implements StorageProvider {
       } as drive_v3.Schema$File,
       media: {
         mimeType: contentType,
-        body: this.toStream(options.data),
+        body: await this.toStream(options.data),
       },
       fields: "id,name,size,modifiedTime,md5Checksum,version,webViewLink,parents",
     });
@@ -355,7 +371,7 @@ export class GoogleDriveStorageProvider implements StorageProvider {
       } as drive_v3.Schema$File,
       media: {
         mimeType: contentType,
-        body: this.toStream(options.data),
+        body: await this.toStream(options.data),
       },
       fields: "id,name,size,modifiedTime,md5Checksum,version,webViewLink,parents",
     });
@@ -439,7 +455,7 @@ export class GoogleDriveStorageProvider implements StorageProvider {
       requestBody: body,
       media: {
         mimeType: options.mimeType,
-        body: this.toStream(options.data as Buffer | Blob),
+        body: await this.toStream(options.data as Buffer | Blob),
       },
       fields: "id,name,mimeType,size,modifiedTime,md5Checksum,version,webViewLink,parents",
     });

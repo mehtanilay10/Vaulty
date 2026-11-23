@@ -13,7 +13,10 @@ interface PasswordVaultContextType {
 
 const PasswordVaultContext = createContext<PasswordVaultContextType | undefined>(undefined);
 
-// Store the key and master password in memory only (not persisted for security)
+const SESSION_VAULT_KEY = "vaulty_session_vault_key";
+const SESSION_UNLOCKED_KEY = "vaulty_app_lock_session_unlocked";
+
+// Store the key and master password in memory only (not persisted long-term for security)
 let memoryKey: CryptoKey | null = null;
 let memorySalt: string | null = null;
 let memoryMasterPassword: string | null = null;
@@ -22,6 +25,11 @@ export function clearMemoryVault(): void {
   memoryKey = null;
   memorySalt = null;
   memoryMasterPassword = null;
+  if (typeof window !== "undefined") {
+    try {
+      sessionStorage.removeItem(SESSION_VAULT_KEY);
+    } catch {}
+  }
 }
 
 export function PasswordVaultProvider({ children }: { children: ReactNode }) {
@@ -34,13 +42,18 @@ export function PasswordVaultProvider({ children }: { children: ReactNode }) {
     memoryKey = null;
     memorySalt = null;
     memoryMasterPassword = null;
+    if (typeof window !== "undefined") {
+      try {
+        sessionStorage.removeItem(SESSION_VAULT_KEY);
+      } catch {}
+    }
     setEncryptionKey(null);
     setVaultSalt(null);
     setMasterPassword(null);
     setIsUnlocked(false);
   }, []);
 
-  const unlockVault = (key: CryptoKey, salt: string, masterPassword: string) => {
+  const unlockVault = useCallback((key: CryptoKey, salt: string, masterPassword: string) => {
     memoryKey = key;
     memorySalt = salt;
     memoryMasterPassword = masterPassword;
@@ -48,7 +61,40 @@ export function PasswordVaultProvider({ children }: { children: ReactNode }) {
     setVaultSalt(salt);
     setMasterPassword(masterPassword);
     setIsUnlocked(true);
-  };
+
+    if (typeof window !== "undefined") {
+      try {
+        crypto.subtle
+          .exportKey("jwk", key)
+          .then((jwk) => {
+            sessionStorage.setItem(SESSION_VAULT_KEY, JSON.stringify(jwk));
+          })
+          .catch(() => {});
+      } catch {}
+    }
+  }, []);
+
+  // Restore session vault key if already unlocked in this browser session
+  useEffect(() => {
+    if (memoryKey || typeof window === "undefined") return;
+    try {
+      const isSessionUnlocked = sessionStorage.getItem(SESSION_UNLOCKED_KEY) === "true";
+      const storedJwkStr = sessionStorage.getItem(SESSION_VAULT_KEY);
+      if (isSessionUnlocked && storedJwkStr) {
+        const jwk = JSON.parse(storedJwkStr);
+        crypto.subtle
+          .importKey("jwk", jwk, { name: "AES-GCM", length: 256 }, true, ["encrypt", "decrypt"])
+          .then((key) => {
+            memoryKey = key;
+            setEncryptionKey(key);
+            setIsUnlocked(true);
+          })
+          .catch(() => {
+            sessionStorage.removeItem(SESSION_VAULT_KEY);
+          });
+      }
+    } catch {}
+  }, []);
 
   // Auto-lock vault after 5 minutes of inactivity
   useEffect(() => {
@@ -76,27 +122,6 @@ export function PasswordVaultProvider({ children }: { children: ReactNode }) {
       events.forEach((event) => window.removeEventListener(event, resetTimer));
     };
   }, [isUnlocked, lockVault]);
-
-  // Clear memory state on unmount or hot reload lifecycle events
-  useEffect(() => {
-    return () => {
-      clearMemoryVault();
-    };
-  }, []);
-
-  // Lock vault on page unload/refresh
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      lockVault();
-      clearMemoryVault();
-    };
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
-
-    return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-    };
-  }, [lockVault]);
 
   return (
     <PasswordVaultContext.Provider

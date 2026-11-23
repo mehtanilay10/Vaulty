@@ -111,6 +111,16 @@ export function AppLockScreen() {
         if (!success) {
           setError("Authentication failed. Please try again.");
         } else {
+          const pinHash = getStoredPinHash();
+          const wrapped = getStoredWrappedVaultKey();
+          if (pinHash && wrapped) {
+            try {
+              const key = await unwrapCryptoKey(pinHash, wrapped);
+              unlockVault(key, "", "");
+            } catch {
+              // Ignore unwrap error on WebAuthn
+            }
+          }
           unlock();
         }
       }
@@ -119,7 +129,7 @@ export function AppLockScreen() {
     } finally {
       setLoading(false);
     }
-  }, [isSetup, setupWebAuthn, unlockWithWebAuthn, unlock]);
+  }, [isSetup, setupWebAuthn, unlockWithWebAuthn, unlock, unlockVault]);
 
   const handleMasterPasswordUnlock = useCallback(async () => {
     setLoading(true);
@@ -261,11 +271,19 @@ export function AppLockScreen() {
 
   // Handle keyboard input on desktop without popping up mobile virtual keyboard
   useEffect(() => {
+    // Only intercept when AppLock is actually active/displayed
+    if (status !== "locked" && status !== "idle") return;
     if (mode !== "pin" && mode !== "confirm-pin") return;
 
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
-      // Don't intercept if user is typing in another input
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+      // Don't intercept if user is typing in another input, textarea, or contentEditable
+      const target = e.target as HTMLElement | null;
+      if (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target?.isContentEditable ||
+        Boolean(target?.closest?.("[contenteditable='true']"))
+      ) {
         return;
       }
 
@@ -294,7 +312,7 @@ export function AppLockScreen() {
 
     window.addEventListener("keydown", handleGlobalKeyDown);
     return () => window.removeEventListener("keydown", handleGlobalKeyDown);
-  }, [mode, handlePinSubmit]);
+  }, [status, mode, handlePinSubmit]);
 
   if (status === "unlocked" || providerLoading) return null;
 

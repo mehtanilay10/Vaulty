@@ -13,6 +13,7 @@ import {
   X,
   LayoutDashboard,
   Loader2,
+  StickyNote,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -71,6 +72,14 @@ const QUICK_NAV: SearchItem[] = [
     title: "Reminders",
     subtitle: "Deadlines, renewals, and payments",
     url: "/reminders",
+    type: "nav",
+    meta: "Page",
+  },
+  {
+    id: "nav-notes",
+    title: "Notes & Lists",
+    subtitle: "OneNote-style flat pages, to-dos, and attachments",
+    url: "/notes",
     type: "nav",
     meta: "Page",
   },
@@ -232,7 +241,7 @@ export function CommandPalette() {
     }
   };
 
-  const getItemIcon = (type: SearchItem["type"]) => {
+  const getItemIcon = (type: SearchItem["type"], url?: string) => {
     switch (type) {
       case "document":
         return <FileText className="h-4 w-4 text-brand-600" />;
@@ -245,6 +254,7 @@ export function CommandPalette() {
       case "reminder":
         return <BellRing className="h-4 w-4 text-danger" />;
       case "nav":
+        if (url?.startsWith("/notes")) return <StickyNote className="h-4 w-4 text-teal-500" />;
         return <LayoutDashboard className="h-4 w-4 text-text-muted" />;
     }
   };
@@ -328,7 +338,7 @@ export function CommandPalette() {
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-surface-muted border border-border-subtle group-hover:border-border">
-                        {getItemIcon(item.type)}
+                        {getItemIcon(item.type, item.url)}
                       </div>
                       <div className="min-w-0">
                         <div className="font-medium truncate">{item.title}</div>

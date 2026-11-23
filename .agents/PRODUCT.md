@@ -42,24 +42,50 @@ Vaulty is a private personal and family information workspace. It combines docum
 
 1. New user has an unconfigured `PasswordVault`.
 2. User sets a master password; browser derives KEK (PBKDF2-HMAC-SHA256, 600,000 iterations) and encrypts credentials with version 2 AES-256-GCM envelope encryption.
-3. Dedicated routes:
-   - `/credentials`: Overview and combined management.
+3. Dedicated routes and tabs:
+   - `/credentials`: Overview with 3 dedicated tabs: **App Pass**, **Bank Pass**, and **Authenticator**.
    - `/credentials/account`: App login credentials.
    - `/credentials/bank`: Bank and financial credentials.
-4. **Brute-Force Lockout Protection:**
+4. **Two-Factor Authenticator (2FA / TOTP):**
+   - Microsoft/Google Authenticator style 2-step verification codes with animated 30s countdown timer and live 6-digit TOTP codes.
+   - QR code scanner modal supporting live camera stream, uploaded QR images (`jsQR`), and manual Base32 secret key entry.
+   - Computes standard RFC 6238 TOTP using Web Crypto API (`HMAC-SHA1`).
+   - TOTP secret stored in `AppCredential.totpSecret`, protected under client-side envelope encryption with user's master password.
+   - Excluded from family sharing for zero-trust credential security.
+5. **Brute-Force Lockout Protection:**
    - Both `/api/passwords/unlock` and `/api/passwords/change-master-password` track failed attempts.
    - After 5 consecutive failed attempts (`MAX_FAILED_ATTEMPTS`), the vault is locked for 15 minutes (`LOCK_DURATION_MINUTES`).
    - Failed attempts log `MASTER_PASSWORD_CHANGE_FAILED` or `VAULT_UNLOCK_FAILED` in `PasswordAuditLog`.
-5. **App Lock Convenience & Cross-Device PIN Sync:**
+6. **App Lock Convenience & Cross-Device PIN Sync:**
    - Setting a 4-digit PIN syncs `sha256(pin)` and an AES-GCM wrapped vault key to `PasswordVault` (`appLockPinHash`, `appLockWrappedKey`) via `/api/user/app-lock`.
    - Entering the PIN on any device unlocks App Lock and transparently un-wraps the credential vault without requiring master password re-entry.
    - **Session Grace Period:** App Lock maintains `LAST_ACTIVE_KEY` in `sessionStorage` with a 5-minute inactivity window. Hard reloads and brief tab switching preserve unlocked state.
-6. **Zero-Knowledge Recovery Re-Keying:**
+7. **Zero-Knowledge Recovery Re-Keying:**
    - Populated vaults require the offline recovery key and security answers to reset a forgotten master password (`POST /api/passwords/recovery/rekey`). The browser unwraps the KEK, decrypts existing credentials in memory, re-encrypts with a new master password, and commits atomically.
    - Recovery routes (`/api/passwords/recovery/verify`, `/api/passwords/recovery/rekey`) are token-gated by the emailed reset token, allowing recovery even if an active web session is not present.
    - Unconfigured vaults block resets to prevent catastrophic data loss.
-7. **Input Validation:**
+8. **Input Validation:**
    - Credential creation and updates enforce strict Zod schemas with character caps (envelope ciphertext capped at 100,000 characters).
+
+### Notes & Checklists (OneNote-Style Flat Pages)
+
+- **Flat Page Organization:** Simple, fast flat pages (`/notes`) without cumbersome notebook hierarchies.
+- **Rich Text Canvas:**
+  - Formatting toolbar: Bold, Italic, Underline, Strikethrough, Highlight (yellow marker), Headings (H1, H2, Normal), Bulleted (`<ul>`) and Numbered (`<ol>`) lists, Blockquotes, and Dividing lines (`<hr>`).
+  - Native list bullets and numbers guaranteed via dedicated `.onenote-editor` CSS rules.
+- **Interactive Checkboxes / To-Do Lists:**
+  - Adding a to-do always inserts on a fresh new line, even if cursor is in the middle of existing text.
+  - Pressing `Enter` within a to-do automatically splits text at the cursor and creates the next to-do item on the line below.
+  - Pressing `Backspace` on an empty to-do cleanly converts it back into a standard paragraph line.
+  - Checking a box applies strikethrough styling and persists state in real time.
+- **Inline Resizable Images:**
+  - Preset quick-resizing: `25%` (Small), `50%` (Medium), `75%` (Large), `100%` (Full width).
+  - Floating image alignment: Left, Center, Right.
+  - Image removal action.
+  - Pasting screenshots from clipboard (`Ctrl+V`) and drag & drop onto the canvas.
+- **Color Accents & Pinning:** 7 color themes (Default, Teal, Blue, Purple, Emerald, Amber, Rose) and sticky top pinning.
+- **Auto-Saving:** Debounced automatic background persistence to PostgreSQL (`/api/notes/[id]`) with live status indicator ("All changes saved", "Saving...", "Unsaved changes").
+- **Family Sharing:** Granular `shareNotes` permission in `FamilyMembership` allows family members to view read-only pages at `/family/notes` and `/family/[ownerId]/notes`.
 
 ### Wealth Management & Multi-Currency Ledger
 
@@ -122,30 +148,32 @@ Vaulty is a private personal and family information workspace. It combines docum
 
 ## 3. Product Surfaces & Route Inventory
 
-| Route                       | Purpose              | Key Behaviors                                                                                                              |
-| :-------------------------- | :------------------- | :------------------------------------------------------------------------------------------------------------------------- |
-| `/`                         | Landing page         | Marketing overview, capabilities, privacy boundaries, open vault CTA                                                       |
-| `/dashboard`                | Personal workspace   | Document counts, expiry alerts, wealth net worth by currency, reminders                                                    |
-| `/documents`                | Documents overview   | Recent documents, category breakdowns, upload trigger                                                                      |
-| `/documents/library`        | Document library     | Owned vault documents only, hover quick actions, filter by tag/folder                                                      |
-| `/documents/[id]`           | Document detail      | Preview controls, AI summary, interpretation, extracted dates, Q&A                                                         |
-| `/folders`, `/folders/[id]` | Folders              | Hierarchical folder navigation, folder share management                                                                    |
-| `/credentials`              | Credentials overview | Vault unlock, search, active tabs for app and bank credentials                                                             |
-| `/credentials/account`      | App credentials      | Direct subroute opening App Logins tab and creation form                                                                   |
-| `/credentials/bank`         | Bank credentials     | Direct subroute opening Bank Credentials tab and creation form                                                             |
-| `/wealth`                   | Wealth overview      | Net worth by currency, asset/liability cards, quick actions                                                                |
-| `/wealth/accounts`          | Wealth accounts      | Account list, filter by status/type, bulk delete, add account                                                              |
-| `/wealth/accounts/[id]`     | Account detail       | Chronological transactions, running balances, account merge                                                                |
-| `/wealth/transactions`      | Transactions         | Global transaction ledger, date/category filters                                                                           |
-| `/wealth/statements/import` | Statement import     | CSV/XLSX/PDF statement upload, parse, and review flow                                                                      |
-| `/email-sync`               | Email Sync           | Multi-module inbox automation: Gmail/Outlook connections, transactions review queue, document scan, and due date reminders |
-| `/wealth/email-sync`        | Legacy redirect      | Automatically redirects to `/email-sync`                                                                                   |
-| `/reminders`                | Reminders list       | Custom reminders, upcoming expiries, channel preferences                                                                   |
-| `/reminders/calendar-view`  | Reminders calendar   | Monthly visual calendar of upcoming due dates and expiries                                                                 |
-| `/notifications`            | Notifications        | In-app notification center, Web Push subscription toggle                                                                   |
-| `/family`                   | Family sharing       | Member invitations, module permissions, shared family vaults                                                               |
-| `/shared`                   | Shared with me       | Documents and folders shared directly with the user                                                                        |
-| `/search`                   | Full search          | 250ms debounced search across document metadata and text                                                                   |
-| `/chat`                     | AI chat              | Grounded conversational Q&A across user's document vault                                                                   |
-| `/settings`                 | Settings             | Profile, App Lock & PIN, recovery setup, Drive, PDF passwords, takeout                                                     |
-| `/share/[token]`            | Public share         | Token-authenticated public document viewer with optional password/expiry                                                   |
+| Route                       | Purpose             | Key Behaviors                                                                                                              |
+| :-------------------------- | :------------------ | :------------------------------------------------------------------------------------------------------------------------- |
+| `/`                         | Landing page        | Marketing overview, capabilities, privacy boundaries, open vault CTA                                                       |
+| `/dashboard`                | Your Space overview | Document counts, expiry alerts, wealth net worth by currency, reminders                                                    |
+| `/documents`                | Documents overview  | Recent documents, category breakdowns, upload trigger                                                                      |
+| `/documents/library`        | Document library    | Owned vault documents only, hover quick actions, filter by tag/folder                                                      |
+| `/documents/[id]`           | Document detail     | Preview controls, AI summary, interpretation, extracted dates, Q&A                                                         |
+| `/folders`, `/folders/[id]` | Folders             | Hierarchical folder navigation, folder share management                                                                    |
+| `/credentials`              | Credentials & 2FA   | Vault unlock, search, active tabs for App Pass, Bank Pass, and Authenticator                                               |
+| `/credentials/account`      | App credentials     | Direct subroute opening App Logins tab and creation form                                                                   |
+| `/credentials/bank`         | Bank credentials    | Direct subroute opening Bank Credentials tab and creation form                                                             |
+| `/notes`                    | Notes & Checklists  | OneNote-style flat pages, rich text toolbar, checkboxes, resizable images, auto-save                                       |
+| `/wealth`                   | Wealth overview     | Net worth by currency, asset/liability cards, quick actions                                                                |
+| `/wealth/accounts`          | Wealth accounts     | Account list, filter by status/type, bulk delete, add account                                                              |
+| `/wealth/accounts/[id]`     | Account detail      | Chronological transactions, running balances, account merge                                                                |
+| `/wealth/transactions`      | Transactions        | Global transaction ledger, date/category filters                                                                           |
+| `/wealth/statements/import` | Statement import    | CSV/XLSX/PDF statement upload, parse, and review flow                                                                      |
+| `/email-sync`               | Email Sync          | Multi-module inbox automation: Gmail/Outlook connections, transactions review queue, document scan, and due date reminders |
+| `/wealth/email-sync`        | Legacy redirect     | Automatically redirects to `/email-sync`                                                                                   |
+| `/reminders`                | Reminders list      | Custom reminders, upcoming expiries, channel preferences                                                                   |
+| `/reminders/calendar-view`  | Reminders calendar  | Monthly visual calendar of upcoming due dates and expiries                                                                 |
+| `/notifications`            | Notifications       | In-app notification center, Web Push subscription toggle                                                                   |
+| `/family`                   | Family sharing      | Member invitations, module permissions, shared family vaults                                                               |
+| `/family/notes`             | Family Notes        | Read-only notes, checklists, and pages shared by family members                                                            |
+| `/shared`                   | Shared with me      | Documents and folders shared directly with the user                                                                        |
+| `/search`                   | Full search         | 250ms debounced search across document metadata and text                                                                   |
+| `/chat`                     | AI chat             | Grounded conversational Q&A across user's document vault                                                                   |
+| `/settings`                 | Settings            | Profile, App Lock & PIN, recovery setup, Drive, PDF passwords, takeout                                                     |
+| `/share/[token]`            | Public share        | Token-authenticated public document viewer with optional password/expiry                                                   |

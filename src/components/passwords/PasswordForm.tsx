@@ -25,6 +25,7 @@ import {
 } from "@/lib/envelope-crypto";
 import { csrfHeaders } from "@/lib/csrf-client";
 import { Credential } from "@/types/credentials";
+import { parseOtpAuthUri } from "@/lib/totp";
 
 type CredentialType = "APP" | "BANK";
 
@@ -82,6 +83,7 @@ export function PasswordForm({
     url: "",
     username: "",
     password: "",
+    totpSecret: "",
     netbankPassword: "",
     atmPin: "",
     upiPin: "",
@@ -208,6 +210,7 @@ export function PasswordForm({
         url: "",
         username: "",
         password: "",
+        totpSecret: "",
         netbankPassword: "",
         atmPin: "",
         upiPin: "",
@@ -398,7 +401,64 @@ export function PasswordForm({
         {renderPasswordField("Username", "username", true)}
 
         {credentialType === "APP" ? (
-          renderPasswordField("Password", "password", true)
+          <>
+            {renderPasswordField("Password", "password", true)}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="totpSecret">Authenticator / TOTP Key</Label>
+                <span className="text-[11px] text-text-muted">Optional 2FA</span>
+              </div>
+              <div className="relative">
+                <Input
+                  id="totpSecret"
+                  type={showPasswords.totpSecret ? "text" : "password"}
+                  value={formData.totpSecret}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    const parsed = parseOtpAuthUri(val);
+                    setFormData({
+                      ...formData,
+                      totpSecret: parsed?.secret ? parsed.secret : val,
+                    });
+                  }}
+                  placeholder="Paste Base32 key or otpauth:// URI"
+                  className="pr-20 font-mono text-xs"
+                />
+                <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1">
+                  <button
+                    type="button"
+                    onClick={() => togglePasswordVisibility("totpSecret")}
+                    className="p-1 text-text-muted hover:text-text-primary"
+                    title={showPasswords.totpSecret ? "Hide TOTP key" : "Show TOTP key"}
+                  >
+                    {showPasswords.totpSecret ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                  {formData.totpSecret && (
+                    <button
+                      type="button"
+                      onClick={() => handleCopy(formData.totpSecret, "totpSecret")}
+                      className="p-1 text-text-muted hover:text-text-primary"
+                      title="Copy to clipboard"
+                    >
+                      {copied.totpSecret ? (
+                        <Check className="h-4 w-4 text-success" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </button>
+                  )}
+                </div>
+              </div>
+              <p className="text-[11px] text-text-muted">
+                Paste raw Base32 secret or otpauth:// URI to generate live 6-digit verification
+                codes.
+              </p>
+            </div>
+          </>
         ) : (
           <>
             {renderPasswordField("Netbank Password", "netbankPassword")}

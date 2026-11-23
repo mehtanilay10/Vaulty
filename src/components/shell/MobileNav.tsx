@@ -20,6 +20,7 @@ import {
   ChevronRight,
   Bell,
   Camera,
+  StickyNote,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -36,7 +37,7 @@ export function MobileNav({
   const router = useRouter();
   const [moreOpen, setMoreOpen] = useState(false);
 
-  // The 4 main workspace pillars directly accessible on thumb reach
+  // The 4 main your space pillars directly accessible on thumb reach
   const navTabs = [
     { name: "Home", href: "/dashboard", icon: LayoutDashboard },
     { name: "Documents", href: "/documents", icon: FileText },
@@ -52,6 +53,13 @@ export function MobileNav({
       href: "/reminders",
       icon: BellRing,
       accent: "text-amber-500 bg-amber-500/10 border-amber-500/20",
+    },
+    {
+      name: "Notes & Lists",
+      desc: "OneNote-style pages & to-dos",
+      href: "/notes",
+      icon: StickyNote,
+      accent: "text-teal-500 bg-teal-500/10 border-teal-500/20",
     },
     {
       name: "Family Sharing",
@@ -106,7 +114,7 @@ export function MobileNav({
             id="mobile-more-menu"
             role="dialog"
             aria-modal="true"
-            aria-label="Workspace & tools menu"
+            aria-label="Your Space & tools menu"
             className="w-full max-h-[85vh] overflow-y-auto rounded-t-2xl border-t border-border-subtle bg-surface-elevated p-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-fluent-64"
             onClick={(e) => e.stopPropagation()}
           >
@@ -116,7 +124,7 @@ export function MobileNav({
             <div className="mb-4 flex items-center justify-between">
               <div>
                 <h2 className="text-base font-semibold tracking-tight text-text-primary">
-                  Workspace & Tools
+                  Your Space & Tools
                 </h2>
                 <p className="text-xs text-text-muted">Quick access to all areas of your safe</p>
               </div>
@@ -160,7 +168,7 @@ export function MobileNav({
             )}
 
             {/* Quick add actions grid */}
-            <div className="mb-4 grid grid-cols-4 gap-2">
+            <div className="mb-4 grid grid-cols-3 gap-2">
               <button
                 type="button"
                 onClick={() => {
@@ -173,6 +181,28 @@ export function MobileNav({
               >
                 <Camera className="mb-1 h-4 w-4 text-brand" />
                 <span className="text-[11px] font-medium text-text-primary">+ Scan Doc</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMoreOpen(false);
+                  router.push("/credentials?tab=AUTH&action=new");
+                }}
+                className="flex flex-col items-center justify-center rounded-xl border border-border-subtle bg-surface-muted/50 p-2.5 text-center transition-colors hover:bg-surface-muted"
+              >
+                <ShieldCheck className="mb-1 h-4 w-4 text-brand" />
+                <span className="text-[11px] font-medium text-text-primary">+ 2FA Auth</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMoreOpen(false);
+                  router.push("/notes?action=new");
+                }}
+                className="flex flex-col items-center justify-center rounded-xl border border-border-subtle bg-surface-muted/50 p-2.5 text-center transition-colors hover:bg-surface-muted"
+              >
+                <StickyNote className="mb-1 h-4 w-4 text-brand" />
+                <span className="text-[11px] font-medium text-text-primary">+ New Note</span>
               </button>
               <button
                 type="button"

@@ -197,7 +197,8 @@ export function DocumentsClient({
       const matchesSearch = query
         ? doc.name.toLowerCase().includes(query) ||
           doc.folder?.name?.toLowerCase().includes(query) ||
-          doc.tags.some((t) => t.tag.name.toLowerCase().includes(query))
+          (Array.isArray(doc.tags) &&
+            doc.tags.some((t) => t?.tag?.name?.toLowerCase().includes(query)))
         : true;
       const matchesType =
         typeFilter === "all" ||
@@ -596,10 +597,25 @@ export function DocumentsClient({
                   </p>
                   {doc.expiryDate && (
                     <p
-                      className={`mb-2 text-[11px] ${new Date(doc.expiryDate).getTime() < now ? "text-danger" : "text-warning"}`}
+                      className={`mb-2 text-[11px] ${(() => {
+                        const t = new Date(doc.expiryDate).getTime();
+                        return !isNaN(t) && t < now ? "text-danger" : "text-warning";
+                      })()}`}
                     >
-                      {new Date(doc.expiryDate).getTime() < now ? "Expired" : "Expires"}{" "}
-                      {new Date(doc.expiryDate).toLocaleDateString()}
+                      {(() => {
+                        const t = new Date(doc.expiryDate).getTime();
+                        return !isNaN(t) && t < now ? "Expired" : "Expires";
+                      })()}{" "}
+                      {(() => {
+                        try {
+                          const d = new Date(doc.expiryDate);
+                          return isNaN(d.getTime())
+                            ? String(doc.expiryDate)
+                            : d.toLocaleDateString();
+                        } catch {
+                          return String(doc.expiryDate);
+                        }
+                      })()}
                     </p>
                   )}
 

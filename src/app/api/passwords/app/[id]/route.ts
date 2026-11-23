@@ -4,6 +4,18 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getVaultAccess } from "@/lib/vault-access";
 import { validateCSRFRequest } from "@/lib/csrf";
+import { z } from "zod";
+
+const updateAppCredentialSchema = z.object({
+  name: z.string().min(1).max(200).optional(),
+  url: z.string().max(2000).nullish(),
+  username: z.string().min(1).max(320).optional(),
+  password: z.string().min(1).max(100000).optional(),
+  totpSecret: z.string().max(100000).nullish(),
+  icon: z.string().max(100).nullish(),
+  iconColor: z.string().max(50).nullish(),
+  isFavorite: z.boolean().optional(),
+});
 
 // PUT - Update app credential
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -15,7 +27,13 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     const body = await readJsonRecord(req);
     if (!body) return NextResponse.json({ error: "Invalid JSON request body." }, { status: 400 });
-    const { name, url, username, password, icon, iconColor, isFavorite } = body;
+
+    const parsed = updateAppCredentialSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid credential fields." }, { status: 400 });
+    }
+
+    const { name, url, username, password, totpSecret, icon, iconColor, isFavorite } = parsed.data;
     const { id } = await params;
 
     // Validate CSRF token
@@ -51,6 +69,12 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         url: url !== undefined ? (url && url !== "" ? url : null) : credential.url,
         username: username !== undefined ? username : credential.username,
         password: password !== undefined ? password : credential.password,
+        totpSecret:
+          totpSecret !== undefined
+            ? totpSecret && totpSecret !== ""
+              ? totpSecret
+              : null
+            : credential.totpSecret,
         isFavorite: isFavorite !== undefined ? isFavorite : credential.isFavorite,
         icon: icon !== undefined ? (icon && icon !== "" ? icon : null) : credential.icon,
         iconColor:

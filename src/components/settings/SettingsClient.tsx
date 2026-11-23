@@ -817,7 +817,7 @@ export function SettingsClient({
   return (
     <>
       <PageHeader
-        eyebrow="Workspace preferences"
+        eyebrow="Your Space preferences"
         title="Account & Vault Settings"
         description="Manage your identity, security, storage connection, and AI processing."
         icon={<User className="h-5 w-5" />}

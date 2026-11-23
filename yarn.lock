@@ -3796,13 +3796,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"effect@npm:3.21.0":
-  version: 3.21.0
-  resolution: "effect@npm:3.21.0"
+"effect@npm:^3.22.1":
+  version: 3.22.5
+  resolution: "effect@npm:3.22.5"
   dependencies:
     "@standard-schema/spec": "npm:^1.0.0"
     fast-check: "npm:^3.23.1"
-  checksum: 10c0/665cb8fd0862f334eeb1d0fbadb14913de358948c08929bfd079fd38903132ba54daa99da4c453f738c318fa5ce0de862bf8db08974d97a05d868f6bc685eb50
+  checksum: 10c0/afa7bcf16087e50bdec37334376a396f6515ab4a5045841f88bd16fec5848de8e531f83d91dc3282fb109419660b40e50cacfbe3f06d6e449c02182f7f1f9578
   languageName: node
   linkType: hard
 
@@ -5583,6 +5583,13 @@ __metadata:
   bin:
     json5: lib/cli.js
   checksum: 10c0/5a04eed94810fa55c5ea138b2f7a5c12b97c3750bc63d11e511dcecbfef758003861522a070c2272764ee0f4e3e323862f386945aeb5b85b87ee43f084ba586c
+  languageName: node
+  linkType: hard
+
+"jsqr@npm:^1.4.0":
+  version: 1.4.0
+  resolution: "jsqr@npm:1.4.0"
+  checksum: 10c0/69fbfe4c866a04c97b377901a166544a583bfc76b838c275efa9af058d64e5612267079b1e96ea7b6434385803571b1c6a97a43c85f4373e8afa4f4034fc916c
   languageName: node
   linkType: hard
 
@@ -8751,6 +8758,7 @@ __metadata:
     fflate: "npm:^0.8.3"
     googleapis: "npm:^190.0.0"
     husky: "npm:^9.1.7"
+    jsqr: "npm:^1.4.0"
     lint-staged: "npm:^17.6.0"
     lucide-react: "npm:^1.70.0"
     mermaid: "npm:^12.3.0"

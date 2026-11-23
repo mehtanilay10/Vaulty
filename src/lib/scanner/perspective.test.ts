@@ -4,6 +4,7 @@ import {
   mapDestinationToSource,
   calculateOutputDimensions,
   detectDefaultQuad,
+  detectDocumentQuad,
   sampleBilinear,
   type QuadPoints,
 } from "./perspective";
@@ -118,5 +119,45 @@ describe("perspective scanner math", () => {
     // Expected R: (100 + 200 + 0 + 100) / 4 = 100
     expect(out[0]).toBe(100);
     expect(out[3]).toBe(255);
+  });
+
+  it("detects document quad from high-contrast rectangular document on background", () => {
+    // 100x100 canvas with a 60x60 white document centered at (20, 20) on dark background (20)
+    const w = 100;
+    const h = 100;
+    const data = new Uint8ClampedArray(w * h * 4);
+
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const idx = (y * w + x) * 4;
+        const isDoc = x >= 20 && x <= 80 && y >= 20 && y <= 80;
+        const val = isDoc ? 240 : 30;
+        data[idx] = val;
+        data[idx + 1] = val;
+        data[idx + 2] = val;
+        data[idx + 3] = 255;
+      }
+    }
+
+    const detected = detectDocumentQuad({ data, width: w, height: h });
+    expect(detected.topLeft.x).toBeCloseTo(20, -1);
+    expect(detected.topLeft.y).toBeCloseTo(20, -1);
+    expect(detected.topRight.x).toBeCloseTo(80, -1);
+    expect(detected.topRight.y).toBeCloseTo(20, -1);
+    expect(detected.bottomRight.x).toBeCloseTo(80, -1);
+    expect(detected.bottomRight.y).toBeCloseTo(80, -1);
+    expect(detected.bottomLeft.x).toBeCloseTo(20, -1);
+    expect(detected.bottomLeft.y).toBeCloseTo(80, -1);
+  });
+
+  it("falls back to default quad when image lacks document contrast", () => {
+    const w = 50;
+    const h = 50;
+    const data = new Uint8ClampedArray(w * h * 4);
+    data.fill(128); // uniform grey
+
+    const detected = detectDocumentQuad({ data, width: w, height: h });
+    const defaultQuad = detectDefaultQuad(w, h, 0.05);
+    expect(detected).toEqual(defaultQuad);
   });
 });

@@ -24,7 +24,7 @@ import { Select } from "@/components/ui/Select";
 import { Label } from "@/components/ui/Label";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { Alert } from "@/components/ui/Alert";
-import { Modal } from "@/components/ui/Modal";
+import { Blade } from "@/components/ui/Blade";
 import { MultiSelectPills, type MultiSelectOption } from "@/components/ui/MultiSelectPills";
 import { csrfHeaders } from "@/lib/csrf-client";
 import {
@@ -32,6 +32,7 @@ import {
   type ScanFilter,
   calculateOutputDimensions,
   detectDefaultQuad,
+  detectDocumentQuad,
   warpImageData,
   rotateCanvas,
   compressCanvasToBlob,
@@ -98,11 +99,85 @@ export function CameraScanModal({
   onAppendComplete?: () => void;
 }) {
   const [step, setStep] = useState<Step>("capture");
+  const [filter, setFilter] = useState<ScanFilter>("document");
+
+  const getLiveFilterStyle = (f: ScanFilter) => {
+    switch (f) {
+      case "grayscale":
+        return "grayscale(100%) contrast(125%)";
+      case "document":
+        return "grayscale(25%) contrast(175%) brightness(115%)";
+      case "color":
+      default:
+        return "none";
+    }
+  };
+
+  const autoDetectCornersForImage = (img: HTMLImageElement) => {
+    try {
+      const maxDim = 320;
+      const scale = Math.min(maxDim / img.naturalWidth, maxDim / img.naturalHeight, 1);
+      const w = Math.max(1, Math.round(img.naturalWidth * scale));
+      const h = Math.max(1, Math.round(img.naturalHeight * scale));
+
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      if (ctx) {
+        ctx.drawImage(img, 0, 0, w, h);
+        const smallData = ctx.getImageData(0, 0, w, h);
+        const detected = detectDocumentQuad(smallData, img.naturalWidth, img.naturalHeight);
+        setCorners({
+          topLeft: {
+            x: detected.topLeft.x / img.naturalWidth,
+            y: detected.topLeft.y / img.naturalHeight,
+          },
+          topRight: {
+            x: detected.topRight.x / img.naturalWidth,
+            y: detected.topRight.y / img.naturalHeight,
+          },
+          bottomRight: {
+            x: detected.bottomRight.x / img.naturalWidth,
+            y: detected.bottomRight.y / img.naturalHeight,
+          },
+          bottomLeft: {
+            x: detected.bottomLeft.x / img.naturalWidth,
+            y: detected.bottomLeft.y / img.naturalHeight,
+          },
+        });
+        return;
+      }
+    } catch (err) {
+      console.warn("Auto document corner detection failed, using fallback:", err);
+    }
+
+    const defaultQuad = detectDefaultQuad(img.naturalWidth, img.naturalHeight, 0.05);
+    setCorners({
+      topLeft: {
+        x: defaultQuad.topLeft.x / img.naturalWidth,
+        y: defaultQuad.topLeft.y / img.naturalHeight,
+      },
+      topRight: {
+        x: defaultQuad.topRight.x / img.naturalWidth,
+        y: defaultQuad.topRight.y / img.naturalHeight,
+      },
+      bottomRight: {
+        x: defaultQuad.bottomRight.x / img.naturalWidth,
+        y: defaultQuad.bottomRight.y / img.naturalHeight,
+      },
+      bottomLeft: {
+        x: defaultQuad.bottomLeft.x / img.naturalWidth,
+        y: defaultQuad.bottomLeft.y / img.naturalHeight,
+      },
+    });
+  };
   const [error, setError] = useState<string | null>(null);
 
   // Multi-page stack
   const [pages, setPages] = useState<ScannedPage[]>([]);
   const [activeReviewPageIndex, setActiveReviewPageIndex] = useState<number>(0);
+  const [draggedPageIndex, setDraggedPageIndex] = useState<number | null>(null);
 
   // Raw captured image for the current page being scanned
   const [rawImageSrc, setRawImageSrc] = useState<string | null>(null);
@@ -121,7 +196,6 @@ export function CameraScanModal({
   });
   const [activeCorner, setActiveCorner] = useState<keyof QuadPoints | null>(null);
   const [aspectPreset, setAspectPreset] = useState<string>("free");
-  const [filter, setFilter] = useState<ScanFilter>("document");
   const [rotationDegrees, setRotationDegrees] = useState<0 | 90 | 180 | 270>(0);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -172,12 +246,8 @@ export function CameraScanModal({
     }
   }, [isOpen, step, rawImageSrc]);
 
-  // Clean up object URLs on unmount or reset
-  useEffect(() => {
-    return () => {
-      pages.forEach((p) => URL.revokeObjectURL(p.previewUrl));
-    };
-  }, [pages]);
+  // Note: previewUrls are now base64 data URLs generated from outputCanvas,
+  // ensuring previews never break due to premature URL.revokeObjectURL calls.
 
   const handleImageFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -198,26 +268,8 @@ export function CameraScanModal({
       img.onload = () => {
         setRawImageSrc(src);
         setRawImageDims({ width: img.naturalWidth, height: img.naturalHeight });
-        // Detect initial quad inset
-        const defaultQuad = detectDefaultQuad(img.naturalWidth, img.naturalHeight, 0.05);
-        setCorners({
-          topLeft: {
-            x: defaultQuad.topLeft.x / img.naturalWidth,
-            y: defaultQuad.topLeft.y / img.naturalHeight,
-          },
-          topRight: {
-            x: defaultQuad.topRight.x / img.naturalWidth,
-            y: defaultQuad.topRight.y / img.naturalHeight,
-          },
-          bottomRight: {
-            x: defaultQuad.bottomRight.x / img.naturalWidth,
-            y: defaultQuad.bottomRight.y / img.naturalHeight,
-          },
-          bottomLeft: {
-            x: defaultQuad.bottomLeft.x / img.naturalWidth,
-            y: defaultQuad.bottomLeft.y / img.naturalHeight,
-          },
-        });
+        // Auto-detect document bounding corners like Lens/Google Scan
+        autoDetectCornersForImage(img);
 
         // Set default document name if not already set
         if (!docName) {
@@ -258,6 +310,7 @@ export function CameraScanModal({
   const handlePointerMove = (e: React.PointerEvent) => {
     if (!activeCorner || !cropContainerRef.current) return;
     const rect = cropContainerRef.current.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return;
     const x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
     const y = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));
 
@@ -265,6 +318,7 @@ export function CameraScanModal({
       ...prev,
       [activeCorner]: { x, y },
     }));
+    setAspectPreset("free");
   };
 
   const handlePointerUp = (e: React.PointerEvent) => {
@@ -298,6 +352,7 @@ export function CameraScanModal({
         y: Math.max(0, Math.min(1, prev[corner].y + dy)),
       },
     }));
+    setAspectPreset("free");
   };
 
   // Reset corners to 5% inset
@@ -308,6 +363,75 @@ export function CameraScanModal({
       bottomRight: { x: 0.95, y: 0.95 },
       bottomLeft: { x: 0.05, y: 0.95 },
     });
+    setAspectPreset("free");
+  };
+
+  // Apply preset aspect ratio to crop quad in real-time
+  const applyAspectPreset = (presetId: string) => {
+    setAspectPreset(presetId);
+    if (!rawImageDims.width || !rawImageDims.height) return;
+
+    if (presetId === "free") {
+      handleResetCorners();
+      return;
+    }
+
+    const preset = ASPECT_PRESETS.find((p) => p.id === presetId);
+    if (!preset || !preset.ratio) return;
+
+    const nw = rawImageDims.width;
+    const nh = rawImageDims.height;
+    const targetHOverW = preset.ratio;
+    const imageHOverW = nh / nw;
+
+    let normW = 0.84;
+    let normH = normW * (targetHOverW / imageHOverW);
+
+    if (normH > 0.9) {
+      normH = 0.9;
+      normW = normH * (imageHOverW / targetHOverW);
+    }
+    if (normW > 0.92) {
+      normW = 0.92;
+      normH = normW * (targetHOverW / imageHOverW);
+    }
+
+    const xOffset = Math.max(0.02, (1 - normW) / 2);
+    const yOffset = Math.max(0.02, (1 - normH) / 2);
+
+    setCorners({
+      topLeft: { x: xOffset, y: yOffset },
+      topRight: { x: xOffset + normW, y: yOffset },
+      bottomRight: { x: xOffset + normW, y: yOffset + normH },
+      bottomLeft: { x: xOffset, y: yOffset + normH },
+    });
+  };
+
+  // Drag and drop page reordering in Review & Upload
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedPageIndex(index);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", index.toString());
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+  };
+
+  const handleDrop = (e: React.DragEvent, targetIndex: number) => {
+    e.preventDefault();
+    if (draggedPageIndex === null || draggedPageIndex === targetIndex) return;
+
+    setPages((prev) => {
+      const copy = [...prev];
+      const [movedPage] = copy.splice(draggedPageIndex, 1);
+      copy.splice(targetIndex, 0, movedPage);
+      return copy;
+    });
+
+    setActiveReviewPageIndex(targetIndex);
+    setDraggedPageIndex(null);
   };
 
   // Rotate 90 degrees clockwise
@@ -361,7 +485,7 @@ export function CameraScanModal({
 
     const thumb = generateThumbnailDataUrl(outputCanvas, 200);
     const compressedBlob = await compressCanvasToBlob(outputCanvas, "image/jpeg", 0.85);
-    const newPreviewUrl = URL.createObjectURL(compressedBlob);
+    const newPreviewUrl = outputCanvas.toDataURL("image/jpeg", 0.85);
 
     return {
       id: `page_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
@@ -592,9 +716,10 @@ export function CameraScanModal({
   }, [totalOriginalSize, totalSize]);
 
   return (
-    <Modal
+    <Blade
       open={isOpen}
       onClose={handleClose}
+      size="xl"
       title={
         targetDocumentId
           ? targetDocumentName
@@ -621,7 +746,6 @@ export function CameraScanModal({
                 ? "Pages will be automatically stitched into a single compressed PDF"
                 : "Automatic compression ready for Google Drive storage"
       }
-      maxWidth="xl"
       footer={
         step === "crop" ? (
           <div className="flex w-full flex-wrap items-center justify-between gap-2.5">
@@ -765,154 +889,180 @@ export function CameraScanModal({
       {/* STEP 2: CROP & PERSPECTIVE ADJUST */}
       {step === "crop" && rawImageSrc && (
         <div className="space-y-4">
-          {/* Controls toolbar */}
-          <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border-subtle bg-surface-muted/50 p-2.5">
-            {/* Filter mode */}
-            <div className="flex items-center gap-1">
-              <span className="text-xs font-medium text-text-muted mr-1">Filter:</span>
-              <button
-                type="button"
-                onClick={() => setFilter("document")}
-                className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-colors ${
-                  filter === "document"
-                    ? "bg-brand text-white shadow-sm"
-                    : "text-text-secondary hover:bg-surface"
-                }`}
-              >
-                Document
-              </button>
-              <button
-                type="button"
-                onClick={() => setFilter("color")}
-                className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-colors ${
-                  filter === "color"
-                    ? "bg-brand text-white shadow-sm"
-                    : "text-text-secondary hover:bg-surface"
-                }`}
-              >
-                Color
-              </button>
-              <button
-                type="button"
-                onClick={() => setFilter("grayscale")}
-                className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-colors ${
-                  filter === "grayscale"
-                    ? "bg-brand text-white shadow-sm"
-                    : "text-text-secondary hover:bg-surface"
-                }`}
-              >
-                B&W
-              </button>
-            </div>
-
-            {/* Presets & Rotate */}
-            <div className="flex items-center gap-1.5 ml-auto">
-              {ASPECT_PRESETS.map((preset) => (
+          {/* Controls toolbar: multi-line with Filter and Crop on separate lines */}
+          <div className="space-y-2.5 rounded-xl border border-border-subtle bg-surface-muted/50 p-3">
+            {/* Line 1: Filter */}
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border-subtle/60 pb-2.5">
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-semibold text-text-secondary mr-1">Filter:</span>
                 <button
-                  key={preset.id}
                   type="button"
-                  onClick={() => setAspectPreset(preset.id)}
-                  className={`px-2 py-1 text-xs font-medium rounded-lg transition-colors ${
-                    aspectPreset === preset.id
-                      ? "bg-surface border border-border text-brand shadow-xs"
-                      : "text-text-muted hover:text-text-primary"
+                  onClick={() => setFilter("document")}
+                  className={`px-3 py-1 text-xs font-medium rounded-lg transition-colors ${
+                    filter === "document"
+                      ? "bg-brand text-white shadow-xs font-semibold"
+                      : "text-text-secondary hover:bg-surface"
                   }`}
                 >
-                  {preset.label}
+                  Document
                 </button>
-              ))}
+                <button
+                  type="button"
+                  onClick={() => setFilter("color")}
+                  className={`px-3 py-1 text-xs font-medium rounded-lg transition-colors ${
+                    filter === "color"
+                      ? "bg-brand text-white shadow-xs font-semibold"
+                      : "text-text-secondary hover:bg-surface"
+                  }`}
+                >
+                  Color
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFilter("grayscale")}
+                  className={`px-3 py-1 text-xs font-medium rounded-lg transition-colors ${
+                    filter === "grayscale"
+                      ? "bg-brand text-white shadow-xs font-semibold"
+                      : "text-text-secondary hover:bg-surface"
+                  }`}
+                >
+                  B&W
+                </button>
+              </div>
 
-              <button
-                type="button"
-                onClick={handleRotate}
-                title="Rotate 90°"
-                aria-label="Rotate 90 degrees clockwise"
-                className="flex items-center gap-1 rounded-lg border border-border-subtle bg-surface p-1.5 text-xs text-text-secondary hover:bg-surface-muted"
-              >
-                <RotateCw className="h-3.5 w-3.5" />
-              </button>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={handleRotate}
+                  title="Rotate 90° clockwise"
+                  aria-label="Rotate 90 degrees clockwise"
+                  className="flex items-center gap-1.5 rounded-lg border border-border-subtle bg-surface px-2.5 py-1 text-xs text-text-secondary hover:bg-surface-muted active:scale-95 transition-all shadow-2xs"
+                >
+                  <RotateCw className="h-3.5 w-3.5" />
+                  <span>Rotate 90°</span>
+                </button>
 
-              <button
-                type="button"
-                onClick={handleResetCorners}
-                title="Reset corners"
-                aria-label="Reset corners to full page"
-                className="flex items-center gap-1 rounded-lg border border-border-subtle bg-surface px-2 py-1 text-xs text-text-secondary hover:bg-surface-muted"
-              >
-                Reset
-              </button>
+                <button
+                  type="button"
+                  onClick={handleResetCorners}
+                  title="Reset corners"
+                  aria-label="Reset corners to full page"
+                  className="flex items-center gap-1 rounded-lg border border-border-subtle bg-surface px-2.5 py-1 text-xs text-text-secondary hover:bg-surface-muted active:scale-95 transition-all shadow-2xs"
+                >
+                  Reset
+                </button>
+              </div>
+            </div>
+
+            {/* Line 2: Crop & Presets */}
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-xs font-semibold text-text-secondary mr-1">Crop:</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (imageElementRef.current) {
+                      autoDetectCornersForImage(imageElementRef.current);
+                    }
+                  }}
+                  title="Auto-detect document boundaries"
+                  aria-label="Auto-detect document corners"
+                  className="flex items-center gap-1 rounded-lg border border-brand/40 bg-brand-subtle px-2.5 py-1 text-xs font-semibold text-brand hover:bg-brand/20 active:scale-95 transition-all shadow-2xs"
+                >
+                  <Sparkles className="h-3.5 w-3.5 text-brand" />
+                  <span>Auto Crop</span>
+                </button>
+
+                {ASPECT_PRESETS.map((preset) => (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    onClick={() => applyAspectPreset(preset.id)}
+                    className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-colors ${
+                      aspectPreset === preset.id
+                        ? "bg-surface border border-border-subtle text-brand font-semibold shadow-2xs"
+                        : "text-text-muted hover:text-text-primary hover:bg-surface/50"
+                    }`}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
           {/* Interactive crop canvas container */}
-          <div
-            ref={cropContainerRef}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-            className="relative select-none touch-none overflow-hidden rounded-xl border border-border-subtle bg-black/90 flex items-center justify-center max-h-[55vh]"
-          >
-            <img
-              ref={imageElementRef}
-              src={rawImageSrc}
-              alt="Document scan candidate"
-              className="max-h-[55vh] w-auto max-w-full object-contain pointer-events-none"
-              style={{
-                transform: `rotate(${rotationDegrees}deg)`,
-                transition: "transform 0.15s ease",
-              }}
-            />
-
-            {/* SVG Overlay displaying quad polygon and connection lines */}
-            <svg
-              className="absolute inset-0 h-full w-full pointer-events-none"
-              viewBox="0 0 100 100"
-              preserveAspectRatio="none"
+          <div className="relative overflow-hidden rounded-xl border border-border-subtle bg-black/90 p-4 flex items-center justify-center min-h-[360px] max-h-[64vh]">
+            <div
+              ref={cropContainerRef}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUp}
+              className="relative inline-block touch-none select-none max-h-[58vh]"
             >
-              <polygon
-                points={`
-                  ${corners.topLeft.x * 100},${corners.topLeft.y * 100}
-                  ${corners.topRight.x * 100},${corners.topRight.y * 100}
-                  ${corners.bottomRight.x * 100},${corners.bottomRight.y * 100}
-                  ${corners.bottomLeft.x * 100},${corners.bottomLeft.y * 100}
-                `}
-                fill="rgba(37, 99, 235, 0.18)"
-                stroke="rgb(37, 99, 235)"
-                strokeWidth="1"
-                vectorEffect="non-scaling-stroke"
-              />
-            </svg>
-
-            {/* 4 Interactive Corner Pins */}
-            {(
-              [
-                { key: "topLeft", pt: corners.topLeft, label: "Top-left corner" },
-                { key: "topRight", pt: corners.topRight, label: "Top-right corner" },
-                { key: "bottomRight", pt: corners.bottomRight, label: "Bottom-right corner" },
-                { key: "bottomLeft", pt: corners.bottomLeft, label: "Bottom-left corner" },
-              ] as const
-            ).map(({ key, pt, label }) => (
-              <div
-                key={key}
-                role="slider"
-                tabIndex={0}
-                aria-label={label}
-                aria-valuenow={Math.round(pt.x * 100)}
-                onKeyDown={(e) => handleKeyDown(key, e)}
-                onPointerDown={(e) => handlePointerDown(key, e)}
+              <img
+                ref={imageElementRef}
+                src={rawImageSrc}
+                alt="Document scan candidate"
+                className="max-h-[58vh] max-w-full w-auto object-contain pointer-events-none rounded shadow-md block"
                 style={{
-                  left: `${pt.x * 100}%`,
-                  top: `${pt.y * 100}%`,
-                  transform: "translate(-50%, -50%)",
+                  transform: `rotate(${rotationDegrees}deg)`,
+                  filter: getLiveFilterStyle(filter),
+                  transition: "transform 0.15s ease, filter 0.2s ease",
                 }}
-                className={`absolute z-10 flex h-11 w-11 items-center justify-center cursor-grab active:cursor-grabbing touch-none ${
-                  activeCorner === key ? "scale-125" : "hover:scale-110"
-                } transition-transform`}
+              />
+
+              {/* SVG Overlay displaying quad polygon and connection lines */}
+              <svg
+                className="absolute inset-0 h-full w-full pointer-events-none"
+                viewBox="0 0 100 100"
+                preserveAspectRatio="none"
               >
-                <div className="flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-brand shadow-lg ring-2 ring-brand/40">
-                  <div className="h-1.5 w-1.5 rounded-full bg-white" />
+                <polygon
+                  points={`
+                    ${corners.topLeft.x * 100},${corners.topLeft.y * 100}
+                    ${corners.topRight.x * 100},${corners.topRight.y * 100}
+                    ${corners.bottomRight.x * 100},${corners.bottomRight.y * 100}
+                    ${corners.bottomLeft.x * 100},${corners.bottomLeft.y * 100}
+                  `}
+                  fill="rgba(37, 99, 235, 0.22)"
+                  stroke="rgb(37, 99, 235)"
+                  strokeWidth="1.5"
+                  vectorEffect="non-scaling-stroke"
+                />
+              </svg>
+
+              {/* 4 Interactive Corner Pins */}
+              {(
+                [
+                  { key: "topLeft", pt: corners.topLeft, label: "Top-left corner" },
+                  { key: "topRight", pt: corners.topRight, label: "Top-right corner" },
+                  { key: "bottomRight", pt: corners.bottomRight, label: "Bottom-right corner" },
+                  { key: "bottomLeft", pt: corners.bottomLeft, label: "Bottom-left corner" },
+                ] as const
+              ).map(({ key, pt, label }) => (
+                <div
+                  key={key}
+                  role="slider"
+                  tabIndex={0}
+                  aria-label={label}
+                  aria-valuenow={Math.round(pt.x * 100)}
+                  onKeyDown={(e) => handleKeyDown(key, e)}
+                  onPointerDown={(e) => handlePointerDown(key, e)}
+                  style={{
+                    left: `${pt.x * 100}%`,
+                    top: `${pt.y * 100}%`,
+                    transform: "translate(-50%, -50%)",
+                  }}
+                  className={`absolute z-10 flex h-11 w-11 items-center justify-center cursor-grab active:cursor-grabbing touch-none ${
+                    activeCorner === key ? "scale-125" : "hover:scale-110"
+                  } transition-transform`}
+                >
+                  <div className="flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-brand shadow-lg ring-2 ring-brand/40">
+                    <div className="h-1.5 w-1.5 rounded-full bg-white" />
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
 
           <div className="flex items-center justify-between text-xs text-text-muted">
@@ -960,25 +1110,32 @@ export function CameraScanModal({
                   Pages ({pages.length})
                 </span>
                 <span className="text-[11px] text-text-muted">
-                  Use arrows to reorder or trash to remove
+                  Drag & drop cards to reorder pages
                 </span>
               </div>
               <div className="flex gap-2.5 overflow-x-auto pb-2 pt-1 scrollbar-thin">
                 {pages.map((page, idx) => (
                   <div
                     key={page.id}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, idx)}
+                    onDragOver={handleDragOver}
+                    onDrop={(e) => handleDrop(e, idx)}
+                    onDragEnd={() => setDraggedPageIndex(null)}
                     onClick={() => setActiveReviewPageIndex(idx)}
-                    className={`relative group shrink-0 rounded-xl border p-1.5 cursor-pointer transition-all ${
-                      activeReviewPageIndex === idx
-                        ? "border-brand ring-2 ring-brand/20 bg-surface shadow-sm"
-                        : "border-border-subtle bg-surface-muted/30 hover:border-border"
+                    className={`relative group shrink-0 rounded-xl border p-1.5 cursor-grab active:cursor-grabbing transition-all ${
+                      draggedPageIndex === idx
+                        ? "opacity-40 border-dashed border-brand scale-95"
+                        : activeReviewPageIndex === idx
+                          ? "border-brand ring-2 ring-brand/20 bg-surface shadow-sm"
+                          : "border-border-subtle bg-surface-muted/30 hover:border-border"
                     }`}
                   >
                     <div className="relative h-24 w-18 overflow-hidden rounded-lg bg-surface">
                       <img
-                        src={page.thumbnail || page.previewUrl}
+                        src={page.previewUrl || page.thumbnail}
                         alt={`Page ${idx + 1}`}
-                        className="h-full w-full object-cover"
+                        className="h-full w-full object-cover pointer-events-none"
                       />
                       <span className="absolute bottom-1 left-1 rounded bg-black/75 px-1 py-0.5 text-[10px] font-bold text-white leading-none">
                         p.{idx + 1}
@@ -1044,11 +1201,17 @@ export function CameraScanModal({
 
           {/* Active page large preview */}
           {pages[activeReviewPageIndex] && (
-            <div className="flex justify-center overflow-hidden rounded-xl border border-border-subtle bg-surface-muted/30 p-2">
+            <div className="flex flex-col items-center justify-center overflow-hidden rounded-xl border border-border-subtle bg-surface-muted/30 p-3 sm:p-4">
+              <div className="text-[11px] font-medium text-text-muted mb-2">
+                Page {activeReviewPageIndex + 1} Preview (
+                {(pages[activeReviewPageIndex].size / 1024).toFixed(0)} KB)
+              </div>
               <img
-                src={pages[activeReviewPageIndex].previewUrl}
+                src={
+                  pages[activeReviewPageIndex].previewUrl || pages[activeReviewPageIndex].thumbnail
+                }
                 alt={`Preview of page ${activeReviewPageIndex + 1}`}
-                className="max-h-52 rounded-md object-contain shadow-xs border border-border-subtle"
+                className="max-h-72 sm:max-h-80 w-auto max-w-full object-contain rounded-lg shadow-sm border border-border-subtle bg-white"
               />
             </div>
           )}
@@ -1148,6 +1311,6 @@ export function CameraScanModal({
           )}
         </div>
       )}
-    </Modal>
+    </Blade>
   );
 }

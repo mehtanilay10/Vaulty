@@ -5,24 +5,32 @@
  * imported from route handlers, server components, client components and tests.
  */
 
-export type FamilyModule = "documents" | "wealth" | "credentials" | "reminders";
+export type FamilyModule = "documents" | "wealth" | "credentials" | "reminders" | "notes";
 
 export interface FamilyModuleFlags {
   shareDocuments: boolean;
   shareWealth: boolean;
   shareCredentials: boolean;
   shareReminders: boolean;
+  shareNotes: boolean;
 }
 
 export type FamilyInvitationStatus = "PENDING" | "ACCEPTED" | "REJECTED" | "REVOKED" | "EXPIRED";
 
-export const FAMILY_MODULES: FamilyModule[] = ["documents", "wealth", "credentials", "reminders"];
+export const FAMILY_MODULES: FamilyModule[] = [
+  "documents",
+  "wealth",
+  "credentials",
+  "reminders",
+  "notes",
+];
 
 export const FAMILY_MODULE_LABELS: Record<FamilyModule, string> = {
   documents: "Documents",
   wealth: "Wealth",
   credentials: "Credentials",
   reminders: "Reminders",
+  notes: "Notes",
 };
 
 export const FAMILY_MODULE_DESCRIPTIONS: Record<FamilyModule, string> = {
@@ -30,6 +38,7 @@ export const FAMILY_MODULE_DESCRIPTIONS: Record<FamilyModule, string> = {
   wealth: "View the owner's wealth accounts, balances and transactions (read-only).",
   credentials: "View the owner's app and bank credentials (read-only, end-to-end encrypted).",
   reminders: "View upcoming bill payment due dates, renewals and task reminders (read-only).",
+  notes: "View the owner's personal note pages, to-dos and image attachments (read-only).",
 };
 
 export const FAMILY_MODULE_FIELD: Record<FamilyModule, keyof FamilyModuleFlags> = {
@@ -37,6 +46,7 @@ export const FAMILY_MODULE_FIELD: Record<FamilyModule, keyof FamilyModuleFlags> 
   wealth: "shareWealth",
   credentials: "shareCredentials",
   reminders: "shareReminders",
+  notes: "shareNotes",
 };
 
 export function emptyFamilyModuleFlags(): FamilyModuleFlags {
@@ -45,6 +55,7 @@ export function emptyFamilyModuleFlags(): FamilyModuleFlags {
     shareWealth: false,
     shareCredentials: false,
     shareReminders: false,
+    shareNotes: false,
   };
 }
 
@@ -69,6 +80,7 @@ export function parseFamilyModuleFlags(value: unknown): FamilyModuleFlags | null
     shareWealth: input.shareWealth === true,
     shareCredentials: input.shareCredentials === true,
     shareReminders: input.shareReminders === true,
+    shareNotes: input.shareNotes === true,
   };
 
   return hasAnyFamilyModule(flags) ? flags : null;
@@ -77,7 +89,11 @@ export function parseFamilyModuleFlags(value: unknown): FamilyModuleFlags | null
 export function hasAnyFamilyModule(flags: FamilyModuleFlags): boolean {
   if (!flags) return false;
   return Boolean(
-    flags.shareDocuments || flags.shareWealth || flags.shareCredentials || flags.shareReminders,
+    flags.shareDocuments ||
+    flags.shareWealth ||
+    flags.shareCredentials ||
+    flags.shareReminders ||
+    flags.shareNotes,
   );
 }
 

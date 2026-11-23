@@ -129,7 +129,7 @@ export async function POST(req: NextRequest) {
       const uploadResult = await provider.uploadFile({
         filename: cleanFileName,
         mimeType: file.type || "application/octet-stream",
-        data: file,
+        data: Buffer.from(await file.arrayBuffer()),
         parentId: targetDriveParentId,
       });
 

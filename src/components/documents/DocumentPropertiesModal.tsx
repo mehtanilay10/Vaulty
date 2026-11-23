@@ -61,11 +61,17 @@ export function DocumentPropertiesModal({
   useEffect(() => {
     if (document) {
       setDocName(document.name);
-      setTargetFolderId(document.folderId);
-      setTags(document.tags.map((t) => t.tag.name) || []);
-      setExpiryDate(
-        document.expiryDate ? new Date(document.expiryDate).toISOString().slice(0, 10) : "",
-      );
+      setTargetFolderId(document.folderId || "");
+      setTags((document.tags || []).map((t) => t.tag?.name).filter(Boolean) as string[]);
+      setExpiryDate(() => {
+        if (!document.expiryDate) return "";
+        try {
+          const d = new Date(document.expiryDate);
+          return isNaN(d.getTime()) ? "" : d.toISOString().slice(0, 10);
+        } catch {
+          return "";
+        }
+      });
     }
   }, [document]);
   /* eslint-enable react-hooks/set-state-in-effect */
@@ -141,7 +147,11 @@ export function DocumentPropertiesModal({
       if (!res.ok) throw new Error("Failed to delete document.");
 
       onClose();
-      router.push(`/folders/${document.folderId}`);
+      if (document.folderId) {
+        router.push(`/folders/${document.folderId}`);
+      } else {
+        router.push("/documents");
+      }
       router.refresh();
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to delete document.";

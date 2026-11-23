@@ -6,7 +6,7 @@ import {
   type FamilyModule,
   type FamilyModuleFlags,
 } from "@/types/family";
-import { BellRing, FileText, Lock, Wallet } from "lucide-react";
+import { BellRing, FileText, Lock, StickyNote, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const ICONS = {
@@ -14,13 +14,15 @@ const ICONS = {
   wealth: Wallet,
   credentials: Lock,
   reminders: BellRing,
+  notes: StickyNote,
 };
 
-const MODULE_VARIANTS: Record<FamilyModule, "brand" | "emerald" | "violet" | "amber"> = {
+const MODULE_VARIANTS: Record<FamilyModule, "brand" | "emerald" | "violet" | "amber" | "info"> = {
   documents: "brand",
   wealth: "emerald",
   credentials: "violet",
   reminders: "amber",
+  notes: "info",
 };
 
 export function FamilyModuleBadges({

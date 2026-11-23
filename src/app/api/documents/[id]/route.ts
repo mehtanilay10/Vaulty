@@ -268,15 +268,43 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
             folderId: doc.folderId,
           });
 
-          for (const fileId of fileIdsToDelete) {
-            try {
-              await provider.deleteFile(fileId);
-            } catch (fileErr) {
-              if (fileId === doc.storageFileId) {
-                throw fileErr;
+          // Delete all associated files in Google Drive concurrently
+          const deleteResults = await Promise.allSettled(
+            fileIdsToDelete.map(async (fileId) => {
+              try {
+                await provider.deleteFile(fileId);
+              } catch (fileErr: unknown) {
+                const errObj = fileErr as {
+                  code?: number | string;
+                  status?: number;
+                  message?: string;
+                };
+                const isNotFound =
+                  errObj?.code === 404 ||
+                  errObj?.status === 404 ||
+                  errObj?.message?.toLowerCase().includes("file not found") ||
+                  errObj?.message?.toLowerCase().includes("notfound");
+
+                if (isNotFound) {
+                  console.warn(
+                    `[documents] File ${fileId} was already absent from Google Drive, proceeding with deletion.`,
+                  );
+                  return;
+                }
+
+                if (fileId === doc.storageFileId) {
+                  throw fileErr;
+                }
+                console.warn(`[documents] Failed to delete secondary artifact ${fileId}:`, fileErr);
               }
-              console.warn(`[documents] Failed to delete secondary artifact ${fileId}:`, fileErr);
-            }
+            }),
+          );
+
+          // If deleting the primary file threw a non-404 error, abort so file isn't orphaned
+          const primaryIndex = doc.storageFileId ? fileIdsToDelete.indexOf(doc.storageFileId) : -1;
+          if (primaryIndex !== -1 && deleteResults[primaryIndex]?.status === "rejected") {
+            const reason = (deleteResults[primaryIndex] as PromiseRejectedResult).reason;
+            throw reason;
           }
         } catch (driveError) {
           console.error("Google Drive delete error:", driveError);
@@ -293,14 +321,15 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       }
     }
 
-    await prisma.$transaction(async (tx) => {
-      await tx.document.delete({
+    // Use batch array transaction instead of interactive transaction callback
+    // to avoid P2028 transaction expiration timeouts.
+    await prisma.$transaction([
+      prisma.document.delete({
         where: { id },
-      });
-
+      }),
       // The audit log has an onDelete: Cascade relation to Document, so keep
       // the document id in metadata and leave the relation empty.
-      await tx.auditLog.create({
+      prisma.auditLog.create({
         data: {
           action: "DOCUMENT_DELETE",
           userId: user.id,
@@ -312,8 +341,8 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
             storageProvider: doc.storageProvider,
           }),
         },
-      });
-    });
+      }),
+    ]);
 
     return NextResponse.json({ success: true });
   } catch (error) {

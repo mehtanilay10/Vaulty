@@ -10,7 +10,7 @@ import {
   type FamilyModuleFlags,
 } from "@/types/family";
 import { Checkbox } from "@/components/ui/Checkbox";
-import { BellRing, FileText, Lock, Wallet } from "lucide-react";
+import { BellRing, FileText, Lock, StickyNote, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const DEFAULT_MODULE_CONFIG = {
@@ -46,6 +46,11 @@ const MODULE_CONFIG: Record<
     icon: BellRing,
     iconTile: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
     checkedClass: "border-amber-500/30 bg-amber-500/5",
+  },
+  notes: {
+    icon: StickyNote,
+    iconTile: "bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/20",
+    checkedClass: "border-teal-500/30 bg-teal-500/5",
   },
 };
 

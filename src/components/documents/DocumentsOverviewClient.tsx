@@ -55,7 +55,7 @@ export function DocumentsOverviewClient({
     id: string;
     name: string;
     expiryDate: string | null;
-    folder: { id: string; name: string };
+    folder?: { id: string; name: string } | null;
   }[];
   stats: { totalDocuments: number; totalFolders: number; aiSummaries: number };
   initialDriveConnected?: boolean;
@@ -79,14 +79,19 @@ export function DocumentsOverviewClient({
 
   const getUrgency = (expiryDate: string | null) => {
     if (!expiryDate) return { label: "Unknown", variant: "default" as const };
-    const now = new Date();
-    const expiry = new Date(expiryDate);
-    const diffDays = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    try {
+      const now = new Date();
+      const expiry = new Date(expiryDate);
+      if (isNaN(expiry.getTime())) return { label: "Unknown", variant: "default" as const };
+      const diffDays = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
-    if (diffDays < 0) return { label: "Expired", variant: "danger" as const };
-    if (diffDays <= 14) return { label: `${diffDays}d left`, variant: "danger" as const };
-    if (diffDays <= 30) return { label: `${diffDays}d left`, variant: "warning" as const };
-    return { label: `${diffDays}d left`, variant: "success" as const };
+      if (diffDays < 0) return { label: "Expired", variant: "danger" as const };
+      if (diffDays <= 14) return { label: `${diffDays}d left`, variant: "danger" as const };
+      if (diffDays <= 30) return { label: `${diffDays}d left`, variant: "warning" as const };
+      return { label: `${diffDays}d left`, variant: "success" as const };
+    } catch {
+      return { label: "Unknown", variant: "default" as const };
+    }
   };
 
   return (
@@ -199,9 +204,16 @@ export function DocumentsOverviewClient({
                         {doc.name}
                       </p>
                       <p className="truncate text-[11px] text-text-muted">
-                        {doc.folder?.name}
+                        {doc.folder?.name || "Unfiled"}
                         {doc.expiryDate
-                          ? ` · Expires ${new Date(doc.expiryDate).toLocaleDateString()}`
+                          ? ` · Expires ${(() => {
+                              try {
+                                const d = new Date(doc.expiryDate);
+                                return isNaN(d.getTime()) ? doc.expiryDate : d.toLocaleDateString();
+                              } catch {
+                                return doc.expiryDate;
+                              }
+                            })()}`
                           : ""}
                       </p>
                     </div>

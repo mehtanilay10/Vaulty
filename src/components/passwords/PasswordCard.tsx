@@ -28,6 +28,7 @@ import {
   type EncryptionEnvelope,
 } from "@/lib/envelope-crypto";
 import { Credential } from "@/types/credentials";
+import { generateTOTP, getTOTPRemainingSeconds } from "@/lib/totp";
 
 interface PasswordCardProps {
   credential: Credential;
@@ -95,6 +96,9 @@ export function PasswordCard({
   const [lastAccessedAt, setLastAccessedAt] = useState<string | null>(
     credential.lastAccessedAt || null,
   );
+  const [totpCode, setTotpCode] = useState<string>("");
+  const [totpRemaining, setTotpRemaining] = useState<number>(30);
+  const [copiedTOTP, setCopiedTOTP] = useState(false);
   const copyTimeoutsRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
   const { toast } = useFeedback();
 
@@ -106,6 +110,56 @@ export function PasswordCard({
       timeouts.clear();
     };
   }, []);
+
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    if (!isExpanded || !decryptedData.totpSecret) {
+      setTotpCode("");
+      return;
+    }
+
+    let isMounted = true;
+
+    const updateTOTP = async () => {
+      try {
+        const remaining = getTOTPRemainingSeconds(30);
+        if (isMounted) setTotpRemaining(remaining);
+        const code = await generateTOTP(decryptedData.totpSecret);
+        if (isMounted) setTotpCode(code);
+      } catch (err) {
+        console.error("Failed to generate TOTP code:", err);
+      }
+    };
+
+    void updateTOTP();
+    const interval = setInterval(() => {
+      void updateTOTP();
+    }, 1000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [isExpanded, decryptedData.totpSecret]);
+  /* eslint-enable react-hooks/set-state-in-effect */
+
+  const handleCopyTOTP = async () => {
+    if (!totpCode) return;
+    try {
+      await navigator.clipboard.writeText(totpCode);
+      void recordActivity("COPY");
+      setCopiedTOTP(true);
+      const timeout = setTimeout(() => {
+        copyTimeoutsRef.current.delete(timeout);
+        setCopiedTOTP(false);
+      }, 2000);
+      copyTimeoutsRef.current.add(timeout);
+      toast("Verification code copied to clipboard", "success");
+    } catch (err) {
+      console.error("Failed to copy TOTP code to clipboard:", err);
+      toast("Clipboard access was unavailable. Please copy the code manually.", "error");
+    }
+  };
 
   const handleToggleFavorite = async () => {
     if (readOnly || !onFavoriteToggle) return;
@@ -471,6 +525,95 @@ export function PasswordCard({
                       </div>
                     </div>
                   )}
+                  {decryptedData.totpSecret && (
+                    <div className="mt-3 rounded-xl border border-brand/20 bg-brand/5 p-3.5 dark:bg-brand/10">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <ShieldCheck className="h-4 w-4 text-brand" />
+                          <span className="text-xs font-semibold text-text-primary">
+                            Authenticator (2FA)
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-xs text-text-muted">
+                          <div className="relative flex h-5 w-5 items-center justify-center">
+                            <svg className="h-5 w-5 -rotate-90 transform" viewBox="0 0 36 36">
+                              <path
+                                className="text-border-subtle"
+                                strokeWidth="3.5"
+                                stroke="currentColor"
+                                fill="none"
+                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                              />
+                              <path
+                                className={
+                                  totpRemaining <= 5
+                                    ? "text-danger transition-all duration-300"
+                                    : "text-brand transition-all duration-300"
+                                }
+                                strokeDasharray={`${(totpRemaining / 30) * 100}, 100`}
+                                strokeWidth="3.5"
+                                strokeLinecap="round"
+                                stroke="currentColor"
+                                fill="none"
+                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                              />
+                            </svg>
+                          </div>
+                          <span
+                            className={`font-mono text-[11px] font-medium ${
+                              totpRemaining <= 5 ? "text-danger" : "text-text-secondary"
+                            }`}
+                          >
+                            {totpRemaining}s
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="mt-2.5 flex items-center justify-between">
+                        <div className="flex items-baseline gap-2">
+                          <span className="font-mono text-2xl font-bold tracking-wider text-text-primary">
+                            {totpCode
+                              ? totpCode.length === 6
+                                ? `${totpCode.slice(0, 3)} ${totpCode.slice(3)}`
+                                : totpCode
+                              : "••••••"}
+                          </span>
+                        </div>
+
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="secondary"
+                          onClick={handleCopyTOTP}
+                          disabled={!totpCode}
+                          className="gap-1.5 text-xs"
+                          aria-label="Copy verification code"
+                        >
+                          {copiedTOTP ? (
+                            <>
+                              <Check className="h-3.5 w-3.5 text-success" />
+                              <span className="text-success">Copied!</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="h-3.5 w-3.5" />
+                              <span>Copy Code</span>
+                            </>
+                          )}
+                        </Button>
+                      </div>
+
+                      <div className="mt-2.5 h-1 w-full overflow-hidden rounded-full bg-surface-muted">
+                        <div
+                          className={`h-full transition-all duration-1000 ease-linear ${
+                            totpRemaining <= 5 ? "bg-danger" : "bg-brand"
+                          }`}
+                          style={{ width: `${(totpRemaining / 30) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  {renderField("TOTP Key", "totpSecret", { isSecret: true })}
                 </>
               ) : (
                 <>

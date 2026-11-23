@@ -26,18 +26,20 @@ const RecoverySetupModal = dynamic(
   () => import("@/components/passwords/RecoverySetupModal").then((mod) => mod.RecoverySetupModal),
   { ssr: false },
 );
+import { AuthenticatorCard } from "@/components/passwords/AuthenticatorCard";
+import { QRScannerModal, type Scanned2FAAccount } from "@/components/passwords/QRScannerModal";
+import { encryptEnvelopeWithKey } from "@/lib/envelope-crypto";
 import {
   Lock,
   Plus,
   Globe,
-  Building2,
   Star,
   Search,
   Key,
   ShieldCheck,
   Eye,
   EyeOff,
-  ArrowRight,
+  Camera,
 } from "lucide-react";
 import { usePasswordVault } from "@/lib/password-context";
 import { useAppLock } from "@/components/app-lock/AppLockProvider";
@@ -61,7 +63,7 @@ interface PasswordsClientProps {
   hasRecoverySetup?: boolean;
   initialAppCredentials: Credential[];
   initialBankCredentials: Credential[];
-  mode?: "dashboard" | "account" | "bank";
+  mode?: "dashboard" | "account" | "bank" | "authenticator";
 }
 
 interface SearchMetadata {
@@ -99,16 +101,24 @@ export function PasswordsClient({
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [formType, setFormType] = useState<"APP" | "BANK">(mode === "bank" ? "BANK" : "APP");
   const [editingCredential, setEditingCredential] = useState<Credential | null>(null);
-  const [currentTab, setCurrentTab] = useState<"overview" | "account" | "bank">(
-    mode === "bank" ? "bank" : mode === "account" ? "account" : "overview",
+  const [currentTab, setCurrentTab] = useState<"account" | "bank" | "authenticator">(
+    mode === "bank" ? "bank" : mode === "authenticator" ? "authenticator" : "account",
   );
   const [activeTab, setActiveTab] = useState<"APP" | "BANK">(mode === "bank" ? "BANK" : "APP");
+  const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
   const [showFavorites, setShowFavorites] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [sortBy, setSortBy] = useState<"recent" | "name" | "accessed">("recent");
   const [isRecoveryModalOpen, setIsRecoveryModalOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Authenticator accounts (credentials with totpSecret)
+  const authenticatorCredentials = useMemo(() => {
+    return appCredentials.filter((c) =>
+      Boolean((c as unknown as { totpSecret?: string | null }).totpSecret),
+    );
+  }, [appCredentials]);
 
   // Inline unlock state when vault key is not in memory
   const [unlockMethod, setUnlockMethod] = useState<"pin" | "master">("pin");
@@ -117,46 +127,7 @@ export function PasswordsClient({
   const [showInlinePassword, setShowInlinePassword] = useState(false);
   const [inlineError, setInlineError] = useState("");
   const [isInlineUnlocking, setIsInlineUnlocking] = useState(false);
-
-  const searchParams = useSearchParams();
-
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => {
-    if (mode === "bank") {
-      setCurrentTab("bank");
-      setActiveTab("BANK");
-      setFormType("BANK");
-    } else if (mode === "account") {
-      setCurrentTab("account");
-      setActiveTab("APP");
-      setFormType("APP");
-    } else {
-      setCurrentTab("overview");
-    }
-  }, [mode]);
-
-  useEffect(() => {
-    const tabParam = searchParams.get("tab");
-    if (tabParam === "BANK" || tabParam === "bank") {
-      setCurrentTab("bank");
-      setActiveTab("BANK");
-      setFormType("BANK");
-    } else if (tabParam === "APP" || tabParam === "account" || tabParam === "app") {
-      setCurrentTab("account");
-      setActiveTab("APP");
-      setFormType("APP");
-    }
-    const action = searchParams.get("action");
-    if (action === "new") {
-      const targetType = tabParam === "BANK" || mode === "bank" ? "BANK" : "APP";
-      setCurrentTab(targetType === "BANK" ? "bank" : "account");
-      setActiveTab(targetType);
-      setFormType(targetType);
-      setEditingCredential(null);
-      setIsFormOpen(true);
-    }
-  }, [searchParams, mode]);
-  /* eslint-enable react-hooks/set-state-in-effect */
+  const [isAutoUnlocking, setIsAutoUnlocking] = useState(false);
 
   const refreshCredentials = useCallback(async () => {
     if (!vaultUnlocked) return;
@@ -180,6 +151,93 @@ export function PasswordsClient({
       console.error("Error refreshing credentials:", error);
     }
   }, [vaultUnlocked]);
+
+  // Auto-unlock vault if the user is already authenticated/unlocked in this session
+  useEffect(() => {
+    if (vaultUnlocked || !appUnlocked) return;
+    const pinHash = getStoredPinHash();
+    let wrapped = getStoredWrappedVaultKey();
+
+    const tryAutoUnlock = async () => {
+      setIsAutoUnlocking(true);
+      try {
+        if (!wrapped) {
+          try {
+            const res = await fetch("/api/user/app-lock");
+            if (res.ok) {
+              const data = await res.json();
+              if (data?.wrappedKey) {
+                wrapped = data.wrappedKey;
+                storeWrappedVaultKey(data.wrappedKey);
+              }
+            }
+          } catch {}
+        }
+
+        if (pinHash && wrapped) {
+          const key = await unwrapCryptoKey(pinHash, wrapped);
+          unlockVault(key, "", "");
+          setTimeout(async () => {
+            await refreshCredentials();
+          }, 50);
+          return;
+        }
+      } catch (err) {
+        console.warn("Vault auto-unlock attempted but requires explicit entry:", err);
+      } finally {
+        setIsAutoUnlocking(false);
+      }
+    };
+
+    tryAutoUnlock();
+  }, [vaultUnlocked, appUnlocked, unlockVault, refreshCredentials]);
+
+  const searchParams = useSearchParams();
+
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    if (mode === "bank") {
+      setCurrentTab("bank");
+      setActiveTab("BANK");
+      setFormType("BANK");
+    } else if (mode === "authenticator") {
+      setCurrentTab("authenticator");
+    } else {
+      setCurrentTab("account");
+      setActiveTab("APP");
+      setFormType("APP");
+    }
+  }, [mode]);
+
+  useEffect(() => {
+    const tabParam = searchParams.get("tab");
+    if (tabParam === "BANK" || tabParam === "bank") {
+      setCurrentTab("bank");
+      setActiveTab("BANK");
+      setFormType("BANK");
+    } else if (tabParam === "AUTH" || tabParam === "authenticator") {
+      setCurrentTab("authenticator");
+    } else if (tabParam === "APP" || tabParam === "account" || tabParam === "app") {
+      setCurrentTab("account");
+      setActiveTab("APP");
+      setFormType("APP");
+    }
+    const action = searchParams.get("action");
+    if (action === "new") {
+      if (tabParam === "AUTH" || tabParam === "authenticator" || mode === "authenticator") {
+        setCurrentTab("authenticator");
+        setIsQRScannerOpen(true);
+      } else {
+        const targetType = tabParam === "BANK" || mode === "bank" ? "BANK" : "APP";
+        setCurrentTab(targetType === "BANK" ? "bank" : "account");
+        setActiveTab(targetType);
+        setFormType(targetType);
+        setEditingCredential(null);
+        setIsFormOpen(true);
+      }
+    }
+  }, [searchParams, mode]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // Decrypt credential metadata (name, username, url) in memory for search, display, and sorting.
   useEffect(() => {
@@ -472,17 +530,6 @@ export function PasswordsClient({
     return timeB - timeA;
   });
 
-  // Recent credentials across both Apps and Banks for dashboard
-  const recentCredentials = useMemo(() => {
-    const list: Array<{ cred: Credential; type: "APP" | "BANK" }> = [
-      ...appCredentials.map((c) => ({ cred: c, type: "APP" as const })),
-      ...bankCredentials.map((c) => ({ cred: c, type: "BANK" as const })),
-    ];
-    return list
-      .sort((a, b) => new Date(b.cred.createdAt).getTime() - new Date(a.cred.createdAt).getTime())
-      .slice(0, 6);
-  }, [appCredentials, bankCredentials]);
-
   // Show setup modal if no vault exists
   if (!hasVault) {
     return (
@@ -661,20 +708,56 @@ export function PasswordsClient({
     return null;
   }
 
+  const handleScanned2FA = async (account: Scanned2FAAccount) => {
+    if (!encryptionKey) {
+      toast("Please unlock your vault first to save your 2-step account.", "info");
+      return;
+    }
+
+    try {
+      const encryptedSecret = await encryptEnvelopeWithKey(account.secret, encryptionKey);
+      const encryptedPassword = await encryptEnvelopeWithKey("", encryptionKey);
+
+      const res = await fetch("/api/passwords/app", {
+        method: "POST",
+        headers: csrfHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({
+          name: account.issuer || "2-Step Account",
+          username: account.account || "Account",
+          password: encryptedPassword,
+          totpSecret: encryptedSecret,
+          icon: "shield",
+          iconColor: "#0078d4",
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to save 2-step account");
+      }
+
+      await refreshCredentials();
+      toast(`${account.issuer} added to Authenticator!`, "success");
+      setCurrentTab("authenticator");
+    } catch (err) {
+      console.error("Error saving 2-step account:", err);
+      toast("Failed to save 2-step account.", "error");
+    }
+  };
+
   const pageTitle =
-    currentTab === "overview"
-      ? "Credentials Dashboard"
+    currentTab === "authenticator"
+      ? "Authenticator"
       : currentTab === "bank"
-        ? "Bank Credentials"
-        : "App Logins";
+        ? "Bank Passwords"
+        : "App Passwords";
   const pageDescription =
-    currentTab === "overview"
-      ? "Your application logins and bank portal accounts are protected with client-side envelope encryption."
+    currentTab === "authenticator"
+      ? "Microsoft Authenticator-style two-step verification codes with QR scan setup. Private to you and never shared."
       : currentTab === "bank"
         ? "Your bank netbanking portals, customer IDs, and transaction credentials."
         : "Your web and application passwords, protected with client-side envelope encryption.";
 
-  const switchToTab = (tab: "overview" | "account" | "bank") => {
+  const switchToTab = (tab: "account" | "bank" | "authenticator") => {
     setCurrentTab(tab);
     if (tab === "account") {
       setActiveTab("APP");
@@ -688,9 +771,9 @@ export function PasswordsClient({
       if (typeof window !== "undefined") {
         window.history.replaceState(null, "", "/credentials?tab=BANK");
       }
-    } else {
+    } else if (tab === "authenticator") {
       if (typeof window !== "undefined") {
-        window.history.replaceState(null, "", "/credentials");
+        window.history.replaceState(null, "", "/credentials?tab=AUTH");
       }
     }
   };
@@ -724,10 +807,17 @@ export function PasswordsClient({
                 </>
               )}
             </Button>
-            <Button onClick={() => handleAddCredential(activeTab)}>
-              <Plus className="h-4 w-4" />
-              Add {activeTab === "BANK" ? "Bank" : "App"} Credential
-            </Button>
+            {currentTab === "authenticator" ? (
+              <Button onClick={() => setIsQRScannerOpen(true)}>
+                <Camera className="h-4 w-4 mr-1.5" />
+                Scan QR Code
+              </Button>
+            ) : (
+              <Button onClick={() => handleAddCredential(activeTab)}>
+                <Plus className="h-4 w-4 mr-1.5" />
+                Add {activeTab === "BANK" ? "Bank" : "App"} Credential
+              </Button>
+            )}
           </>
         }
       />
@@ -735,265 +825,120 @@ export function PasswordsClient({
       <div className="mt-4 mb-6">
         <Tabs>
           <Tab
-            value="overview"
-            active={currentTab === "overview"}
-            onClick={() => switchToTab("overview")}
-          >
-            Overview
-          </Tab>
-          <Tab
             value="account"
             active={currentTab === "account"}
             onClick={() => switchToTab("account")}
           >
-            <span>App Logins</span>
+            <span>App Pass</span>
             <span className="ml-1.5 rounded-full bg-surface-muted px-1.5 py-0.5 text-[11px] font-normal text-text-muted">
               {appCredentials.length}
             </span>
           </Tab>
           <Tab value="bank" active={currentTab === "bank"} onClick={() => switchToTab("bank")}>
-            <span>Bank Accounts</span>
+            <span>Bank Pass</span>
             <span className="ml-1.5 rounded-full bg-surface-muted px-1.5 py-0.5 text-[11px] font-normal text-text-muted">
               {bankCredentials.length}
+            </span>
+          </Tab>
+          <Tab
+            value="authenticator"
+            active={currentTab === "authenticator"}
+            onClick={() => switchToTab("authenticator")}
+          >
+            <span className="flex items-center gap-1.5">
+              <ShieldCheck className="h-3.5 w-3.5 text-blue-500" />
+              Authenticator
+            </span>
+            <span className="ml-1.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 text-[11px] font-semibold">
+              {authenticatorCredentials.length}
             </span>
           </Tab>
         </Tabs>
       </div>
 
-      {currentTab === "overview" ? (
-        <>
-          {/* 4 Stats Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div
-              className="cursor-pointer"
-              onClick={() => switchToTab("account")}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") switchToTab("account");
-              }}
-            >
-              <Card className="p-4.5 hover:border-brand/40 transition-all">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">
-                      App Accounts
-                    </span>
-                    <div className="h-8 w-8 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
-                      <Globe className="h-4 w-4" />
-                    </div>
-                  </div>
-                  <p className="text-2xl font-bold text-text-primary">{appCredentials.length}</p>
-                  <span className="text-xs text-brand font-medium inline-flex items-center gap-1 hover:underline">
-                    View all app logins <ArrowRight className="h-3 w-3" />
-                  </span>
-                </div>
-              </Card>
-            </div>
-
-            <div
-              className="cursor-pointer"
-              onClick={() => switchToTab("bank")}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") switchToTab("bank");
-              }}
-            >
-              <Card className="p-4.5 hover:border-brand/40 transition-all">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">
-                      Bank Credentials
-                    </span>
-                    <div className="h-8 w-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                      <Building2 className="h-4 w-4" />
-                    </div>
-                  </div>
-                  <p className="text-2xl font-bold text-text-primary">{bankCredentials.length}</p>
-                  <span className="text-xs text-brand font-medium inline-flex items-center gap-1 hover:underline">
-                    View all bank portals <ArrowRight className="h-3 w-3" />
-                  </span>
-                </div>
-              </Card>
-            </div>
-
-            <Card className="p-4.5 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">
-                  Encryption
-                </span>
-                <div className="h-8 w-8 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center">
-                  <ShieldCheck className="h-4 w-4" />
-                </div>
+      {currentTab === "authenticator" ? (
+        isAutoUnlocking ? (
+          <div className="flex flex-col items-center justify-center p-12 space-y-2">
+            <div className="animate-spin rounded-full h-7 w-7 border-b-2 border-brand" />
+            <span className="text-xs text-text-muted">Unlocking authenticator…</span>
+          </div>
+        ) : !vaultUnlocked ? (
+          <Card className="p-6 max-w-md mx-auto mt-4">
+            <div className="text-center space-y-1 mb-4">
+              <div className="h-10 w-10 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto mb-2">
+                <ShieldCheck className="h-5 w-5" />
               </div>
-              <p className="text-xl font-bold text-text-primary">AES-256-GCM</p>
-              <span className="text-xs text-text-muted block">Client-side envelope v2</span>
-            </Card>
-
-            <Card className="p-4.5 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">
-                  Offline Recovery
-                </span>
-                <div className="h-8 w-8 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
-                  <Key className="h-4 w-4" />
-                </div>
-              </div>
-              <p className="text-xl font-bold text-text-primary">
-                {hasRecoverySetup ? "Configured" : "Action Needed"}
+              <h4 className="text-sm font-semibold text-text-primary">Unlock Authenticator</h4>
+              <p className="text-xs text-text-muted">
+                Enter your PIN or master password to decrypt your 2-step verification codes.
               </p>
-              <span className="text-xs text-text-muted block">
-                {hasRecoverySetup ? "Zero-knowledge re-key ready" : "Protect against lockout"}
-              </span>
-            </Card>
-          </div>
+            </div>
+            {renderInlineUnlockForm(false)}
+          </Card>
+        ) : (
+          <div className="flex flex-col gap-4">
+            {/* Top search & Scan QR button */}
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="relative flex-1 min-w-[200px] max-w-sm">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-text-muted" />
+                <Input
+                  id="search-authenticator"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search 2-step accounts..."
+                  className="h-8 pl-9 pr-3 text-[12px]"
+                />
+              </div>
 
-          {/* 2 Navigation & Action Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-            <Card className="p-5 sm:p-6 flex flex-col justify-between space-y-4">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2.5">
-                  <div className="h-8 w-8 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
-                    <Globe className="h-4.5 w-4.5" />
-                  </div>
-                  <h3 className="text-base font-semibold text-text-primary">App & Web Accounts</h3>
-                </div>
-                <p className="text-xs text-text-muted leading-relaxed">
-                  Store user credentials, usernames, passwords, service URLs, and two-factor secrets
-                  for digital accounts.
-                </p>
-              </div>
-              <div className="flex items-center justify-between gap-2 pt-3 border-t border-border-subtle">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="text-xs"
-                  onClick={() => switchToTab("account")}
-                >
-                  View App Logins ({appCredentials.length})
-                </Button>
-                <Button size="sm" onClick={() => handleAddCredential("APP")} className="text-xs">
-                  <Plus className="h-3.5 w-3.5 mr-1" />
-                  New App Credential
+              <div className="flex items-center gap-2">
+                <Button size="sm" onClick={() => setIsQRScannerOpen(true)}>
+                  <Camera className="h-3.5 w-3.5 mr-1" />
+                  Scan QR Code
                 </Button>
               </div>
-            </Card>
-
-            <Card className="p-5 sm:p-6 flex flex-col justify-between space-y-4">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2.5">
-                  <div className="h-8 w-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                    <Building2 className="h-4.5 w-4.5" />
-                  </div>
-                  <h3 className="text-base font-semibold text-text-primary">
-                    Bank & Netbanking Accounts
-                  </h3>
-                </div>
-                <p className="text-xs text-text-muted leading-relaxed">
-                  Safely store bank customer IDs, netbanking user IDs, online financial access
-                  credentials, and transaction passwords.
-                </p>
-              </div>
-              <div className="flex items-center justify-between gap-2 pt-3 border-t border-border-subtle">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="text-xs"
-                  onClick={() => switchToTab("bank")}
-                >
-                  View Bank Logins ({bankCredentials.length})
-                </Button>
-                <Button size="sm" onClick={() => handleAddCredential("BANK")} className="text-xs">
-                  <Plus className="h-3.5 w-3.5 mr-1" />
-                  New Bank Credential
-                </Button>
-              </div>
-            </Card>
-          </div>
-
-          {/* Quick Access / Recent Logins Section */}
-          <div className="mt-8 space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-base font-semibold text-text-primary">Quick Access Logins</h3>
-                <p className="text-xs text-text-muted">
-                  {vaultUnlocked
-                    ? "Recently added credentials and starred logins."
-                    : "Unlock vault to preview credentials."}
-                </p>
-              </div>
-              {vaultUnlocked && (
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-xs"
-                    onClick={() => switchToTab("account")}
-                  >
-                    All Apps
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-xs"
-                    onClick={() => switchToTab("bank")}
-                  >
-                    All Banks
-                  </Button>
-                </div>
-              )}
             </div>
 
-            {!vaultUnlocked ? (
-              <Card className="p-6 max-w-md mx-auto">
-                <div className="text-center space-y-1 mb-4">
-                  <div className="h-10 w-10 rounded-2xl bg-brand/10 text-brand flex items-center justify-center mx-auto mb-2">
-                    <Lock className="h-5 w-5" />
-                  </div>
-                  <h4 className="text-sm font-semibold text-text-primary">
-                    Unlock Vault for Quick Access
-                  </h4>
-                  <p className="text-xs text-text-muted">
-                    Enter your PIN or master password to preview credentials directly on this
-                    dashboard.
-                  </p>
-                </div>
-                {renderInlineUnlockForm(false)}
-              </Card>
-            ) : recentCredentials.length === 0 ? (
+            {/* Authenticator Cards Grid */}
+            {authenticatorCredentials.length === 0 ? (
               <EmptyState
-                icon={<Globe className="h-6 w-6" />}
-                title="No credentials stored yet"
-                description="Add your first app or bank credential to get started."
+                icon={<ShieldCheck className="h-8 w-8 text-blue-500" />}
+                title="No 2-Step Accounts Configured"
+                description="Scan a QR code from Microsoft, Google, GitHub, Amazon, or other accounts to set up this app as your 2-step verification authenticator."
                 action={
-                  <Button onClick={() => handleAddCredential("APP")}>
-                    <Plus className="h-4 w-4" />
-                    Add App Credential
+                  <Button onClick={() => setIsQRScannerOpen(true)}>
+                    <Camera className="h-4 w-4 mr-1.5" />
+                    Scan QR Code
                   </Button>
                 }
               />
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {recentCredentials.map(
-                  ({ cred, type }: { cred: Credential; type: "APP" | "BANK" }) => (
-                    <PasswordCard
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                {authenticatorCredentials
+                  .filter((cred) => {
+                    if (!searchQuery.trim()) return true;
+                    const q = searchQuery.toLowerCase();
+                    return (
+                      cred.name.toLowerCase().includes(q) || cred.username.toLowerCase().includes(q)
+                    );
+                  })
+                  .map((cred) => (
+                    <AuthenticatorCard
                       key={cred.id}
                       credential={cred}
-                      type={type}
                       encryptionKey={encryptionKey!}
-                      onEdit={() => handleEditCredential(cred, type)}
-                      onDelete={() => handleDeleteCredential(cred.id, type)}
-                      onFavoriteToggle={(id, isFavorite) =>
-                        handleToggleFavorite(id, type, isFavorite)
-                      }
+                      onEdit={() => handleEditCredential(cred, "APP")}
+                      onDelete={() => handleDeleteCredential(cred.id, "APP")}
                     />
-                  ),
-                )}
+                  ))}
               </div>
             )}
           </div>
-        </>
+        )
+      ) : isAutoUnlocking ? (
+        <div className="flex flex-col items-center justify-center p-12 space-y-2">
+          <div className="animate-spin rounded-full h-7 w-7 border-b-2 border-brand" />
+          <span className="text-xs text-text-muted">Unlocking credential vault…</span>
+        </div>
       ) : !vaultUnlocked ? (
         <Card className="p-6 max-w-md mx-auto mt-4">
           <div className="text-center space-y-1 mb-4">
@@ -1110,6 +1055,12 @@ export function PasswordsClient({
         vaultSalt={vaultSalt}
         onSave={handleFormSave}
         editingCredential={editingCredential}
+      />
+
+      <QRScannerModal
+        isOpen={isQRScannerOpen}
+        onClose={() => setIsQRScannerOpen(false)}
+        onScanned={handleScanned2FA}
       />
     </>
   );

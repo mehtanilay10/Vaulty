@@ -13,6 +13,7 @@ import {
   Mail,
   BellRing,
   Lock,
+  StickyNote,
   ChevronDown,
 } from "lucide-react";
 
@@ -33,7 +34,7 @@ interface SidebarItem {
 
 const groups: { label: string; items: SidebarItem[] }[] = [
   {
-    label: "Workspace",
+    label: "Your Space",
     items: [
       {
         name: "Dashboard",
@@ -67,6 +68,13 @@ const groups: { label: string; items: SidebarItem[] }[] = [
         icon: BellRing,
         activeColor: "text-amber-600 dark:text-amber-400",
         activeBg: "bg-amber-500/10",
+      },
+      {
+        name: "Notes",
+        href: "/notes",
+        icon: StickyNote,
+        activeColor: "text-teal-600 dark:text-teal-400",
+        activeBg: "bg-teal-500/10",
       },
     ],
   },

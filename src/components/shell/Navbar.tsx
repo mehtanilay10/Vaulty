@@ -16,6 +16,9 @@ import {
   Wallet,
   Bell,
   Keyboard,
+  Camera,
+  ShieldCheck,
+  StickyNote,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ThemeToggle } from "./ThemeToggle";
@@ -28,11 +31,13 @@ import { KeyboardShortcutsModal } from "@/components/shell/KeyboardShortcutsModa
 
 export function Navbar({
   onOpenUpload,
+  onOpenScan,
   isDriveConnected,
   sidebarCollapsed = false,
   onToggleSidebar,
 }: {
   onOpenUpload?: () => void;
+  onOpenScan?: () => void;
   isDriveConnected?: boolean;
   sidebarCollapsed?: boolean;
   onToggleSidebar?: () => void;
@@ -135,7 +140,7 @@ export function Navbar({
                   </button>
                 }
               >
-                <div className="py-1">
+                <div className="w-64 py-1 sm:w-72">
                   <div className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-text-muted">
                     Quick Actions
                   </div>
@@ -145,35 +150,76 @@ export function Navbar({
                       onOpenUpload();
                     }}
                   >
-                    <Upload className="h-4 w-4 text-brand" />
+                    <Upload className="h-4 w-4 text-brand shrink-0" />
                     <div className="flex flex-col text-left">
                       <span className="font-medium text-text-primary">Upload Document</span>
                       <span className="text-[11px] text-text-muted">Save & AI analysis</span>
                     </div>
                   </DropdownItem>
-                  <DropdownItem href="/credentials?tab=BANK&action=new">
-                    <Building2 className="h-4 w-4 text-brand" />
+                  {onOpenScan && (
+                    <DropdownItem
+                      onClick={() => {
+                        onOpenScan();
+                      }}
+                    >
+                      <Camera className="h-4 w-4 text-brand shrink-0" />
+                      <div className="flex flex-col text-left">
+                        <span className="font-medium text-text-primary">Scan Document</span>
+                        <span className="text-[11px] text-text-muted">
+                          Camera scanner & auto-crop
+                        </span>
+                      </div>
+                    </DropdownItem>
+                  )}
+                  <DropdownItem href="/credentials?tab=AUTH&action=new">
+                    <ShieldCheck className="h-4 w-4 text-brand shrink-0" />
                     <div className="flex flex-col text-left">
-                      <span className="font-medium text-text-primary">Add Bank Credential</span>
-                      <span className="text-[11px] text-text-muted">Netbanking, PINs & ATM</span>
+                      <span className="font-medium text-text-primary">Set Up Authenticator</span>
+                      <span className="text-[11px] text-text-muted">
+                        2-Step verification & QR scan
+                      </span>
                     </div>
                   </DropdownItem>
+                  <DropdownItem href="/notes?action=new">
+                    <StickyNote className="h-4 w-4 text-brand shrink-0" />
+                    <div className="flex flex-col text-left">
+                      <span className="font-medium text-text-primary">New Note Page</span>
+                      <span className="text-[11px] text-text-muted">
+                        Rich text, to-dos & images
+                      </span>
+                    </div>
+                  </DropdownItem>
+                  <div className="my-1 border-t border-border-subtle" />
+                  <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
+                    Credentials & Vault
+                  </div>
                   <DropdownItem href="/credentials?tab=APP&action=new">
-                    <Globe className="h-4 w-4 text-brand" />
+                    <Globe className="h-4 w-4 text-brand shrink-0" />
                     <div className="flex flex-col text-left">
                       <span className="font-medium text-text-primary">Add App Credential</span>
                       <span className="text-[11px] text-text-muted">Website & app login</span>
                     </div>
                   </DropdownItem>
+                  <DropdownItem href="/credentials?tab=BANK&action=new">
+                    <Building2 className="h-4 w-4 text-brand shrink-0" />
+                    <div className="flex flex-col text-left">
+                      <span className="font-medium text-text-primary">Add Bank Credential</span>
+                      <span className="text-[11px] text-text-muted">Netbanking, PINs & ATM</span>
+                    </div>
+                  </DropdownItem>
+                  <div className="my-1 border-t border-border-subtle" />
+                  <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
+                    Wealth & Organization
+                  </div>
                   <DropdownItem href="/wealth/accounts?action=new">
-                    <Wallet className="h-4 w-4 text-brand" />
+                    <Wallet className="h-4 w-4 text-brand shrink-0" />
                     <div className="flex flex-col text-left">
                       <span className="font-medium text-text-primary">Add Wealth Account</span>
                       <span className="text-[11px] text-text-muted">Bank, card, or asset</span>
                     </div>
                   </DropdownItem>
                   <DropdownItem href="/reminders?action=new">
-                    <Bell className="h-4 w-4 text-brand" />
+                    <Bell className="h-4 w-4 text-brand shrink-0" />
                     <div className="flex flex-col text-left">
                       <span className="font-medium text-text-primary">New Reminder</span>
                       <span className="text-[11px] text-text-muted">Due date, bill, or task</span>

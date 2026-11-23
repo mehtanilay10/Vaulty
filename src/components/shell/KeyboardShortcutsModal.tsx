@@ -52,6 +52,7 @@ export function KeyboardShortcutsModal({ open, onClose }: { open: boolean; onClo
       title="Keyboard Shortcuts"
       description="Navigate Vaulty faster using your keyboard."
       maxWidth="lg"
+      fullScreenMobile={true}
     >
       <div className="space-y-6 py-1">
         {SHORTCUT_GROUPS.map((group) => {
@@ -67,9 +68,11 @@ export function KeyboardShortcutsModal({ open, onClose }: { open: boolean; onClo
                 {group.items.map((item, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center justify-between gap-4 px-3.5 py-2.5 text-xs"
+                    className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 sm:gap-4 px-3.5 py-2.5 text-xs"
                   >
-                    <span className="text-text-primary font-medium">{item.description}</span>
+                    <span className="text-text-primary font-medium flex-1 min-w-[140px]">
+                      {item.description}
+                    </span>
                     <div className="flex items-center gap-1.5 shrink-0">
                       {item.keys.map((key, kIdx) => (
                         <kbd

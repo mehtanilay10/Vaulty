@@ -10,6 +10,7 @@ export interface PasswordCredential {
   upiPin?: string | null;
   mobileAppPin?: string | null;
   mobileTransactionPin?: string | null;
+  totpSecret?: string | null;
   isFavorite: boolean;
   icon?: string | null;
   iconColor?: string | null;

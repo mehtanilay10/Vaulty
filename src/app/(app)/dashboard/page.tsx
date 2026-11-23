@@ -106,11 +106,16 @@ export default async function DashboardPage() {
   ]);
 
   const activeWealthAccounts = allWealthAccounts.filter((account) => account.status === "ACTIVE");
-  const recentWealthAccounts = allWealthAccounts.slice(0, 3);
+  const dashboardWealthAccounts = activeWealthAccounts.filter(
+    (account) => (account.currency || "").toUpperCase() !== "USD",
+  );
+  const recentWealthAccounts = allWealthAccounts
+    .filter((account) => (account.currency || "").toUpperCase() !== "USD")
+    .slice(0, 3);
   const favoriteCount =
     (vault?.appCredentials?.length ?? 0) + (vault?.bankCredentials?.length ?? 0);
 
-  const { summary, currency } = calculateWealthSummary(activeWealthAccounts);
+  const { summary, currency } = calculateWealthSummary(dashboardWealthAccounts);
   const reminders = getUpcomingReminders(activeWealthAccounts).map((reminder) => ({
     ...reminder,
     dueDate: reminder.dueDate instanceof Date ? reminder.dueDate.toISOString() : reminder.dueDate,

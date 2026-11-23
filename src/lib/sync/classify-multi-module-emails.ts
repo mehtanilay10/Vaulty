@@ -625,3 +625,53 @@ export function heuristicClassifyMultiModule(
 
   return { transactions, documents, reminders };
 }
+
+/**
+ * Classify emails across all modules in small batches with retry on transient
+ * Gemini errors (429/503/high demand). Throws if a batch ultimately fails.
+ */
+export async function classifyMultiInBatches(
+  emails: GmailEmailForClassification[],
+  logPrefix: string = "[AI]",
+): Promise<MultiModuleClassificationResult> {
+  const allTransactions: ClassifiedGmailTransaction[] = [];
+  const allDocuments: MultiModuleClassificationResult["documents"] = [];
+  const allReminders: MultiModuleClassificationResult["reminders"] = [];
+
+  for (let offset = 0; offset < emails.length; offset += 5) {
+    const chunk = emails.slice(offset, offset + 5);
+    let attempts = 0;
+    const maxAttempts = 3;
+    while (attempts < maxAttempts) {
+      try {
+        const batch = await classifyMultiModuleBatch(chunk, { logPrefix });
+        allTransactions.push(...batch.transactions);
+        allDocuments.push(...batch.documents);
+        allReminders.push(...batch.reminders);
+        break;
+      } catch (err) {
+        attempts++;
+        const msg = err instanceof Error ? err.message : String(err);
+        const isRetryable =
+          msg.includes("503") ||
+          msg.includes("429") ||
+          msg.includes("high demand") ||
+          msg.includes("RESOURCE_EXHAUSTED") ||
+          msg.includes("UNAVAILABLE");
+        if (isRetryable && attempts < maxAttempts) {
+          console.warn(
+            `${logPrefix} Gemini transient error. Retrying in ${attempts * 2}s (attempt ${attempts + 1}/${maxAttempts})...`,
+          );
+          await new Promise((r) => setTimeout(r, attempts * 2000));
+        } else {
+          throw err;
+        }
+      }
+    }
+  }
+  return {
+    transactions: allTransactions,
+    documents: allDocuments,
+    reminders: allReminders,
+  };
+}

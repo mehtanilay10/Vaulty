@@ -42,6 +42,7 @@ import {
   Pencil,
   RefreshCw,
   ShieldCheck,
+  StickyNote,
   Trash2,
   UserPlus,
   Users,
@@ -202,6 +203,7 @@ export function FamilyClient({ overview }: { overview: FamilyOverview }) {
       shareWealth: invitation.shareWealth,
       shareCredentials: invitation.shareCredentials,
       shareReminders: invitation.shareReminders,
+      shareNotes: invitation.shareNotes,
     });
     setSharingTarget({ kind: "invitation", invitation });
   };
@@ -212,6 +214,7 @@ export function FamilyClient({ overview }: { overview: FamilyOverview }) {
       shareWealth: membership.shareWealth,
       shareCredentials: membership.shareCredentials,
       shareReminders: membership.shareReminders,
+      shareNotes: membership.shareNotes,
     });
     setSharingTarget({ kind: "membership", membership });
   };
@@ -882,6 +885,18 @@ export function FamilyClient({ overview }: { overview: FamilyOverview }) {
                               <Bell className="h-3.5 w-3.5 shrink-0" />
                             </span>
                             <span className="truncate">Reminders</span>
+                            <ChevronRight className="ml-auto h-3.5 w-3.5 shrink-0 opacity-60 transition-transform group-hover:translate-x-0.5" />
+                          </Link>
+                        )}
+                        {membership.shareNotes && (
+                          <Link
+                            href={`/family/${membership.ownerId}/notes`}
+                            className="group flex items-center gap-2 rounded-xl border border-border-subtle bg-surface px-3 py-2.5 text-[12px] font-medium text-text-secondary transition-all hover:border-teal-500/40 hover:bg-teal-500/5 hover:text-teal-600 dark:hover:text-teal-400"
+                          >
+                            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-teal-500/10 text-teal-600 dark:text-teal-400">
+                              <StickyNote className="h-3.5 w-3.5 shrink-0" />
+                            </span>
+                            <span className="truncate">Notes</span>
                             <ChevronRight className="ml-auto h-3.5 w-3.5 shrink-0 opacity-60 transition-transform group-hover:translate-x-0.5" />
                           </Link>
                         )}

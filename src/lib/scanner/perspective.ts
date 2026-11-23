@@ -149,6 +149,176 @@ export function detectDefaultQuad(imgWidth: number, imgHeight: number, inset = 0
 }
 
 /**
+ * Automatically detects the quadrilateral bounding corners of document-type contents
+ * (like Microsoft Lens, Google Scan, CamScanner) against their background.
+ * Falls back to detectDefaultQuad if no distinct rectangular document boundary is detected.
+ */
+export function detectDocumentQuad(
+  imageSource: { data: Uint8ClampedArray | number[]; width: number; height: number },
+  fullWidth?: number,
+  fullHeight?: number,
+): QuadPoints {
+  const w = imageSource.width;
+  const h = imageSource.height;
+  const targetW = fullWidth ?? w;
+  const targetH = fullHeight ?? h;
+
+  if (w < 4 || h < 4) {
+    return detectDefaultQuad(targetW, targetH, 0.05);
+  }
+
+  const scaleX = targetW / w;
+  const scaleY = targetH / h;
+  const pixels = imageSource.data;
+  const numPixels = w * h;
+
+  // 1. Convert to luminance array and compute basic stats
+  const lum = new Float32Array(numPixels);
+  let minLum = 255;
+  let maxLum = 0;
+
+  for (let i = 0; i < numPixels; i++) {
+    const idx = i * 4;
+    const l = 0.299 * pixels[idx] + 0.587 * pixels[idx + 1] + 0.114 * pixels[idx + 2];
+    lum[i] = l;
+    if (l < minLum) minLum = l;
+    if (l > maxLum) maxLum = l;
+  }
+
+  const contrast = maxLum - minLum;
+  if (contrast < 25) {
+    return detectDefaultQuad(targetW, targetH, 0.05);
+  }
+
+  // 2. Otsu thresholding to separate document from background
+  const bins = new Uint32Array(32);
+  for (let i = 0; i < numPixels; i++) {
+    const bin = Math.min(31, Math.floor((lum[i] / 256) * 32));
+    bins[bin]++;
+  }
+
+  const total = numPixels;
+  let sumB = 0;
+  let wB = 0;
+  let maximum = 0;
+  let thresholdBin = 16;
+  let sum1 = 0;
+  for (let i = 0; i < 32; i++) {
+    sum1 += i * bins[i];
+  }
+
+  for (let i = 0; i < 32; i++) {
+    wB += bins[i];
+    if (wB === 0) continue;
+    const wF = total - wB;
+    if (wF === 0) break;
+    sumB += i * bins[i];
+    const mB = sumB / wB;
+    const mF = (sum1 - sumB) / wF;
+    const between = wB * wF * (mB - mF) * (mB - mF);
+    if (between > maximum) {
+      maximum = between;
+      thresholdBin = i;
+    }
+  }
+
+  const threshold = ((thresholdBin + 1) / 32) * 256;
+
+  // Determine if document is lighter than background by sampling outer edge pixels
+  const marginX = Math.max(1, Math.floor(w * 0.02));
+  const marginY = Math.max(1, Math.floor(h * 0.02));
+
+  let edgeSum = 0;
+  let edgeCount = 0;
+  for (let x = 0; x < w; x += 2) {
+    edgeSum += lum[x] + lum[(h - 1) * w + x];
+    edgeCount += 2;
+  }
+  for (let y = 1; y < h - 1; y += 2) {
+    edgeSum += lum[y * w] + lum[y * w + (w - 1)];
+    edgeCount += 2;
+  }
+  const avgEdgeLum = edgeCount > 0 ? edgeSum / edgeCount : 128;
+  const isDocLighter = avgEdgeLum < threshold;
+
+  // 3. Find document boundary points
+
+  let minTL = Infinity;
+  let maxTR = -Infinity;
+  let maxBR = -Infinity;
+  let minBL = Infinity;
+
+  let bestTL = { x: marginX, y: marginY };
+  let bestTR = { x: w - marginX, y: marginY };
+  let bestBR = { x: w - marginX, y: h - marginY };
+  let bestBL = { x: marginX, y: h - marginY };
+
+  let docPixelCount = 0;
+
+  for (let y = marginY; y < h - marginY; y++) {
+    const rowOffset = y * w;
+    for (let x = marginX; x < w - marginX; x++) {
+      const val = lum[rowOffset + x];
+      const isDoc = isDocLighter ? val >= threshold : val < threshold;
+      if (isDoc) {
+        docPixelCount++;
+        const sumXY = x + y;
+        const diffXY = x - y;
+
+        if (sumXY < minTL) {
+          minTL = sumXY;
+          bestTL = { x, y };
+        }
+        if (diffXY > maxTR) {
+          maxTR = diffXY;
+          bestTR = { x, y };
+        }
+        if (sumXY > maxBR) {
+          maxBR = sumXY;
+          bestBR = { x, y };
+        }
+        if (diffXY < minBL) {
+          minBL = diffXY;
+          bestBL = { x, y };
+        }
+      }
+    }
+  }
+
+  const docRatio = docPixelCount / ((w - 2 * marginX) * (h - 2 * marginY));
+
+  if (docRatio < 0.1 || docRatio > 0.96) {
+    return detectDefaultQuad(targetW, targetH, 0.05);
+  }
+
+  const quadW = Math.max(bestTR.x - bestTL.x, bestBR.x - bestBL.x);
+  const quadH = Math.max(bestBL.y - bestTL.y, bestBR.y - bestTR.y);
+
+  if (quadW < w * 0.25 || quadH < h * 0.25) {
+    return detectDefaultQuad(targetW, targetH, 0.05);
+  }
+
+  return {
+    topLeft: {
+      x: Math.round(Math.max(0, Math.min(targetW, bestTL.x * scaleX))),
+      y: Math.round(Math.max(0, Math.min(targetH, bestTL.y * scaleY))),
+    },
+    topRight: {
+      x: Math.round(Math.max(0, Math.min(targetW, bestTR.x * scaleX))),
+      y: Math.round(Math.max(0, Math.min(targetH, bestTR.y * scaleY))),
+    },
+    bottomRight: {
+      x: Math.round(Math.max(0, Math.min(targetW, bestBR.x * scaleX))),
+      y: Math.round(Math.max(0, Math.min(targetH, bestBR.y * scaleY))),
+    },
+    bottomLeft: {
+      x: Math.round(Math.max(0, Math.min(targetW, bestBL.x * scaleX))),
+      y: Math.round(Math.max(0, Math.min(targetH, bestBL.y * scaleY))),
+    },
+  };
+}
+
+/**
  * Bilinear sampling of ImageData at subpixel location (x, y).
  */
 export function sampleBilinear(
@@ -244,17 +414,39 @@ export function warpImageData(
         dstPixels[dstIdx + 2] = yVal;
         dstPixels[dstIdx + 3] = pixel[3];
       } else if (filter === "document") {
-        // High contrast document filter: whiten paper background, darken text
-        const lum = 0.299 * pixel[0] + 0.587 * pixel[1] + 0.114 * pixel[2];
-        // Sigmoid / piecewise stretch: ink (<80) darkened, paper (>200) pure white
-        const low = 80;
-        const high = 210;
-        const enhanced = Math.min(255, Math.max(0, ((lum - low) / (high - low)) * 255));
-        const val = Math.round(enhanced);
-        dstPixels[dstIdx] = val;
-        dstPixels[dstIdx + 1] = val;
-        dstPixels[dstIdx + 2] = val;
-        dstPixels[dstIdx + 3] = pixel[3];
+        // High contrast document filter: whiten paper background, darken ink/text, preserve colored ink
+        const r = pixel[0];
+        const g = pixel[1];
+        const b = pixel[2];
+        const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+        const maxC = Math.max(r, g, b);
+        const minC = Math.min(r, g, b);
+        const saturation = maxC > 0 ? (maxC - minC) / maxC : 0;
+
+        if (saturation > 0.2 && lum < 220) {
+          // Colored ink (signature, stamp, logo): boost contrast while preserving hue
+          const contrast = 1.35;
+          dstPixels[dstIdx] = Math.min(255, Math.max(0, Math.round((r - 128) * contrast + 128)));
+          dstPixels[dstIdx + 1] = Math.min(
+            255,
+            Math.max(0, Math.round((g - 128) * contrast + 128)),
+          );
+          dstPixels[dstIdx + 2] = Math.min(
+            255,
+            Math.max(0, Math.round((b - 128) * contrast + 128)),
+          );
+          dstPixels[dstIdx + 3] = pixel[3];
+        } else {
+          // Monochromatic document text & background whitening
+          const low = 70;
+          const high = 205;
+          const enhanced = Math.min(255, Math.max(0, ((lum - low) / (high - low)) * 255));
+          const val = Math.round(enhanced);
+          dstPixels[dstIdx] = val;
+          dstPixels[dstIdx + 1] = val;
+          dstPixels[dstIdx + 2] = val;
+          dstPixels[dstIdx + 3] = pixel[3];
+        }
       }
     }
   }

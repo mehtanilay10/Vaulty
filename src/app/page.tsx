@@ -131,8 +131,8 @@ export default function LandingPage() {
             className="hidden items-center gap-7 text-[13px] font-medium text-text-secondary md:flex"
             aria-label="Main navigation"
           >
-            <a href="#workspace" className="transition-colors hover:text-text-primary">
-              The Workspace
+            <a href="#your-space" className="transition-colors hover:text-text-primary">
+              Your Space
             </a>
             <a href="#features" className="transition-colors hover:text-text-primary">
               Capabilities
@@ -162,20 +162,19 @@ export default function LandingPage() {
         <section className="landing-hero">
           <div className="landing-hero__copy">
             <div className="landing-kicker">
-              <span className="landing-kicker__dot" /> Personal & Family Information Workspace
+              <span className="landing-kicker__dot" /> Personal & Family Information Space
             </div>
             <h1>
               The important things in your life, <em>kept together.</em>
             </h1>
             <p className="landing-hero__description">
               Documents, credentials, wealth records, and deadline reminders — unified in one secure
-              workspace backed by Google Drive, client-side encryption, and AI-assisted
-              understanding.
+              space backed by Google Drive, client-side encryption, and AI-assisted understanding.
             </p>
             <div className="landing-hero__actions">
               {cta}
-              <a href="#workspace" className="landing-secondary-link">
-                Explore the workspace <ArrowDownRight className="h-4 w-4" />
+              <a href="#your-space" className="landing-secondary-link">
+                Explore your space <ArrowDownRight className="h-4 w-4" />
               </a>
             </div>
             <div className="landing-principles" aria-label="Product principles">
@@ -188,9 +187,13 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <div className="landing-preview-wrap" aria-label="Illustration of the Vaulty workspace">
+          <div
+            id="your-space"
+            className="landing-preview-wrap"
+            aria-label="Illustration of the Vaulty space"
+          >
             <div className="landing-preview-note">
-              <span className="landing-preview-note__dot" /> PRIVATE & ENCRYPTED WORKSPACE
+              <span className="landing-preview-note__dot" /> PRIVATE & ENCRYPTED SPACE
             </div>
             <div className="landing-preview">
               <div className="landing-preview__topbar">
@@ -209,7 +212,7 @@ export default function LandingPage() {
                 <div className="landing-preview__welcome">
                   <div>
                     <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-text-muted">
-                      Workspace pillars
+                      Your Space pillars
                     </p>
                     <p className="mt-1 text-[20px] font-semibold tracking-[-0.04em] text-text-primary">
                       Everything, organized & protected.
@@ -459,14 +462,14 @@ export default function LandingPage() {
                 </span>
               </Link>
               <p className="text-xs text-text-secondary leading-relaxed">
-                Private personal & family workspace for documents, credentials, wealth records, and
+                Private personal & family space for documents, credentials, wealth records, and
                 deadline reminders.
               </p>
             </div>
 
             <div>
               <p className="font-semibold text-xs text-text-primary uppercase tracking-wider">
-                Workspace
+                Your Space
               </p>
               <ul className="mt-3 space-y-2 text-xs">
                 <li>

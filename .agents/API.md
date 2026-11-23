@@ -24,8 +24,8 @@
 
 - `GET /api/documents`: paginated document listing; supports `scope=owned` (default) or `scope=all`, filtering by query `q`, `fileType`, `aiStatus`, `folderId`, and sorting.
 - `POST /api/documents/upload`: multipart upload for PDF, JPEG, PNG, and WebP files up to `MAX_UPLOAD_SIZE` (default 50 MiB). Sanitizes errors to prevent storage leakage.
-- `GET|PATCH|DELETE /api/documents/[id]`: get metadata, update document properties (name, folder, tags, expiry date), or delete document.
-- `GET /api/documents/[id]/file`: stream original binary from Google Drive.
+- `GET|PATCH|DELETE /api/documents/[id]`: get metadata, update document properties (name, folder, tags, expiry date), or delete document (concurrently deletes Google Drive artifacts with 404 resilience and executes atomic batch SQL transaction).
+- `GET /api/documents/[id]/file`: stream original binary from Google Drive; returns 404 `DRIVE_FILE_NOT_FOUND` when missing.
 - `GET|PUT /api/documents/[id]/dates`: get or update extracted expiry and important dates; recalculates associated reminders.
 - `POST /api/documents/[id]/ai`: trigger Gemini extraction and summary for an individual document.
 - `POST /api/documents/[id]/append-page`: multipart upload appending one or more scanned pages or PDF pages to an existing document on Google Drive; converts single images to multi-page PDFs, updates file content, and re-triggers AI extraction when enabled.
@@ -36,7 +36,7 @@
 ## Family
 
 - `GET /api/family`: list family members, invitations, and active module permissions. Rate-limited via `SecurityRateLimit`.
-- `POST /api/family/invitations`: create an email-bound invitation with granular module flags (`shareDocuments`, `shareWealth`, `shareCredentials`, `shareReminders`).
+- `POST /api/family/invitations`: create an email-bound invitation with granular module flags (`shareDocuments`, `shareWealth`, `shareCredentials`, `shareReminders`, `shareNotes`).
 - `POST /api/family/invitations/accept`: accept an invitation for the authenticated user matching the invited email.
 - `POST /api/family/invitations/reject`: reject an invitation.
 - `POST /api/family/invitations/[id]/resend`: resend pending invitation email.
@@ -45,6 +45,7 @@
 - `GET /api/family/documents`: list documents shared with the user through family memberships.
 - `GET /api/family/wealth`: list wealth accounts and transactions shared through family memberships.
 - `GET /api/family/credentials`: list credentials shared through family memberships.
+- `GET /api/family/notes`: list note pages shared through family memberships.
 - `GET|POST /api/family/credentials/key`: retrieve or store the user's family credential keypair.
 - `POST|DELETE /api/family/credentials/key/[membershipId]`: share or revoke wrapped credential keys for a specific family member.
   _(Note: Family reminders are queried directly in `/reminders/page.tsx` via `FamilyMembership.shareReminders` without exposing an unauthenticated API endpoint)._
@@ -93,7 +94,7 @@
 - `POST /api/passwords/setup`: initialize master password and encryption parameters for a new vault.
 - `POST /api/passwords/unlock`: verify master password and retrieve encryption salt/iterations. Enforces 5-attempt brute-force lockout (`lockedUntil`, 15 min lock).
 - `POST /api/passwords/change-master-password`: change master password and commit re-encrypted credential payloads. Enforces the same 5-attempt brute-force lockout and logs `MASTER_PASSWORD_CHANGE_FAILED`.
-- `GET|POST /api/passwords/app`: list or create client-side encrypted app credentials. Validates input schema via Zod with string/ciphertext length caps (100,000 chars).
+- `GET|POST /api/passwords/app`: list or create client-side encrypted app credentials and 2FA TOTP secrets (`totpSecret`). Validates input schema via Zod with string/ciphertext length caps (100,000 chars).
 - `PUT|DELETE /api/passwords/app/[id]`: update or delete an app credential.
 - `GET|POST /api/passwords/bank`: list or create client-side encrypted bank credentials. Validates input schema via Zod with string/ciphertext length caps.
 - `PUT|DELETE /api/passwords/bank/[id]`: update or delete a bank credential.
@@ -105,6 +106,12 @@
 - `POST /api/passwords/reset/confirm`: confirm master password reset (blocks if vault has credentials and recovery is unconfigured).
 - `GET|POST|DELETE /api/passwords/vaults/[id]/share`: legacy vault-level sharing endpoints.
 - `GET /api/passwords/vaults/shared`: list shared vaults.
+
+## Notes
+
+- `GET|POST /api/notes`: list user's note pages (sorted by pinned desc, updated desc; supports `q` query search) or create a new note page.
+- `GET|PATCH|DELETE /api/notes/[id]`: retrieve note page (enforcing user ownership or family notes access), update note (title, content, todos, images, color, isPinned, isArchived), or delete note page.
+- `POST|DELETE /api/notes/[id]/images`: upload image attachment (multipart file or base64 data URL) or remove attachment by `imageId`.
 
 ## Reminders
 

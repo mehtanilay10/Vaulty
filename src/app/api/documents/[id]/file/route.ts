@@ -32,6 +32,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         storageFileId: true,
         ownerId: true,
         folderId: true,
+        sizeBytes: true,
+        thumbnailUrl: true,
       },
     });
 
@@ -93,23 +95,69 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
           folderId: doc.folderId,
         });
 
-        const stream = await provider.downloadFileStream(storageFileId);
+        const responseHeaders: Record<string, string> = {
+          "Content-Type": doc.mimeType || "application/octet-stream",
+          "Content-Disposition": `inline; filename="${encodeURIComponent(doc.name)}"`,
+          "Cache-Control": "private, no-store, max-age=0",
+          Pragma: "no-cache",
+          "X-Content-Type-Options": "nosniff",
+        };
+        if (doc.sizeBytes && doc.sizeBytes > 0) {
+          responseHeaders["Content-Length"] = String(doc.sizeBytes);
+        }
 
-        return new Response(stream, {
-          headers: {
-            "Content-Type": doc.mimeType,
-            "Content-Disposition": `inline; filename="${encodeURIComponent(doc.name)}"`,
-            "Cache-Control": "private, no-store, max-age=0",
-            Pragma: "no-cache",
-            "X-Content-Type-Options": "nosniff",
-          },
-        });
-      } catch (driveError) {
+        try {
+          const stream = await provider.downloadFileStream(storageFileId);
+          return new Response(stream, { headers: responseHeaders });
+        } catch (streamErr) {
+          console.warn(
+            "[document-file] downloadFileStream failed, falling back to downloadFile buffer:",
+            streamErr,
+          );
+          const buffer = await provider.downloadFile(storageFileId);
+          responseHeaders["Content-Length"] = String(buffer.byteLength);
+          return new Response(buffer as unknown as BodyInit, { headers: responseHeaders });
+        }
+      } catch (driveError: unknown) {
         console.error("Drive file fetch error:", driveError);
+        const errObj = driveError as { code?: number | string; status?: number; message?: string };
+        const isNotFound =
+          errObj?.code === 404 ||
+          errObj?.status === 404 ||
+          errObj?.message?.toLowerCase().includes("file not found") ||
+          errObj?.message?.toLowerCase().includes("notfound");
+
+        const status = isNotFound ? 404 : 500;
         return NextResponse.json(
-          { error: "Failed to fetch document from Google Drive." },
-          { status: 500 },
+          {
+            error: isNotFound
+              ? "File not found on Google Drive. It may have been moved or deleted in Drive."
+              : "Failed to fetch document from Google Drive.",
+            code: isNotFound ? "DRIVE_FILE_NOT_FOUND" : "DRIVE_FETCH_ERROR",
+          },
+          { status },
         );
+      }
+    }
+
+    // Fallback if file not yet uploaded to Drive but thumbnail data URL is present
+    if (doc.thumbnailUrl && doc.thumbnailUrl.startsWith("data:")) {
+      try {
+        const commaIndex = doc.thumbnailUrl.indexOf(",");
+        if (commaIndex !== -1) {
+          const mimeMatch = doc.thumbnailUrl.substring(5, commaIndex).split(";")[0];
+          const base64Data = doc.thumbnailUrl.substring(commaIndex + 1);
+          const buffer = Buffer.from(base64Data, "base64");
+          return new Response(buffer as unknown as BodyInit, {
+            headers: {
+              "Content-Type": mimeMatch || "image/jpeg",
+              "Content-Disposition": `inline; filename="${encodeURIComponent(doc.name)}"`,
+              "Cache-Control": "private, max-age=3600",
+            },
+          });
+        }
+      } catch (thumbErr) {
+        console.warn("[document-file] Failed to serve thumbnail data fallback:", thumbErr);
       }
     }
 

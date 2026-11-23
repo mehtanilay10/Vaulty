@@ -48,10 +48,14 @@
 ### Credential vault & App Lock
 
 - `PasswordVault`: Owner, master-password hash, KDF metadata, configured state, reset/lock fields (`failedAttempts`, `lockedUntil` for brute-force defense), recovery metadata, family public/encrypted private key, and cross-device App Lock convenience fields (`appLockPinHash`, `appLockWrappedKey`).
-- `AppCredential`: Encrypted app login fields, favorite, and access metadata.
+- `AppCredential`: Encrypted app login fields, favorite, TOTP secret (`totpSecret`), and access metadata.
 - `BankCredential`: Encrypted bank credential fields, favorite, and access metadata.
 - `VaultShare`: Permission-based vault sharing.
 - `PasswordAuditLog`: Credential access and security event audit trail.
+
+### Notes
+
+- `NotePage`: User-owned flat OneNote-style note pages (`userId`, `title`, `content` text, `todos` JSON list, `images` JSON list, `color`, `isPinned`, `isArchived`, `createdAt`, `updatedAt`).
 
 ### Notifications, reminders, and push
 
@@ -61,8 +65,8 @@
 
 ### Family
 
-- `FamilyInvitation`: Owner, email, token, status, module flags (`shareDocuments`, `shareWealth`, `shareCredentials`, `shareReminders`), expiry, responded timestamp.
-- `FamilyMembership`: Owner, member, and module-level read-only sharing flags (`shareDocuments`, `shareWealth`, `shareCredentials`, `shareReminders`).
+- `FamilyInvitation`: Owner, email, token, status, module flags (`shareDocuments`, `shareWealth`, `shareCredentials`, `shareReminders`, `shareNotes`), expiry, responded timestamp.
+- `FamilyMembership`: Owner, member, and module-level read-only sharing flags (`shareDocuments`, `shareWealth`, `shareCredentials`, `shareReminders`, `shareNotes`).
 - `FamilyCredentialKey`: Per-membership wrapped key material and version.
 
 ### AI chat
@@ -114,6 +118,7 @@
 - `Reminder`: Compound index `@@index([isActive, isCompleted, dueAt])` for global scheduled reminder scans.
 - `SyncEvent`: Compound index `@@index([userId, status])` for sync event status polling.
 - `EmailTransactionImport`: Index `@@index([accountId])` and relation with `onDelete: SetNull` for referential integrity upon account deletion. Compound index `@@unique([ownerId, emailMessageId])`.
+- `NotePage`: Compound indexes `@@index([userId, isPinned])` and `@@index([userId, updatedAt])` for notes listing, pinned filtering, and recent sorting.
 
 ## Schema change checklist
 

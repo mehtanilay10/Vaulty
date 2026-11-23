@@ -11,6 +11,7 @@ const createAppCredentialSchema = z.object({
   username: z.string().min(1).max(320),
   // Client-side envelope ciphertext; generous cap for JSON envelopes.
   password: z.string().min(1).max(100000),
+  totpSecret: z.string().max(100000).nullish(),
   icon: z.string().max(100).nullish(),
   iconColor: z.string().max(50).nullish(),
   isFavorite: z.boolean().optional(),
@@ -96,7 +97,7 @@ export async function POST(req: NextRequest) {
     if (!parsed.success) {
       return NextResponse.json({ error: "Invalid credential fields." }, { status: 400 });
     }
-    const { name, url, username, password, icon, iconColor, isFavorite } = parsed.data;
+    const { name, url, username, password, totpSecret, icon, iconColor, isFavorite } = parsed.data;
 
     // Get user's vault
     const vault = await prisma.passwordVault.findUnique({
@@ -118,6 +119,7 @@ export async function POST(req: NextRequest) {
         url: url || null,
         username,
         password,
+        totpSecret: totpSecret || null,
         isFavorite: isFavorite === true,
         icon: icon || null,
         iconColor: iconColor || null,

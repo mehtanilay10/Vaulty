@@ -64,6 +64,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="app-shell-root flex min-h-[calc(100svh-5.5rem)] flex-col bg-background text-text-primary">
       <Navbar
         onOpenUpload={openUpload}
+        onOpenScan={openCamera}
         isDriveConnected={isConnected}
         sidebarCollapsed={sidebarCollapsed}
         onToggleSidebar={toggleSidebar}

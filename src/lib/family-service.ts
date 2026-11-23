@@ -99,6 +99,7 @@ function serializeInvitation(invitation: {
   shareWealth: boolean;
   shareCredentials: boolean;
   shareReminders: boolean;
+  shareNotes: boolean;
   expiresAt: Date;
   respondedAt: Date | null;
   createdAt: Date;
@@ -112,6 +113,7 @@ function serializeInvitation(invitation: {
     shareWealth: invitation.shareWealth,
     shareCredentials: invitation.shareCredentials,
     shareReminders: invitation.shareReminders,
+    shareNotes: invitation.shareNotes,
     expiresAt: invitation.expiresAt.toISOString(),
     respondedAt: invitation.respondedAt?.toISOString() ?? null,
     createdAt: invitation.createdAt.toISOString(),
@@ -131,6 +133,7 @@ function serializeMembership(membership: {
   shareWealth: boolean;
   shareCredentials: boolean;
   shareReminders: boolean;
+  shareNotes: boolean;
   createdAt: Date;
   updatedAt: Date;
   owner?: UserSelect | null;
@@ -150,6 +153,7 @@ function serializeMembership(membership: {
     shareWealth: membership.shareWealth,
     shareCredentials: membership.shareCredentials,
     shareReminders: membership.shareReminders,
+    shareNotes: membership.shareNotes,
     createdAt: membership.createdAt.toISOString(),
     updatedAt: membership.updatedAt.toISOString(),
     owner: serializeUser(membership.owner),
@@ -166,6 +170,7 @@ function flagData(flags: FamilyModuleFlags) {
     shareWealth: flags.shareWealth,
     shareCredentials: flags.shareCredentials,
     shareReminders: flags.shareReminders,
+    shareNotes: flags.shareNotes,
   };
 }
 
@@ -1128,6 +1133,45 @@ export async function getFamilySharedReminders(memberId: string, ownerId?: strin
   }));
 }
 
+export async function getFamilySharedNotes(memberId: string, ownerId?: string) {
+  const memberships = await prisma.familyMembership.findMany({
+    where: {
+      memberId,
+      shareNotes: true,
+      ...(ownerId ? { ownerId } : {}),
+    },
+    include: {
+      owner: { select: USER_SELECT },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  const ownerIds = memberships.map((membership) => membership.ownerId);
+
+  const notes = ownerIds.length
+    ? await prisma.notePage.findMany({
+        where: {
+          userId: { in: ownerIds },
+          isArchived: false,
+        },
+        orderBy: [{ isPinned: "desc" }, { updatedAt: "desc" }],
+      })
+    : [];
+
+  return memberships.map((membership) => ({
+    membershipId: membership.id,
+    ownerId: membership.ownerId,
+    owner: serializeUser(membership.owner),
+    notes: notes
+      .filter((n) => n.userId === membership.ownerId)
+      .map((n) => ({
+        ...n,
+        createdAt: n.createdAt.toISOString(),
+        updatedAt: n.updatedAt.toISOString(),
+      })),
+  }));
+}
+
 export async function getFamilySharedCredentials(memberId: string, ownerId?: string) {
   const memberships = await prisma.familyMembership.findMany({
     where: {
@@ -1179,8 +1223,16 @@ export async function getFamilySharedCredentials(memberId: string, ownerId?: str
       keyUpdatedAt: membership.credentialKey?.updatedAt.toISOString() ?? null,
       // Never send ciphertext that the member cannot decrypt. This also makes
       // the "waiting for the owner's key" state explicit in the UI.
+      // Strict Security Boundary: Family members must NEVER receive the owner's 2FA TOTP secret or codes!
       appCredentials:
-        hasKey && vaultId ? apps.filter((credential) => credential.vaultId === vaultId) : [],
+        hasKey && vaultId
+          ? apps
+              .filter((credential) => credential.vaultId === vaultId)
+              .map((credential) => ({
+                ...credential,
+                totpSecret: null,
+              }))
+          : [],
       bankCredentials:
         hasKey && vaultId ? banks.filter((credential) => credential.vaultId === vaultId) : [],
     };
