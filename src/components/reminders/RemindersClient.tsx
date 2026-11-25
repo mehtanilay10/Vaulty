@@ -24,6 +24,7 @@ import {
   Users,
 } from "lucide-react";
 import { PageHeader } from "@/components/shell/PageHeader";
+import { CommandBar, CommandBarButton, CommandBarDivider } from "@/components/ui/CommandBar";
 import { Alert } from "@/components/ui/Alert";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -450,30 +451,19 @@ export function RemindersClient({
 
   return (
     <>
-      <PageHeader
-        eyebrow="Stay ahead of important dates"
-        title="Reminders"
-        description="Keep track of renewals, payments and the dates you don't want to miss."
-        icon={<BellRing className="h-5 w-5" />}
-        actions={
-          <div className="flex items-center gap-2">
-            {hasFamilyReminders && (
-              <Link
-                href="/family/reminders"
-                className="btn btn-secondary inline-flex items-center gap-1.5 text-xs h-8 px-2.5"
-              >
-                <Users className="h-3.5 w-3.5 text-text-muted" />
-                <span>Family Reminders</span>
-              </Link>
-            )}
-            <div className="inline-flex items-center rounded-lg border border-border-subtle bg-surface-muted p-0.5">
+      <div className="space-y-3">
+        <PageHeader title="Reminders" icon={<BellRing className="h-5 w-5" />} />
+
+        <CommandBar
+          farItems={
+            <div className="flex items-center gap-1">
               <button
                 type="button"
                 onClick={() => setViewMode("list")}
                 className={cn(
-                  "flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                  "flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium transition-colors",
                   viewMode === "list"
-                    ? "bg-surface text-text-primary shadow-xs font-semibold"
+                    ? "bg-surface-muted text-brand font-semibold"
                     : "text-text-muted hover:text-text-primary",
                 )}
               >
@@ -484,9 +474,9 @@ export function RemindersClient({
                 type="button"
                 onClick={() => setViewMode("calendar")}
                 className={cn(
-                  "flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                  "flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium transition-colors",
                   viewMode === "calendar"
-                    ? "bg-surface text-text-primary shadow-xs font-semibold"
+                    ? "bg-surface-muted text-brand font-semibold"
                     : "text-text-muted hover:text-text-primary",
                 )}
               >
@@ -494,18 +484,34 @@ export function RemindersClient({
                 Calendar
               </button>
             </div>
-            <Button
-              onClick={() => {
-                setEditingId(null);
-                resetForm();
-                setShowForm(true);
-              }}
-            >
-              <Plus className="h-4 w-4" /> Add reminder
-            </Button>
-          </div>
-        }
-      />
+          }
+        >
+          <CommandBarButton
+            primary
+            icon={<Plus className="h-3.5 w-3.5 text-white" />}
+            onClick={() => {
+              setEditingId(null);
+              resetForm();
+              setShowForm(true);
+            }}
+          >
+            Add reminder
+          </CommandBarButton>
+          {hasFamilyReminders && (
+            <>
+              <CommandBarDivider />
+              <CommandBarButton
+                icon={<Users className="h-3.5 w-3.5" />}
+                item={{
+                  key: "family-reminders",
+                  label: "Family Reminders",
+                  href: "/family/reminders",
+                }}
+              />
+            </>
+          )}
+        </CommandBar>
+      </div>
 
       {viewMode === "calendar" ? (
         <div className="mt-6">

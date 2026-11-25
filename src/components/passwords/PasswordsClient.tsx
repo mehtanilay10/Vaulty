@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/shell/PageHeader";
+import { CommandBar, CommandBarButton, CommandBarDivider } from "@/components/ui/CommandBar";
 import { Button } from "@/components/ui/Button";
 import { Tabs, Tab } from "@/components/ui/Tabs";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -535,9 +536,7 @@ export function PasswordsClient({
     return (
       <>
         <PageHeader
-          eyebrow="Credential vault"
           title="Credentials"
-          description="Store your app and bank credentials securely with client-side encryption."
           actions={
             <Button onClick={() => setIsSetupModalOpen(true)}>
               <Lock className="h-4 w-4" />
@@ -750,13 +749,6 @@ export function PasswordsClient({
       : currentTab === "bank"
         ? "Bank Passwords"
         : "App Passwords";
-  const pageDescription =
-    currentTab === "authenticator"
-      ? "Microsoft Authenticator-style two-step verification codes with QR scan setup. Private to you and never shared."
-      : currentTab === "bank"
-        ? "Your bank netbanking portals, customer IDs, and transaction credentials."
-        : "Your web and application passwords, protected with client-side envelope encryption.";
-
   const switchToTab = (tab: "account" | "bank" | "authenticator") => {
     setCurrentTab(tab);
     if (tab === "account") {
@@ -780,49 +772,49 @@ export function PasswordsClient({
 
   return (
     <>
-      <PageHeader
-        eyebrow="Credential Vault"
-        title={pageTitle}
-        description={pageDescription}
-        actions={
-          <>
-            <Button
-              variant="secondary"
-              onClick={() => setIsRecoveryModalOpen(true)}
-              title={
-                hasRecoverySetup
-                  ? "Recovery key configured. Click to view or regenerate."
-                  : "Set up offline recovery"
-              }
-            >
-              {hasRecoverySetup ? (
-                <>
-                  <ShieldCheck className="h-4 w-4 text-success" />
-                  Recovery active
-                </>
-              ) : (
-                <>
-                  <Key className="h-4 w-4" />
-                  Set up recovery
-                </>
-              )}
-            </Button>
-            {currentTab === "authenticator" ? (
-              <Button onClick={() => setIsQRScannerOpen(true)}>
-                <Camera className="h-4 w-4 mr-1.5" />
-                Scan QR Code
-              </Button>
-            ) : (
-              <Button onClick={() => handleAddCredential(activeTab)}>
-                <Plus className="h-4 w-4 mr-1.5" />
-                Add {activeTab === "BANK" ? "Bank" : "App"} Credential
-              </Button>
-            )}
-          </>
-        }
-      />
+      <div className="space-y-3">
+        <PageHeader title={pageTitle} />
 
-      <div className="mt-4 mb-6">
+        <CommandBar>
+          {currentTab === "authenticator" ? (
+            <CommandBarButton
+              primary
+              icon={<Camera className="h-3.5 w-3.5 text-white mr-1" />}
+              onClick={() => setIsQRScannerOpen(true)}
+            >
+              Scan QR Code
+            </CommandBarButton>
+          ) : (
+            <CommandBarButton
+              primary
+              icon={<Plus className="h-3.5 w-3.5 text-white mr-1" />}
+              onClick={() => handleAddCredential(activeTab)}
+            >
+              Add {activeTab === "BANK" ? "Bank" : "App"} Credential
+            </CommandBarButton>
+          )}
+          <CommandBarDivider />
+          <CommandBarButton
+            icon={
+              hasRecoverySetup ? (
+                <ShieldCheck className="h-3.5 w-3.5 text-success" />
+              ) : (
+                <Key className="h-3.5 w-3.5" />
+              )
+            }
+            onClick={() => setIsRecoveryModalOpen(true)}
+            title={
+              hasRecoverySetup
+                ? "Recovery key configured. Click to view or regenerate."
+                : "Set up offline recovery"
+            }
+          >
+            {hasRecoverySetup ? "Recovery active" : "Set up recovery"}
+          </CommandBarButton>
+        </CommandBar>
+      </div>
+
+      <div className="pt-1 pb-3">
         <Tabs>
           <Tab
             value="account"

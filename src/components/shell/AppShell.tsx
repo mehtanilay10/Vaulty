@@ -77,8 +77,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <main
           className={`flex min-h-[calc(100vh-3.5rem)] flex-col justify-between min-w-0 flex-1 pb-20 transition-[margin] duration-200 md:pb-0 ${sidebarCollapsed ? "md:ml-[4.75rem]" : "md:ml-64"}`}
         >
-          <div className="mx-auto w-full max-w-[1560px] px-3.5 py-5 sm:px-6 md:py-8 lg:px-9 flex-1">
-            <div className="animate-fade-up space-y-6 sm:space-y-7">{children}</div>
+          <div className="mx-auto w-full max-w-[1560px] px-3.5 py-4 sm:px-5 md:py-5 lg:px-7 flex-1">
+            <div className="animate-fade-up space-y-4 sm:space-y-5">{children}</div>
           </div>
           <AppFooter className="mt-auto" />
         </main>

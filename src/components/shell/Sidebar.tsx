@@ -167,12 +167,12 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
                   <div key={item.name} className="space-y-0.5">
                     <div
                       className={cn(
-                        "group relative flex items-center rounded-xl text-[13px] transition-all",
+                        "group relative flex items-center rounded-md text-[13px] transition-all",
                         collapsed ? "justify-center" : "justify-between",
                         isActive && !hasChildren
-                          ? "bg-surface-elevated font-semibold text-text-primary shadow-sm border border-border-subtle"
+                          ? "bg-surface-elevated font-semibold text-text-primary shadow-xs border border-border-subtle before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-1 before:rounded-r-sm before:bg-brand"
                           : isActive && hasChildren
-                            ? "bg-surface-muted/70 font-semibold text-text-primary"
+                            ? "bg-surface-muted/70 font-semibold text-text-primary before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-1 before:rounded-r-sm before:bg-brand"
                             : "font-medium text-text-secondary hover:bg-surface-muted hover:text-text-primary",
                       )}
                     >
@@ -181,13 +181,13 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
                         aria-current={isActive && !hasChildren ? "page" : undefined}
                         title={collapsed ? item.name : undefined}
                         className={cn(
-                          "flex flex-1 items-center py-2 transition-all",
-                          collapsed ? "justify-center px-1.5" : "gap-3 px-3",
+                          "flex flex-1 items-center py-1.5 transition-all",
+                          collapsed ? "justify-center px-1.5" : "gap-2.5 px-2.5",
                         )}
                       >
                         <span
                           className={cn(
-                            "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors",
+                            "flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors",
                             isActive
                               ? item.activeColor && item.activeBg
                                 ? `${item.activeBg} ${item.activeColor}`
@@ -210,7 +210,7 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
                             toggleItem(item.name, isExpanded);
                           }}
                           aria-label={isExpanded ? `Collapse ${item.name}` : `Expand ${item.name}`}
-                          className="mr-1.5 flex h-7 w-7 items-center justify-center rounded-lg text-text-muted hover:bg-surface hover:text-text-primary transition-colors"
+                          className="mr-1 flex h-6 w-6 items-center justify-center rounded-md text-text-muted hover:bg-surface hover:text-text-primary transition-colors"
                         >
                           <ChevronDown
                             className={cn(
@@ -224,7 +224,7 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
 
                     {/* Submenu Children Accordion */}
                     {hasChildren && !collapsed && isExpanded && (
-                      <div className="relative ml-5 pl-3 border-l border-border-subtle space-y-0.5 py-1 animate-in fade-in slide-in-from-top-1 duration-150">
+                      <div className="relative ml-5 pl-2.5 border-l border-border-subtle space-y-0.5 py-0.5 animate-in fade-in slide-in-from-top-1 duration-150">
                         {item.children?.map((child) => {
                           const SubIcon = child.icon;
                           const cleanChildHref = child.href.split("?")[0];
@@ -245,7 +245,7 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
                               href={child.href}
                               aria-current={isChildCurrent ? "page" : undefined}
                               className={cn(
-                                "flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-xs transition-colors",
+                                "flex items-center gap-2 rounded-md px-2 py-1 text-xs transition-colors",
                                 isChildCurrent
                                   ? "bg-brand/10 font-semibold text-brand"
                                   : "text-text-muted hover:bg-surface-muted hover:text-text-primary",

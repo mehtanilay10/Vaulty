@@ -7,7 +7,6 @@ const nextConfig: NextConfig = {
     "bcryptjs",
     "googleapis",
     "@google/genai",
-    "nodemailer",
     "xlsx",
     "web-push",
   ],

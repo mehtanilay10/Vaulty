@@ -5,9 +5,9 @@ import { PageHeader } from "@/components/shell/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { notFound } from "next/navigation";
 import { hasFamilyModuleAccess } from "@/lib/family-access";
+import { NoteMarkdown } from "@/components/notes/NoteMarkdown";
 import { StickyNote, User, Pin, CheckSquare, Image as ImageIcon } from "lucide-react";
 import type { NoteTodo, NoteImage } from "@/types/notes";
 
@@ -29,11 +29,8 @@ export default async function FamilyOwnerNotesPage({
 
   return (
     <>
-      <Breadcrumbs items={[{ label: "Family", href: "/family" }, { label: "Notes" }]} />
       <PageHeader
-        eyebrow="Family shared"
         title="Notes & Lists"
-        description="Read-only note pages, to-dos, and attachments shared by your family member."
         icon={<StickyNote className="h-5 w-5 text-teal-600 dark:text-teal-400" />}
         actions={
           <Link
@@ -121,9 +118,9 @@ export default async function FamilyOwnerNotesPage({
                             </div>
 
                             {note.content && (
-                              <div
-                                className="text-xs text-text-secondary line-clamp-4 leading-relaxed flex-1 prose dark:prose-invert max-w-none"
-                                dangerouslySetInnerHTML={{ __html: note.content }}
+                              <NoteMarkdown
+                                content={note.content}
+                                className="text-xs text-text-secondary line-clamp-4 leading-relaxed flex-1"
                               />
                             )}
 

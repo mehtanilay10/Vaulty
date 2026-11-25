@@ -2,7 +2,6 @@ import { Suspense } from "react";
 import { auth } from "@/auth";
 import { getUserVaultData } from "@/lib/credentials-data";
 import { PasswordsClient } from "@/components/passwords/PasswordsClient";
-import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 
 export const metadata = {
   title: "Account Logins | Vaulty",
@@ -17,13 +16,6 @@ export default async function AccountCredentialsPage() {
 
   return (
     <>
-      <Breadcrumbs
-        items={[
-          { label: "Dashboard", href: "/dashboard" },
-          { label: "Credentials", href: "/credentials" },
-          { label: "App Credentials" },
-        ]}
-      />
       <Suspense fallback={null}>
         <PasswordsClient
           hasVault={data.hasVault}

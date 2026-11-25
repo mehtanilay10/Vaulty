@@ -25,7 +25,7 @@ const CameraScanModal = dynamic(
   { ssr: false },
 );
 import { PageHeader } from "@/components/shell/PageHeader";
-import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
+import { CommandBar, CommandBarButton, CommandBarDivider } from "@/components/ui/CommandBar";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -318,123 +318,98 @@ export function DocumentDetailClient({
   return (
     <>
       <div className="space-y-3">
-        <Breadcrumbs
-          items={[
-            ...(familyOwner
-              ? [
-                  { label: "Family", href: "/family" },
-                  {
-                    label: `${familyOwner.name || familyOwner.email || "Family member"}'s Documents`,
-                    href: `/family/${familyOwner.id}/documents`,
-                  },
-                ]
-              : [
-                  { label: "Dashboard", href: "/dashboard" },
-                  { label: "Documents", href: "/documents" },
-                ]),
-            ...(document.folder
-              ? [{ label: document.folder.name, href: `/folders/${document.folder.id}` }]
-              : []),
-            { label: document.name },
-          ]}
-        />
-
-        <PageHeader
-          eyebrow="Document"
-          title={document.name}
-          truncateTitle
-          description={`Folder: ${document.folder?.name || "Unfiled"} · Storage: ${storageLabel} · Uploaded ${safeFormatDate(document.createdAt ? String(document.createdAt) : null, "Recently")} · Owner: ${isOwner ? "You" : document.owner?.name || document.owner?.email || "Unknown"}`}
-          icon={<FileText className="h-5 w-5" />}
-          actions={
-            <>
-              {!isOwner && (
+        <div className="space-y-3">
+          <PageHeader
+            breadcrumbs={[
+              ...(familyOwner
+                ? [
+                    { label: "Family", href: "/family" },
+                    {
+                      label: `${familyOwner.name || familyOwner.email || "Family member"}'s Documents`,
+                      href: `/family/${familyOwner.id}/documents`,
+                    },
+                  ]
+                : [
+                    { label: "Dashboard", href: "/dashboard" },
+                    { label: "Documents", href: "/documents" },
+                  ]),
+              ...(document.folder
+                ? [{ label: document.folder.name, href: `/folders/${document.folder.id}` }]
+                : []),
+              { label: document.name },
+            ]}
+            title={document.name}
+            truncateTitle
+            icon={<FileText className="h-5 w-5" />}
+            actions={
+              !isOwner ? (
                 <Badge variant="info">
                   <Lock className="h-3 w-3" />
                   Shared read only
                 </Badge>
-              )}
-              {document.storageProvider === "GOOGLE_DRIVE" && document.storageWebViewLink && (
-                <a
-                  href={document.storageWebViewLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-secondary h-9 px-3.5 text-[13px]"
-                >
-                  <ExternalLink className="h-4 w-4" />
-                  <span>Open in Drive</span>
-                </a>
-              )}
-              {isOwner && (
-                <Button variant="secondary" onClick={() => setIsShareOpen(true)}>
-                  <Share2 className="h-4 w-4" />
-                  Share
-                </Button>
-              )}
-              {isOwner &&
-                (document.mimeType === "application/pdf" ||
-                  document.mimeType.startsWith("image/")) && (
-                  <Button
-                    variant="secondary"
-                    onClick={() => setIsAddPageOpen(true)}
-                    className="gap-1.5"
-                    title="Scan or upload another page to append to this document"
-                  >
-                    <Plus className="h-4 w-4 text-brand" />
-                    <span>Add Page</span>
-                  </Button>
-                )}
-              <Button
-                variant="secondary"
-                onClick={() => setIsQaOpen(true)}
-                className="gap-1.5"
-                title="Ask questions about this document with AI"
+              ) : undefined
+            }
+          />
+
+          <CommandBar>
+            <CommandBarButton
+              icon={<Download className="h-3.5 w-3.5" />}
+              item={{ key: "download", label: "Download", href: fileProxyUrl }}
+            />
+            {isOwner && (
+              <CommandBarButton
+                icon={<Share2 className="h-3.5 w-3.5" />}
+                onClick={() => setIsShareOpen(true)}
               >
-                <Sparkles className="h-4 w-4 text-brand" />
-                <span>Ask AI</span>
-              </Button>
-              <a
-                href={fileProxyUrl}
-                download={document.name}
-                className="btn btn-secondary h-9 px-3.5 text-[13px]"
-              >
-                <Download className="h-4 w-4 text-brand" />
-                <span>Download</span>
-              </a>
-              {isOwner && (
-                <Button
-                  variant="secondary"
-                  onClick={() => setIsPropertiesOpen(true)}
-                  className="gap-1.5"
-                  title="Edit document properties"
+                Share
+              </CommandBarButton>
+            )}
+            <CommandBarButton
+              icon={<Sparkles className="h-3.5 w-3.5 text-brand" />}
+              onClick={() => setIsQaOpen(true)}
+            >
+              Ask AI
+            </CommandBarButton>
+            {isOwner &&
+              (document.mimeType === "application/pdf" ||
+                document.mimeType.startsWith("image/")) && (
+                <CommandBarButton
+                  icon={<Plus className="h-3.5 w-3.5" />}
+                  onClick={() => setIsAddPageOpen(true)}
                 >
-                  <Edit3 className="h-4 w-4" />
-                  <span>Edit</span>
-                </Button>
+                  Add Page
+                </CommandBarButton>
               )}
-              {isOwner && (
-                <Button
-                  variant="secondary"
+            <CommandBarDivider />
+            {document.storageProvider === "GOOGLE_DRIVE" && document.storageWebViewLink && (
+              <CommandBarButton
+                icon={<ExternalLink className="h-3.5 w-3.5" />}
+                item={{ key: "drive", label: "Open in Drive", href: document.storageWebViewLink }}
+              />
+            )}
+            {isOwner && (
+              <CommandBarButton
+                icon={<Edit3 className="h-3.5 w-3.5" />}
+                onClick={() => setIsPropertiesOpen(true)}
+              >
+                Properties
+              </CommandBarButton>
+            )}
+            {isOwner && (
+              <>
+                <CommandBarDivider />
+                <CommandBarButton
+                  danger
+                  icon={<Trash2 className="h-3.5 w-3.5" />}
                   onClick={handleDeleteDocument}
                   disabled={isDeleting}
-                  className="gap-1.5 text-danger hover:bg-danger/10 hover:border-danger/30"
-                  title="Delete document"
                 >
-                  <Trash2 className="h-4 w-4" />
-                  <span>{isDeleting ? "Deleting…" : "Delete"}</span>
-                </Button>
-              )}
-              <Button
-                variant="ghost"
-                onClick={() => setIsPropertiesOpen(true)}
-                aria-label="Document properties"
-                title="Document properties"
-                className="px-2"
-              >
-                <Settings className="h-4 w-4" />
-              </Button>
-            </>
-          }
-        />
+                  {isDeleting ? "Deleting…" : "Delete"}
+                </CommandBarButton>
+              </>
+            )}
+          </CommandBar>
+        </div>
 
         {document.tags?.length > 0 && (
           <div className="flex flex-wrap gap-1.5">

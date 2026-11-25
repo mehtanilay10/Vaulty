@@ -1,6 +1,6 @@
 # Vaulty — AI Agent & Developer Guide
 
-> **Source of truth:** This guide and the companion documents in `.agents/` describe the checked-in repository, not an aspirational roadmap. Verified against the codebase and updated on 2026-11-21. Re-check code before relying on any behavior that may have changed.
+> **Source of truth:** This guide and the companion documents in `.agents/` describe the checked-in repository, not an aspirational roadmap. Verified against the codebase and updated on 2026-11-25. Re-check code before relying on any behavior that may have changed.
 
 ## Mission
 
@@ -10,17 +10,18 @@ Vaulty is a private personal and family information workspace for important docu
 
 ## Consolidated Documentation Index
 
-The developer and agent documentation has been consolidated into 7 focused, non-redundant guides:
+The developer and agent documentation is organized into 8 focused, non-redundant guides:
 
 | Document                                                                              | Primary Scope & Focus Areas                                                                                                                                                     |
 | :------------------------------------------------------------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| [**`AGENTS.md`**](file:///d:/GitHub/Vaulty/.agents/AGENTS.md)                         | Central entry point, mission, non-negotiable engineering rules, and repository map.                                                                                             |
+| [**`AGENTS.md`**](file:///d:/GitHub/Vaulty/.agents/AGENTS.md)                         | Central entry point, mission, non-negotiable engineering rules, repository map, and safe change workflow.                                                                       |
 | [**`PRODUCT.md`**](file:///d:/GitHub/Vaulty/.agents/PRODUCT.md)                       | Product scope, supported surfaces, implemented modules, and complete business workflows (Documents, AI, Credentials, Wealth, Statement/Email sync, Reminders, Family).          |
 | [**`ARCHITECTURE.md`**](file:///d:/GitHub/Vaulty/.agents/ARCHITECTURE.md)             | Runtime topology, data flow, external integrations (Drive, Gemini, Resend, Gmail/Outlook, Web Push), client-side envelope encryption, App Lock PIN sync, and security controls. |
 | [**`DATA_MODEL.md`**](file:///d:/GitHub/Vaulty/.agents/DATA_MODEL.md)                 | PostgreSQL data model, Prisma schema, enums, performance compound indexes, and migration guidelines.                                                                            |
 | [**`API.md`**](file:///d:/GitHub/Vaulty/.agents/API.md)                               | Exhaustive REST API reference across all routes, request/response formats, query optimization, CSRF, and cron bearer authorization.                                             |
-| [**`DEVELOPMENT.md`**](file:///d:/GitHub/Vaulty/.agents/DEVELOPMENT.md)               | Setup, environment variables, NPM scripts, background workers/cron, automated testing (31 test suites / 238 tests), manual QA checklists, and troubleshooting guide.            |
+| [**`DEVELOPMENT.md`**](file:///d:/GitHub/Vaulty/.agents/DEVELOPMENT.md)               | Setup, environment variables, NPM scripts, background workers/cron, automated testing (36 test suites / 273 tests), manual QA checklists, and troubleshooting guide.            |
 | [**`CODING_CONVENTIONS.md`**](file:///d:/GitHub/Vaulty/.agents/CODING_CONVENTIONS.md) | Code architecture, server/client boundaries, avoiding $N+1$ queries, UI/UX visual design system, typography scale, single-primary button hierarchy, and accessibility rules.    |
+| [**`UI_DESIGN_SYSTEM.md`**](file:///d:/GitHub/Vaulty/.agents/UI_DESIGN_SYSTEM.md)     | Design tokens, CommandBar specification, FolderTreeSelect hierarchy, Note editor canvas, spacing cadence, skeletons, and accessibility patterns.                                |
 
 ---
 
@@ -47,9 +48,15 @@ The developer and agent documentation has been consolidated into 7 focused, non-
 src/
   app/                 App Router pages, layouts, API route handlers
   components/          Feature UI and shared components
-    ui/                Domain-agnostic shared primitives (Button, Modal, Card, Blade...)
-    shell/             App shell, navigation, page headers, command palette
-  lib/                 Domain services, authorization, integrations, workers
+    ui/                Domain-agnostic shared primitives (Button, Modal, Card, Blade, FolderTreeSelect, CommandBar...)
+    shell/             App shell, navigation, page headers, command palette, notifications
+    notes/             Note editor (TipTap integration) and Markdown previewer
+    documents/         Document detail, upload modals, camera scanner, document lists
+    wealth/            Accounts client, ledger, transaction forms, statement imports
+    passwords/         Credential lists, vault unlocking, TOTP authenticator, QR scanner
+    reminders/         Reminders client, calendar views, recurrence modals
+    family/            Family sharing management, module permissions, member views
+  lib/                 Domain services, authorization, integrations, workers, crypto
   types/               Shared domain and DTO interfaces
   workers/             Standalone worker entry points (ai-worker.ts, email-worker.ts)
 prisma/

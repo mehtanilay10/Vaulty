@@ -3,21 +3,17 @@ import { Skeleton } from "@/components/ui/Skeleton";
 export default function EmailSyncLoading() {
   return (
     <div className="space-y-6">
-      {/* Breadcrumbs */}
-      <div className="flex items-center gap-2">
-        <Skeleton className="h-3 w-10" />
-        <span className="text-text-muted">/</span>
-        <Skeleton className="h-3 w-20" />
-      </div>
-
       {/* PageHeader */}
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div className="flex items-start gap-3.5">
-          <Skeleton className="h-11 w-11 rounded-xl" />
-          <div className="space-y-2">
-            <Skeleton className="h-3 w-32" />
-            <Skeleton className="h-7 w-56" />
-            <Skeleton className="h-3 w-96 max-w-full" />
+      <div className="space-y-2">
+        <div className="flex items-center gap-1.5">
+          <Skeleton className="h-3 w-10" />
+          <span className="text-text-muted">/</span>
+          <Skeleton className="h-3 w-20" />
+        </div>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-9 w-9 rounded-md" />
+            <Skeleton className="h-6 w-32" />
           </div>
         </div>
       </div>

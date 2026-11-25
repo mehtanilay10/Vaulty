@@ -1,7 +1,6 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { SharedClient } from "@/components/shared/SharedClient";
-import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 
 export default async function SharedPage() {
   const session = await auth();
@@ -30,7 +29,6 @@ export default async function SharedPage() {
 
   return (
     <>
-      <Breadcrumbs items={[{ label: "Dashboard", href: "/dashboard" }, { label: "Shared" }]} />
       <SharedClient sharedFolders={JSON.parse(JSON.stringify(sharedFolders))} />
     </>
   );

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { PageHeader } from "@/components/shell/PageHeader";
-import { Button } from "@/components/ui/Button";
+import { CommandBar, CommandBarButton } from "@/components/ui/CommandBar";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { SectionHeader } from "@/components/ui/SectionHeader";
@@ -304,26 +304,24 @@ export function DashboardOverviewClient({
 
   return (
     <>
-      <PageHeader
-        eyebrow="Vault overview"
-        title={`Welcome back, ${capitalizedFirstName}`}
-        description="Documents, credentials, and wealth — your private vault at a glance."
-        actions={
-          <>
-            <Link
-              href="/chat"
-              className="btn btn-secondary inline-flex h-9 items-center gap-2 px-3.5 text-[13px]"
-            >
-              <MessageSquare className="h-4 w-4" />
-              Ask AI
-            </Link>
-            <Button onClick={openUpload} disabled={!isConnected}>
-              <Upload className="h-4 w-4" />
-              Upload document
-            </Button>
-          </>
-        }
-      />
+      <div className="space-y-3">
+        <PageHeader title={`Welcome back, ${capitalizedFirstName}`} />
+
+        <CommandBar>
+          <CommandBarButton
+            primary
+            icon={<Upload className="h-3.5 w-3.5 text-white" />}
+            onClick={openUpload}
+            disabled={!isConnected}
+          >
+            Upload document
+          </CommandBarButton>
+          <CommandBarButton
+            icon={<MessageSquare className="h-3.5 w-3.5" />}
+            item={{ key: "chat", label: "Ask AI", href: "/chat" }}
+          />
+        </CommandBar>
+      </div>
 
       {(!credentials.hasVault ||
         !isConnected ||

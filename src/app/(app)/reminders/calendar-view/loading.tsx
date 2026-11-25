@@ -3,22 +3,19 @@ import { Card } from "@/components/ui/Card";
 export default function CalendarLoading() {
   return (
     <div className="space-y-6">
-      {/* Breadcrumbs Skeleton */}
-      <div className="flex items-center gap-2">
-        <div className="h-4 w-12 rounded bg-surface-muted animate-pulse" />
-        <span className="text-text-muted">/</span>
-        <div className="h-4 w-20 rounded bg-surface-muted animate-pulse" />
-        <span className="text-text-muted">/</span>
-        <div className="h-4 w-24 rounded bg-surface-muted animate-pulse" />
-      </div>
-
       {/* Page Header Skeleton */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="space-y-2">
-          <div className="h-7 w-44 rounded-lg bg-surface-muted animate-pulse" />
-          <div className="h-4 w-80 rounded bg-surface-muted animate-pulse" />
+      <div className="space-y-2">
+        <div className="flex items-center gap-1.5">
+          <div className="h-3 w-10 rounded bg-surface-muted animate-pulse" />
+          <span className="text-text-muted">/</span>
+          <div className="h-3 w-20 rounded bg-surface-muted animate-pulse" />
+          <span className="text-text-muted">/</span>
+          <div className="h-3 w-24 rounded bg-surface-muted animate-pulse" />
         </div>
-        <div className="h-9 w-24 rounded-lg bg-surface-muted animate-pulse" />
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="h-6 w-40 rounded bg-surface-muted animate-pulse" />
+          <div className="h-9 w-24 rounded-lg bg-surface-muted animate-pulse" />
+        </div>
       </div>
 
       {/* Month Navigator & Filter Pills Card Skeleton */}

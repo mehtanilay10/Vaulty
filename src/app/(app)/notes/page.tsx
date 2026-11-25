@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { NotesClient } from "@/components/notes/NotesClient";
 
 export default async function NotesPage() {
@@ -20,7 +19,6 @@ export default async function NotesPage() {
 
   return (
     <>
-      <Breadcrumbs items={[{ label: "Dashboard", href: "/dashboard" }, { label: "Notes" }]} />
       <Suspense fallback={null}>
         <NotesClient
           initialNotes={JSON.parse(JSON.stringify(notes))}

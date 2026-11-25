@@ -19,7 +19,7 @@ const MergeAccountModal = dynamic(
   { ssr: false },
 );
 import { PageHeader } from "@/components/shell/PageHeader";
-import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
+import { CommandBar, CommandBarButton, CommandBarDivider } from "@/components/ui/CommandBar";
 import { useFeedback } from "@/components/providers/FeedbackProvider";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Button } from "@/components/ui/Button";
@@ -247,53 +247,58 @@ export function AccountDetailClient({
   return (
     <>
       <div className="space-y-3">
-        <Breadcrumbs
-          items={
-            familyOwner
-              ? [
-                  { label: "Family", href: "/family" },
-                  {
-                    label: `${familyOwner.name || familyOwner.email || "Family member"}'s Wealth`,
-                    href: `/family/${familyOwner.id}/wealth`,
-                  },
-                  { label: account.name },
-                ]
-              : [
-                  { label: "Dashboard", href: "/dashboard" },
-                  { label: "Wealth", href: "/wealth" },
-                  { label: "Accounts", href: "/wealth/accounts" },
-                  { label: account.name },
-                ]
-          }
-        />
+        <div className="space-y-3">
+          <PageHeader
+            breadcrumbs={
+              familyOwner
+                ? [
+                    { label: "Family", href: "/family" },
+                    {
+                      label: `${familyOwner.name || familyOwner.email || "Family member"}'s Wealth`,
+                      href: `/family/${familyOwner.id}/wealth`,
+                    },
+                    { label: account.name },
+                  ]
+                : [
+                    { label: "Dashboard", href: "/dashboard" },
+                    { label: "Wealth", href: "/wealth" },
+                    { label: "Accounts", href: "/wealth/accounts" },
+                    { label: account.name },
+                  ]
+            }
+            title={account.name}
+            icon={(() => {
+              const Icon = accountIcons[account.type as keyof typeof accountIcons] || Building2;
+              return <Icon className="h-5 w-5" />;
+            })()}
+          />
 
-        <PageHeader
-          eyebrow={account.type.replace(/_/g, " ")}
-          title={account.name}
-          description={account.provider || account.bankName || "No provider"}
-          icon={(() => {
-            const Icon = accountIcons[account.type as keyof typeof accountIcons] || Building2;
-            return <Icon className="h-5 w-5" />;
-          })()}
-          actions={
-            readOnly ? undefined : (
-              <>
-                <Button variant="secondary" onClick={handleOpenMerge}>
-                  <GitMerge className="h-4 w-4" />
-                  Merge
-                </Button>
-                <Button variant="secondary" onClick={() => setIsEditOpen(true)}>
-                  <Edit className="h-4 w-4" />
-                  Edit
-                </Button>
-                <Button variant="danger" onClick={() => setIsDeleteOpen(true)}>
-                  <Trash2 className="h-4 w-4" />
-                  Delete
-                </Button>
-              </>
-            )
-          }
-        />
+          {!readOnly && (
+            <CommandBar>
+              <CommandBarButton
+                primary
+                icon={<Edit className="h-3.5 w-3.5 text-white" />}
+                onClick={() => setIsEditOpen(true)}
+              >
+                Edit account
+              </CommandBarButton>
+              <CommandBarButton
+                icon={<GitMerge className="h-3.5 w-3.5" />}
+                onClick={handleOpenMerge}
+              >
+                Merge
+              </CommandBarButton>
+              <CommandBarDivider />
+              <CommandBarButton
+                danger
+                icon={<Trash2 className="h-3.5 w-3.5" />}
+                onClick={() => setIsDeleteOpen(true)}
+              >
+                Delete
+              </CommandBarButton>
+            </CommandBar>
+          )}
+        </div>
       </div>
 
       {isAutoDiscovered && !readOnly && (

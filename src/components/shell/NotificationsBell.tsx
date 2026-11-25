@@ -53,6 +53,7 @@ export function NotificationsBell() {
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
+  const [hasLoaded, setHasLoaded] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
@@ -69,6 +70,7 @@ export function NotificationsBell() {
       // ignore
     } finally {
       setLoading(false);
+      setHasLoaded(true);
     }
   }, []);
 
@@ -137,21 +139,27 @@ export function NotificationsBell() {
             )}
           </div>
           <div className="max-h-80 overflow-y-auto">
-            {loading && notifications.length === 0 && (
-              <div className="divide-y divide-border-subtle p-1">
-                {[1, 2].map((i) => (
-                  <div key={i} className="flex items-start gap-2.5 p-2.5 animate-pulse">
-                    <div className="h-7 w-7 rounded-md bg-surface-muted shrink-0" />
-                    <div className="flex-1 space-y-1.5 py-0.5">
-                      <div className="h-3 w-3/4 rounded bg-surface-muted" />
-                      <div className="h-2.5 w-full rounded bg-surface-muted/60" />
+            {(loading || !hasLoaded) && notifications.length === 0 && (
+              <div className="divide-y divide-border-subtle p-2 space-y-2">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex items-start gap-3 p-2 animate-pulse">
+                    <div className="h-8 w-8 rounded-lg bg-border-subtle shrink-0" />
+                    <div className="flex-1 space-y-2 py-0.5">
+                      <div className="h-3 w-3/4 rounded bg-border-subtle" />
+                      <div className="h-2.5 w-1/2 rounded bg-border-subtle/70" />
                     </div>
                   </div>
                 ))}
               </div>
             )}
-            {!loading && notifications.length === 0 && (
-              <p className="px-3 py-4 text-[12px] text-text-muted">No notifications yet.</p>
+            {hasLoaded && !loading && notifications.length === 0 && (
+              <div className="flex flex-col items-center justify-center px-4 py-8 text-center">
+                <Bell className="h-8 w-8 text-text-muted/40 mb-2" />
+                <p className="text-xs font-medium text-text-muted">No notifications yet</p>
+                <p className="text-[11px] text-text-muted/70 mt-0.5">
+                  We&apos;ll notify you when important events occur.
+                </p>
+              </div>
             )}
             {!loading &&
               notifications.map((n) => {

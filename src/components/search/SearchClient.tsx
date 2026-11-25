@@ -126,12 +126,7 @@ export function SearchClient({ initialQuery }: { initialQuery: string }) {
 
   return (
     <>
-      <PageHeader
-        eyebrow="Find anything"
-        title="Search Private Vault"
-        description="Search across filenames, folders, tags, and AI summary text"
-        icon={<Search className="h-5 w-5" />}
-      />
+      <PageHeader title="Search Vault" icon={<Search className="h-5 w-5" />} />
 
       <div className="toolbar-surface p-3">
         <form onSubmit={handleSearchSubmit} className="flex flex-col gap-2.5 sm:flex-row">

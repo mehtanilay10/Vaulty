@@ -7,11 +7,12 @@ Vaulty is a private personal and family information workspace built on the Next.
 - **Web Application:** Next.js 16.4.5 App Router, React 19.3.1, TypeScript strict mode.
 - **Authentication & Sessions:** Auth.js v5 beta with Prisma adapter, Google OAuth and email magic-link providers, JWT session strategy with 20-second in-memory session validation caching (`session-cache.ts`).
 - **Database & Persistence:** PostgreSQL via Prisma 6.3.
-- **File Storage:** Google Drive API using user-connected OAuth tokens. Google Drive is the only concrete storage provider.
+- **File Storage:** Google Drive API using user-connected OAuth tokens. Google Drive is the primary concrete storage provider.
 - **AI Engine:** Google Gemini via `@google/genai` (`gemini-3.6-flash` default).
-- **Email Delivery:** Resend SMTP via Nodemailer for authentication magic links, family invitations, and reminder emails.
+- **Email Delivery:** Resend API (`resend` SDK) for transactional emails, magic links, family invitations, and reminder digests; Resend Inbound Webhooks for email sync forwarding.
 - **Browser Push:** Web Push via `web-push` using VAPID keys and service worker (`public/sw.js`).
-- **Styling:** Tailwind CSS v4, semantic CSS variables, Lucide icons, `next-themes`.
+- **Styling & UI Primitives:** Tailwind CSS v4, semantic CSS variables, Lucide icons, `next-themes`, and custom Microsoft Fluent-inspired controls (`CommandBar`, `FolderTreeSelect`).
+- **Rich Text Canvas:** TipTap v3 (`@tiptap/react`, `@tiptap/starter-kit`, `@tiptap/markdown`, `@tiptap/extension-task-item`, `@tiptap/extension-task-list`) with bidirectional Markdown synchronization and `react-markdown` preview rendering.
 - **Background Workers:**
   - AI Document Queue: Persisted PostgreSQL queue with standalone worker (`yarn ai:worker`) or authenticated cron (`/api/cron/ai-worker`).
   - Email Transaction Sync: Mailbox crawler and transaction classifier with standalone daemon (`yarn worker:email`) or authenticated cron (`/api/cron/email-sync`).
@@ -26,7 +27,7 @@ flowchart TD
   Domain --> DB[("PostgreSQL / Prisma")]
   Domain --> Drive["Google Drive API"]
   Domain --> Gemini["Gemini API"]
-  Domain --> Mail["Resend SMTP"]
+  Domain --> Mail["Resend API"]
   AIWorker["AI Worker Daemon / Cron"] --> DB
   AIWorker --> Drive
   AIWorker --> Gemini
@@ -71,99 +72,61 @@ flowchart TD
 - Document prompts strictly forbid fabricated facts and mandate explicit uncertainty disclaimers. Medical interpretations are informational only (no medical diagnoses or prescription changes).
 - **Data Boundary:** Credential vault plaintext is never transmitted to Gemini. Only uploaded document contents and email text payloads are sent to Gemini.
 
-### Email (Resend SMTP & Inbound Webhooks)
+### Email (Resend API & Inbound Webhooks)
 
 - Uses `RESEND_API_KEY`, `RESEND_INBOUND_WEBHOOK_SECRET`, `INBOUND_EMAIL_DOMAIN`, and `EMAIL_FROM`.
-- Auth.js email magic links use `smtp.resend.com` (port 465, secure).
+- Handled directly via the official `resend` package.
 - `src/lib/email.ts` dispatches application emails, family invitations, and daily reminder digests.
 - **Inbound Webhook (`/api/webhooks/resend/inbound`):** Receives forwarded emails via Svix-signed webhooks, resolves recipient addresses (`username+docs@vaulty.mnilay.com`), automatically cracks password-protected statement PDFs via `PdfPasswordSettings`, stages binary attachments in `InboundEmailAttachment`, and runs multi-module classification for documents, reminders, and wealth transactions without mailbox OAuth grants.
 
-### Financial Email Discovery (Gmail & Outlook)
+### Microsoft Entra (Outlook Sync)
 
-- **Gmail:** Uses incremental delegated `gmail.readonly` scope. Disconnecting local tokens deletes local encrypted credentials without revoking the shared Google OAuth project grant.
-- **Outlook:** Dedicated Microsoft Entra application (`MICROSOFT_CLIENT_ID`, `MICROSOFT_CLIENT_SECRET`, `MICROSOFT_TENANT_ID="consumers"`). Uses delegated `Mail.Read`, `User.Read`, and `offline_access`.
-- **Sync Engine:** `src/lib/sync/email-sync-engine.ts` processes messages in batches of 15, filters personal/promotional emails, auto-imports high-confidence ($\ge 0.90$) transactions into matched Wealth accounts, and queues ambiguous items for manual review.
-- Refresh tokens for both providers are encrypted at rest with AES-256-GCM using keys derived from `AUTH_SECRET`.
+- Configured in `src/lib/outlook/oauth.ts`.
+- Uses `MICROSOFT_CLIENT_ID`, `MICROSOFT_CLIENT_SECRET`, and `MICROSOFT_TENANT_ID`.
+- Scopes: `openid`, `offline_access`, `Mail.Read`.
+- Tokens are encrypted at rest with AES-256-GCM.
 
-### Browser Push Notifications (Web Push)
+### Web Push Notifications
 
-- Implemented with `web-push` in `src/lib/web-push.ts`.
-- Uses `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, and `WEB_PUSH_SUBJECT`.
-- Client registers `public/sw.js` and persists subscription endpoints via `/api/push/subscription`. Subscription public keys (`p256dh`) and auth secrets (`auth`) are encrypted at rest using keys derived from `AUTH_SECRET`.
-- Delivery failures with 404/410 status codes automatically prune expired subscriptions.
+- Implemented via `web-push` using VAPID keys (`NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `WEB_PUSH_SUBJECT`).
+- Service worker at `public/sw.js` handles push events and notification clicks.
+- Client subscriptions stored in `PushSubscription` with encrypted endpoint auth keys.
 
 ---
 
 ## 4. Security & Cryptography Model
 
-### Authentication & Session Lifecycle
+### Credential Vault Envelope Encryption
 
-- Auth.js v5 beta JWT session strategy.
-- Tokens contain `userId` and `sessionVersion`. Session invalidation (`/api/user/sessions/revoke`) increments `User.sessionVersion` in PostgreSQL, immediately rejecting revoked tokens.
-- **Session Cache:** Protected requests validate session version with a 20-second in-memory cache (`session-cache.ts`), eliminating redundant remote database queries on rapid navigations.
-- **Development Login:** `/api/dev-login` is strictly guarded and returns 404/unauthorized outside `NODE_ENV === "development"`.
+```mermaid
+sequenceDiagram
+  participant User as User (Browser)
+  participant KDF as Web Crypto (PBKDF2)
+  participant Local as In-Memory KEK
+  participant Server as Next.js API / DB
 
-### Client-Side Credential Vault Encryption
+  User->>KDF: Master Password + Salt (600k iterations)
+  KDF-->>Local: Key Encryption Key (KEK)
+  Note over Local: AES-256-GCM (v2)
+  Local->>Server: Encrypted Credential Payloads (ciphertext, iv, tag)
+  Server-->>Server: Store in PostgreSQL (Zero-Knowledge)
+  Server->>Local: Return Encrypted Ciphertexts
+  Local->>User: Decrypt to Plaintext in Memory
+```
 
-- Passwords and bank credentials are encrypted client-side using Web Crypto.
-- **Version 2 Envelope Encryption:**
-  - Data Encryption Key (DEK): Random 256-bit AES-GCM key per credential record.
-  - Key Encryption Key (KEK): Master-password-derived key using PBKDF2-HMAC-SHA256 with 600,000 iterations.
-  - Payload ciphertext, IV, auth tag, and KEK-wrapped DEK are stored as version 2 envelopes (`v2:...`).
-- Plaintext credentials and master passwords are never sent to or stored on the server.
-- The server stores only the user's master password verifier (bcrypt) and KDF salt/parameters.
-- Unlocked key material is held in browser memory by `PasswordVaultProvider`; closing the session or locking the vault clears the in-memory key immediately.
-- **Brute-Force Lockout Defense:**
-  - Both `/api/passwords/unlock` and `/api/passwords/change-master-password` track failed attempts and lock out for 15 minutes after 5 consecutive failures.
-- **Input Bounds:**
-  - Credential fields enforce strict character caps via Zod (e.g. envelope ciphertext maximum 100,000 characters).
-- **Buffer Safety:**
-  - Web Crypto key wrapping (`src/lib/key-wrap.ts`) encodes buffers using chunked byte iteration to prevent call stack overflow on large arrays.
+- **Algorithm:** Version 2 envelope encryption using AES-256-GCM.
+- **Key Derivation:** Web Crypto PBKDF2-HMAC-SHA256 with 600,000 iterations and a 16-byte cryptographically random salt.
+- **Zero-Knowledge Guarantee:** Master passwords, plaintext credentials, and derived KEKs are never sent to or stored on the server.
+- **Brute-Force Lockout Defense:** `PasswordVault.failedAttempts` and `PasswordVault.lockedUntil` enforce a 15-minute lockout after 5 consecutive failed unlock or password change attempts.
+- **App Lock Cross-Device PIN Sync:** Setting an App Lock PIN wraps the KEK using `sha256(pin)` as an AES-KW / AES-GCM wrapping key and stores `appLockPinHash` and `appLockWrappedKey` on `PasswordVault`.
 
-### App Lock & Cross-Device PIN Convenience
+### In-Memory Decryption & Memory Safety
 
-- Centralized 4-digit PIN / WebAuthn passkey lock at the application layout.
-- **Cross-Device PIN Sync:** When a user sets up a 4-digit PIN, its SHA-256 hash (`appLockPinHash`) and an AES-GCM wrapped vault convenience key (`appLockWrappedKey`) are saved to `PasswordVault` via `/api/user/app-lock`. This enables the same PIN to unlock App Lock and transparently unwrap credentials across mobile and desktop devices.
-- **Inactivity Grace Period:** App Lock stores an activity timestamp in `sessionStorage` (`LAST_ACTIVE_KEY`) with a 5-minute inactivity timeout. Hard page reloads and brief tab switching preserve unlocked state without prompting for the PIN repeatedly.
-- WebAuthn operations are client-side convenience challenges; they do not replace server-side authentication.
+- Password-protected PDF statements are cracked and parsed in-process using `pdfjs-dist`; attachment bytes and passwords are never transmitted to external APIs.
+- Memory budgets: scrypt operations enforce `maxmem: 128MB`; buffer conversions avoid spread operators; ZIP exports enforce a 50MB per-file and 200MB total ceiling.
 
-### Zero-Knowledge Populated Vault Recovery Re-Keying
+### CSRF & Authorization
 
-- When users configure recovery, the browser generates an offline recovery key and hashes security question answers.
-- If a user forgets their master password:
-  - An empty vault can be reset directly.
-  - A populated vault requires the offline recovery key and security answers via `/api/passwords/recovery/rekey`. The browser unwraps the KEK, decrypts existing credentials in memory, re-encrypts them with a new master-password-derived KEK, and commits them atomically.
-  - Recovery routes (`/api/passwords/recovery/verify`, `/api/passwords/recovery/rekey`) authorize via the emailed reset token, allowing recovery without an active Auth.js session cookie.
-  - If recovery is unconfigured, password reset is blocked to prevent catastrophic data loss.
-
-### Financial PDF Statement Decryption
-
-- Financial email sync downloads statement PDFs only from statement-like messages (max 5 PDFs per message).
-- `PdfPasswordSettings` stores user-configured personal values and institution password templates in an AES-256-GCM encrypted blob using `PDF_PASSWORD_SETTINGS_SECRET` (or `AUTH_SECRET`).
-- `src/lib/sync/email-statement-attachments.ts` decrypts and parses text locally with `pdfjs-dist`. PDF bytes, personal password values, and decrypted statement text are never sent to Gemini or logged.
-
-### Request Protections & Security Controls
-
-- **Production Secret Enforcement:**
-  - `src/env.ts` enforces that in production (`NODE_ENV === "production"`), `AUTH_SECRET`, `CRON_SECRET`, and `CSRF_SECRET` must all be configured with at least 32 characters.
-- **CSRF Defense:** Double-submit cookie with HMAC-SHA256 signature (`csrf-token` and `x-csrf-token`). Production requires a dedicated random `CSRF_SECRET` (minimum 32 characters) and never falls back to `AUTH_SECRET`.
-- **Distributed Rate Limiting:** PostgreSQL-backed sliding window rate limiter (`SecurityRateLimit` via `consumeSecurityAttempt`) protects authentication, dev-login, PIN verification, share link access, recovery, user search, and family sharing endpoints across serverless instances, returning `Retry-After` headers on 429.
-- **Cron Authorization:** All `/api/cron/*` endpoints require `Authorization: Bearer <CRON_SECRET>` (minimum 32 characters) with timing-safe string comparison.
-- **Account Takeout & Deletion:**
-  - Settings provides complete account takeout streaming a client-side ZIP containing documents, transactions, and encrypted credential envelopes. Enforces memory-safe caps: max 50 files, 50 MiB per file, and a 200 MiB cumulative budget.
-  - Transactional account deletion wipes all database records across 20+ tables (including rate limits and verification tokens), Google Drive folders, and OAuth grants.
-- **Public Share Links:**
-  - Cryptographic token generation uses unbiased `crypto.randomInt`.
-  - Share password verification enforces a 128 MiB memory limit (`maxmem: 128 * 1024 * 1024`) on scrypt to prevent Node process termination.
-  - View counts decrement only after file bytes are successfully fetched from Google Drive.
-- **HTTP Security Headers:** Next.js configuration enforces HSTS, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, and restrictive `Permissions-Policy`.
-
----
-
-## 5. Known Limitations
-
-- Google Drive is the only implemented storage provider.
-- End-to-end encryption applies to credential vault records and PDF password settings; uploaded document files and database metadata are encrypted at rest by Google Drive and PostgreSQL/Neon, not end-to-end client-encrypted.
-- WebAuthn passkey unlock is a device-local convenience layer, not server-authenticated WebAuthn sign-in.
-- Financial statement PDF parsing requires digital text; scanned or image-only statements are not OCRed by the email attachment engine.
-- AI date extraction is assistive: only explicitly printed dates are extracted with high confidence ($\ge 0.85$); users should review all extracted financial deadlines.
+- Double-submit CSRF cookie validation using HMAC-SHA256 signatures (`x-csrf-token` header vs `csrf-token` cookie) on all mutations.
+- Distributed sliding-window rate limiting backed by PostgreSQL (`SecurityRateLimit`).
+- All family and shared resource routes verify ownership or membership permissions server-side on every request.

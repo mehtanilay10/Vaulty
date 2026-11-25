@@ -37,7 +37,7 @@ export function SignInButtons({
     setError(null);
 
     try {
-      const result = await signIn("email", {
+      const result = await signIn("resend", {
         email,
         redirect: false,
       });

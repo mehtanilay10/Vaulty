@@ -83,7 +83,7 @@ export function Navbar({
               type="text"
               readOnly
               placeholder="Search vault..."
-              className="input h-9 w-full rounded-xl pl-9 pr-18 text-[13px] shadow-sm transition-all cursor-pointer group-hover:border-border hover:bg-surface-muted/50"
+              className="input h-8.5 w-full rounded-md pl-9 pr-18 text-[13px] shadow-xs transition-all cursor-pointer group-hover:border-border hover:bg-surface-muted/50"
               aria-label="Search your vault"
               title="Search documents, wealth, credentials, reminders (Ctrl+K)"
             />
@@ -100,7 +100,7 @@ export function Navbar({
             type="button"
             onClick={() => window.dispatchEvent(new CustomEvent("vaulty:open-command-palette"))}
             aria-label="Search"
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-surface-muted hover:text-text-primary sm:hidden"
+            className="flex h-8.5 w-8.5 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-surface-muted hover:text-text-primary sm:hidden"
           >
             <Search className="h-4 w-4" />
           </button>
@@ -111,7 +111,7 @@ export function Navbar({
           <PWAInstallButton />
 
           {onOpenUpload && (
-            <div className="inline-flex items-center rounded-lg shadow-sm">
+            <div className="inline-flex items-center rounded-md shadow-xs">
               <button
                 type="button"
                 onClick={() => {
@@ -122,7 +122,7 @@ export function Navbar({
                 title={
                   isDriveConnected ? "Upload document to Vaulty" : "Connect Google Drive to upload"
                 }
-                className="btn btn-primary h-9 rounded-r-none border-r border-white/20 px-3 text-xs flex items-center gap-1.5 disabled:cursor-not-allowed disabled:opacity-50"
+                className="btn btn-primary h-8.5 rounded-r-none border-r border-white/20 px-3 text-xs flex items-center gap-1.5 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Upload className="h-3.5 w-3.5" />
                 <span>Upload</span>
@@ -134,15 +134,16 @@ export function Navbar({
                     type="button"
                     aria-label="More creation actions"
                     title="Quick Actions"
-                    className="btn btn-primary h-9 rounded-l-none px-2 text-xs flex items-center justify-center hover:bg-brand-hover"
+                    className="btn btn-primary h-8.5 rounded-l-none px-2 text-xs flex items-center justify-center hover:bg-brand-hover"
                   >
                     <ChevronDown className="h-3.5 w-3.5" />
                   </button>
                 }
               >
                 <div className="w-64 py-1 sm:w-72">
-                  <div className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-text-muted">
-                    Quick Actions
+                  {/* Documents Module */}
+                  <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
+                    Documents
                   </div>
                   <DropdownItem
                     onClick={() => {
@@ -171,27 +172,12 @@ export function Navbar({
                       </div>
                     </DropdownItem>
                   )}
-                  <DropdownItem href="/credentials?tab=AUTH&action=new">
-                    <ShieldCheck className="h-4 w-4 text-brand shrink-0" />
-                    <div className="flex flex-col text-left">
-                      <span className="font-medium text-text-primary">Set Up Authenticator</span>
-                      <span className="text-[11px] text-text-muted">
-                        2-Step verification & QR scan
-                      </span>
-                    </div>
-                  </DropdownItem>
-                  <DropdownItem href="/notes?action=new">
-                    <StickyNote className="h-4 w-4 text-brand shrink-0" />
-                    <div className="flex flex-col text-left">
-                      <span className="font-medium text-text-primary">New Note Page</span>
-                      <span className="text-[11px] text-text-muted">
-                        Rich text, to-dos & images
-                      </span>
-                    </div>
-                  </DropdownItem>
+
                   <div className="my-1 border-t border-border-subtle" />
+
+                  {/* Credentials Module */}
                   <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
-                    Credentials & Vault
+                    Credentials
                   </div>
                   <DropdownItem href="/credentials?tab=APP&action=new">
                     <Globe className="h-4 w-4 text-brand shrink-0" />
@@ -207,15 +193,36 @@ export function Navbar({
                       <span className="text-[11px] text-text-muted">Netbanking, PINs & ATM</span>
                     </div>
                   </DropdownItem>
+                  <DropdownItem href="/credentials?tab=AUTH&action=new">
+                    <ShieldCheck className="h-4 w-4 text-brand shrink-0" />
+                    <div className="flex flex-col text-left">
+                      <span className="font-medium text-text-primary">Set Up Authenticator</span>
+                      <span className="text-[11px] text-text-muted">
+                        2-Step verification & QR scan
+                      </span>
+                    </div>
+                  </DropdownItem>
+
                   <div className="my-1 border-t border-border-subtle" />
+
+                  {/* Wealth, Notes & Reminders Module */}
                   <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
-                    Wealth & Organization
+                    Wealth & Planning
                   </div>
                   <DropdownItem href="/wealth/accounts?action=new">
                     <Wallet className="h-4 w-4 text-brand shrink-0" />
                     <div className="flex flex-col text-left">
                       <span className="font-medium text-text-primary">Add Wealth Account</span>
                       <span className="text-[11px] text-text-muted">Bank, card, or asset</span>
+                    </div>
+                  </DropdownItem>
+                  <DropdownItem href="/notes?action=new">
+                    <StickyNote className="h-4 w-4 text-brand shrink-0" />
+                    <div className="flex flex-col text-left">
+                      <span className="font-medium text-text-primary">New Note Page</span>
+                      <span className="text-[11px] text-text-muted">
+                        Rich text, to-dos & images
+                      </span>
                     </div>
                   </DropdownItem>
                   <DropdownItem href="/reminders?action=new">

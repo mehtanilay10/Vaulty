@@ -323,28 +323,33 @@ export function ChatClient({
       <div className="flex h-[calc(100dvh-12.5rem)] md:h-[calc(100dvh-7rem)] flex-col overflow-hidden">
         <div className="shrink-0 mb-3">
           <PageHeader
-            eyebrow="Vault assistant"
             title="AI Chat"
-            description="Ask questions about your documents and get cited answers."
             icon={<MessageSquare className="h-5 w-5" />}
             actions={
-              <div className="flex items-center gap-2">
-                <Button variant="secondary" onClick={handleNewChat} className="sm:hidden">
-                  <Plus className="h-4 w-4" />
+              <div className="flex items-center gap-1.5">
+                <Button size="sm" variant="secondary" onClick={handleNewChat} className="sm:hidden">
+                  <Plus className="h-3.5 w-3.5" />
                   <span className="hidden xs:inline">New</span>
                 </Button>
                 <Button
+                  size="sm"
                   variant="ghost"
                   onClick={() => setMobileDrawerOpen(true)}
                   className="sm:hidden"
                 >
-                  <History className="h-4 w-4" />
+                  <History className="h-3.5 w-3.5" />
                 </Button>
-                <Button variant="secondary" onClick={handleNewChat} className="hidden sm:flex">
-                  <Plus className="h-4 w-4" />
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={handleNewChat}
+                  className="hidden sm:flex"
+                >
+                  <Plus className="h-3.5 w-3.5" />
                   New chat
                 </Button>
                 <Button
+                  size="sm"
                   variant="ghost"
                   onClick={() => setSidebarOpen(!sidebarOpen)}
                   className="hidden md:flex"
@@ -352,9 +357,9 @@ export function ChatClient({
                   aria-label={sidebarOpen ? "Hide history" : "Show history"}
                 >
                   {sidebarOpen ? (
-                    <PanelLeftClose className="h-4 w-4" />
+                    <PanelLeftClose className="h-3.5 w-3.5" />
                   ) : (
-                    <PanelLeftOpen className="h-4 w-4" />
+                    <PanelLeftOpen className="h-3.5 w-3.5" />
                   )}
                 </Button>
               </div>

@@ -816,12 +816,7 @@ export function SettingsClient({
 
   return (
     <>
-      <PageHeader
-        eyebrow="Your Space preferences"
-        title="Account & Vault Settings"
-        description="Manage your identity, security, storage connection, and AI processing."
-        icon={<User className="h-5 w-5" />}
-      />
+      <PageHeader title="Settings" icon={<User className="h-5 w-5" />} />
 
       {/* Tab bar for switching tabs — mobile/tablet only; desktop uses sidebar */}
       <div className="mb-6 border-b border-border-subtle xl:hidden">

@@ -6,6 +6,8 @@ import { useSearchParams } from "next/navigation";
 import { csrfHeaders } from "@/lib/csrf-client";
 import Link from "next/link";
 import { PageHeader } from "@/components/shell/PageHeader";
+import { CommandBar, CommandBarButton, CommandBarDivider } from "@/components/ui/CommandBar";
+import { cn } from "@/lib/utils";
 import { UploadModal } from "@/components/documents/UploadModal";
 import { useUpload } from "@/app/contexts/UploadContext";
 import { Button } from "@/components/ui/Button";
@@ -14,13 +16,12 @@ import { Select } from "@/components/ui/Select";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { AiStatusBadge } from "@/components/ui/AiStatusBadge";
-import { SectionHeader } from "@/components/ui/SectionHeader";
+import { FolderTreeSelect } from "@/components/ui/FolderTreeSelect";
 import {
   FileText,
   Search,
   Upload,
   X,
-  Files,
   ArrowLeft,
   LayoutGrid,
   List,
@@ -44,7 +45,7 @@ export function DocumentsClient({
   initialTotal,
 }: {
   initialDocuments: DocumentWithRelations[];
-  folders: { id: string; name: string }[];
+  folders: { id: string; name: string; parentId?: string | null }[];
   currentUserId: string;
   initialHasMore: boolean;
   initialTotal: number;
@@ -258,31 +259,78 @@ export function DocumentsClient({
 
   return (
     <>
-      <PageHeader
-        eyebrow="Document library"
-        title="All Documents"
-        description={`Browse and filter every file in your private vault (${totalCount})`}
-        icon={<FileText className="h-5 w-5" />}
-        actions={
-          <>
-            <Link
-              href="/documents"
-              className="btn btn-secondary inline-flex h-9 items-center gap-2 px-3.5 text-[13px]"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Overview
-            </Link>
-            <Button variant="secondary" onClick={() => openCamera()} disabled={!isConnected}>
-              <Camera className="h-4 w-4" />
-              Scan document
-            </Button>
-            <Button onClick={openUpload} disabled={!isConnected}>
-              <Upload className="h-4 w-4" />
-              Upload document
-            </Button>
-          </>
-        }
-      />
+      <div className="space-y-3">
+        <PageHeader title="All Documents" icon={<FileText className="h-5 w-5" />} />
+
+        <CommandBar
+          farItems={
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setViewMode("grid")}
+                title="Grid view"
+                aria-label="Grid view"
+                className={cn(
+                  "flex h-7 w-7 items-center justify-center rounded-none text-text-muted transition-colors",
+                  viewMode === "grid"
+                    ? "bg-surface-muted text-brand font-semibold"
+                    : "hover:bg-surface-muted hover:text-text-primary",
+                )}
+              >
+                <LayoutGrid className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("list")}
+                title="List view"
+                aria-label="List view"
+                className={cn(
+                  "flex h-7 w-7 items-center justify-center rounded-none text-text-muted transition-colors",
+                  viewMode === "list"
+                    ? "bg-surface-muted text-brand font-semibold"
+                    : "hover:bg-surface-muted hover:text-text-primary",
+                )}
+              >
+                <List className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          }
+        >
+          <CommandBarButton
+            primary
+            icon={<Upload className="h-3.5 w-3.5 text-white" />}
+            onClick={openUpload}
+            disabled={!isConnected}
+          >
+            Upload
+          </CommandBarButton>
+          <CommandBarButton
+            icon={<Camera className="h-3.5 w-3.5" />}
+            onClick={() => openCamera()}
+            disabled={!isConnected}
+          >
+            Scan
+          </CommandBarButton>
+          <CommandBarDivider />
+          <CommandBarButton
+            icon={<ArrowLeft className="h-3.5 w-3.5" />}
+            item={{ key: "overview", label: "Overview", href: "/documents" }}
+          />
+          {selectedIds.length > 0 && (
+            <>
+              <CommandBarDivider />
+              <CommandBarButton
+                icon={<Sparkles className="h-3.5 w-3.5 text-brand" />}
+                onClick={handleBulkAi}
+                disabled={bulkBusy}
+              >
+                Queue AI ({selectedIds.length})
+              </CommandBarButton>
+              <CommandBarButton onClick={() => setSelectedIds([])}>Deselect</CommandBarButton>
+            </>
+          )}
+        </CommandBar>
+      </div>
 
       {!isConnected && (
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-xl border border-warning/30 bg-warning-subtle/40 text-text-primary">
@@ -337,23 +385,21 @@ export function DocumentsClient({
               className="w-full pl-9"
             />
           </div>
-          <div className="flex items-center gap-2">
-            <Select
-              value={filterFolderId}
-              onChange={(e) => setFilterFolderId(e.target.value)}
-              className="w-full sm:w-52"
-            >
-              <option value="">All folders</option>
-              {folders.map((f) => (
-                <option key={f.id} value={f.id}>
-                  {f.name}
-                </option>
-              ))}
-            </Select>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="w-full sm:w-52">
+              <FolderTreeSelect
+                folders={folders}
+                value={filterFolderId}
+                onChange={setFilterFolderId}
+                allOptionLabel="All folders"
+                placeholder="All folders"
+                size="sm"
+              />
+            </div>
             <Select
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
-              className="w-full sm:w-32"
+              className="w-full sm:w-28"
             >
               <option value="all">All types</option>
               <option value="pdf">PDF</option>
@@ -369,6 +415,16 @@ export function DocumentsClient({
               <option value="FAILED">Failed</option>
               <option value="QUEUED">Queued</option>
               <option value="PROCESSING">Processing</option>
+            </Select>
+            <Select
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value)}
+              className="w-full sm:w-36"
+            >
+              <option value="recent">Newest first</option>
+              <option value="oldest">Oldest first</option>
+              <option value="opened">Recently opened</option>
+              <option value="name">Name A–Z</option>
             </Select>
             {hasFilters && (
               <Button
@@ -390,54 +446,15 @@ export function DocumentsClient({
       </div>
 
       <section className="space-y-3">
-        <SectionHeader
-          icon={<Files className="h-4 w-4" />}
-          title={hasFilters ? "Filtered documents" : "All documents"}
-          description={
-            hasFilters
-              ? `${filteredDocs.length} of ${totalCount} documents match your filters.`
-              : "Open a document to view, share, or review its AI summary."
-          }
-          count={filteredDocs.length}
-          action={
-            <div className="flex flex-wrap items-center gap-2">
-              <Select
-                value={sortOrder}
-                onChange={(e) => setSortOrder(e.target.value)}
-                className="w-36"
-              >
-                <option value="recent">Newest first</option>
-                <option value="oldest">Oldest first</option>
-                <option value="opened">Recently opened</option>
-                <option value="name">Name A–Z</option>
-              </Select>
-              <div
-                className="inline-flex rounded-lg border border-border-subtle bg-surface p-1"
-                role="group"
-                aria-label="Document view"
-              >
-                <button
-                  type="button"
-                  aria-label="Grid view"
-                  aria-pressed={viewMode === "grid"}
-                  onClick={() => setViewMode("grid")}
-                  className={`rounded-md p-1.5 ${viewMode === "grid" ? "bg-brand-subtle text-brand" : "text-text-muted"}`}
-                >
-                  <LayoutGrid className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  aria-label="List view"
-                  aria-pressed={viewMode === "list"}
-                  onClick={() => setViewMode("list")}
-                  className={`rounded-md p-1.5 ${viewMode === "list" ? "bg-brand-subtle text-brand" : "text-text-muted"}`}
-                >
-                  <List className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-          }
-        />
+        <div className="flex items-center justify-between px-1 text-xs text-text-muted">
+          <p>
+            Showing <span className="font-semibold text-text-primary">{filteredDocs.length}</span>{" "}
+            {filteredDocs.length === 1 ? "document" : "documents"}
+            {hasFilters && totalCount !== filteredDocs.length && (
+              <span> (filtered from {totalCount} total)</span>
+            )}
+          </p>
+        </div>
 
         {selectedIds.length > 0 && (
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-brand/20 bg-brand-subtle/50 p-3">

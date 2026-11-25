@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { PageHeader } from "@/components/shell/PageHeader";
+import { CommandBar, CommandBarButton, CommandBarDivider } from "@/components/ui/CommandBar";
 import { useUpload } from "@/app/contexts/UploadContext";
 
 const UploadModal = dynamic(
@@ -96,39 +97,39 @@ export function DocumentsOverviewClient({
 
   return (
     <>
-      <PageHeader
-        eyebrow="Document vault"
-        title="Documents"
-        description="Your private document library — upload, organize, and track expiries."
-        icon={<FileText className="h-5 w-5" />}
-        actions={
-          <>
-            <Link
-              href="/documents/library"
-              className="btn btn-secondary inline-flex h-9 items-center gap-2 px-3.5 text-[13px]"
-            >
-              <FileText className="h-4 w-4" />
-              Browse all
-            </Link>
-            <Button
-              variant="secondary"
-              onClick={() => setIsCreateFolderOpen(true)}
-              disabled={!isConnected}
-            >
-              <FolderPlus className="h-4 w-4" />
-              New folder
-            </Button>
-            <Button variant="secondary" onClick={() => openCamera()} disabled={!isConnected}>
-              <Camera className="h-4 w-4" />
-              Scan document
-            </Button>
-            <Button onClick={openUpload} disabled={!isConnected}>
-              <Upload className="h-4 w-4" />
-              Upload document
-            </Button>
-          </>
-        }
-      />
+      <div className="space-y-3">
+        <PageHeader title="Documents" icon={<FileText className="h-5 w-5" />} />
+
+        <CommandBar>
+          <CommandBarButton
+            primary
+            icon={<Upload className="h-3.5 w-3.5 text-white" />}
+            onClick={openUpload}
+            disabled={!isConnected}
+          >
+            Upload
+          </CommandBarButton>
+          <CommandBarButton
+            icon={<Camera className="h-3.5 w-3.5" />}
+            onClick={() => openCamera()}
+            disabled={!isConnected}
+          >
+            Scan
+          </CommandBarButton>
+          <CommandBarButton
+            icon={<FolderPlus className="h-3.5 w-3.5" />}
+            onClick={() => setIsCreateFolderOpen(true)}
+            disabled={!isConnected}
+          >
+            New folder
+          </CommandBarButton>
+          <CommandBarDivider />
+          <CommandBarButton
+            icon={<FileText className="h-3.5 w-3.5" />}
+            item={{ key: "browse", label: "Browse library", href: "/documents/library" }}
+          />
+        </CommandBar>
+      </div>
 
       {!isConnected && !driveLoading && (
         <div className="flex items-center gap-3 rounded-lg border border-warning/30 bg-warning-subtle/20 px-4 py-3 text-text-primary">

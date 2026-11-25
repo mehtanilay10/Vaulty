@@ -2,7 +2,6 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import type { User } from "@/types";
 import { SettingsClient } from "@/components/settings/SettingsClient";
-import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 
 export default async function SettingsPage() {
   const session = await auth();
@@ -77,7 +76,6 @@ export default async function SettingsPage() {
 
   return (
     <>
-      <Breadcrumbs items={[{ label: "Dashboard", href: "/dashboard" }, { label: "Settings" }]} />
       <SettingsClient
         user={user as User}
         recentEvents={JSON.parse(JSON.stringify(recentEvents))}

@@ -164,7 +164,6 @@ export function ReminderCalendarClient({ events, embedded = false }: ReminderCal
       {!embedded && (
         <PageHeader
           title="Calendar View"
-          description="Unified schedule of your upcoming reminders, document renewals, and payment due dates."
           actions={
             <div className="flex items-center gap-2">
               <div className="inline-flex items-center rounded-lg border border-border-subtle bg-surface-muted p-0.5">

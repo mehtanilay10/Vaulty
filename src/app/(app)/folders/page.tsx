@@ -1,7 +1,6 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { FoldersClient } from "@/components/folders/FoldersClient";
-import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 
 export default async function FoldersPage() {
   const session = await auth();
@@ -20,13 +19,6 @@ export default async function FoldersPage() {
 
   return (
     <>
-      <Breadcrumbs
-        items={[
-          { label: "Dashboard", href: "/dashboard" },
-          { label: "Documents", href: "/documents" },
-          { label: "Folders" },
-        ]}
-      />
       <FoldersClient initialFolders={JSON.parse(JSON.stringify(folders))} />
     </>
   );

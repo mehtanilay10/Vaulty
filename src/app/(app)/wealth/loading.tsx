@@ -3,24 +3,20 @@ import { Skeleton } from "@/components/ui/Skeleton";
 export default function WealthLoading() {
   return (
     <div className="space-y-6">
-      {/* Breadcrumbs */}
-      <div className="flex items-center gap-2">
-        <Skeleton className="h-3 w-10" />
-        <span className="text-text-muted">/</span>
-        <Skeleton className="h-3 w-16" />
-      </div>
-
       {/* PageHeader */}
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div className="space-y-2">
-          <Skeleton className="h-3 w-28" />
-          <Skeleton className="h-7 w-48" />
-          <Skeleton className="h-3 w-80 max-w-full" />
+      <div className="space-y-2">
+        <div className="flex items-center gap-1.5">
+          <Skeleton className="h-3 w-10" />
+          <span className="text-text-muted">/</span>
+          <Skeleton className="h-3 w-16" />
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Skeleton className="h-9 w-28 rounded-lg" />
-          <Skeleton className="h-9 w-36 rounded-lg" />
-          <Skeleton className="h-9 w-28 rounded-lg" />
+        <div className="flex items-center justify-between gap-3">
+          <Skeleton className="h-6 w-40" />
+          <div className="flex flex-wrap gap-2">
+            <Skeleton className="h-9 w-28 rounded-lg" />
+            <Skeleton className="h-9 w-36 rounded-lg" />
+            <Skeleton className="h-9 w-28 rounded-lg" />
+          </div>
         </div>
       </div>
 

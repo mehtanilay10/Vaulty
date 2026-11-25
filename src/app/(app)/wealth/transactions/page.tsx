@@ -1,7 +1,6 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { TransactionsClient } from "./TransactionsClient";
-import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 
 export default async function WealthTransactionsPage() {
   const session = await auth();
@@ -26,13 +25,6 @@ export default async function WealthTransactionsPage() {
 
   return (
     <>
-      <Breadcrumbs
-        items={[
-          { label: "Dashboard", href: "/dashboard" },
-          { label: "Wealth", href: "/wealth" },
-          { label: "Transactions" },
-        ]}
-      />
       <TransactionsClient transactions={JSON.parse(JSON.stringify(transactions))} />
     </>
   );

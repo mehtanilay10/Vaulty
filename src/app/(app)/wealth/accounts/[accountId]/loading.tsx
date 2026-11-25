@@ -4,31 +4,27 @@ import { Card } from "@/components/ui/Card";
 export default function AccountDetailLoading() {
   return (
     <div className="space-y-6">
-      {/* Breadcrumbs */}
-      <div className="flex items-center gap-2">
-        <Skeleton className="h-3 w-10" />
-        <span className="text-text-muted">/</span>
-        <Skeleton className="h-3 w-16" />
-        <span className="text-text-muted">/</span>
-        <Skeleton className="h-3 w-20" />
-        <span className="text-text-muted">/</span>
-        <Skeleton className="h-3 w-32" />
-      </div>
-
       {/* PageHeader */}
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div className="space-y-2">
-          <Skeleton className="h-3 w-28" />
-          <div className="flex items-center gap-3">
-            <Skeleton className="h-8 w-64" />
-            <Skeleton className="h-5 w-16 rounded-full" />
-          </div>
-          <Skeleton className="h-3 w-48" />
+      <div className="space-y-2">
+        <div className="flex items-center gap-1.5">
+          <Skeleton className="h-3 w-10" />
+          <span className="text-text-muted">/</span>
+          <Skeleton className="h-3 w-16" />
+          <span className="text-text-muted">/</span>
+          <Skeleton className="h-3 w-20" />
+          <span className="text-text-muted">/</span>
+          <Skeleton className="h-3 w-32" />
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Skeleton className="h-9 w-24 rounded-lg" />
-          <Skeleton className="h-9 w-28 rounded-lg" />
-          <Skeleton className="h-9 w-20 rounded-lg" />
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <Skeleton className="h-9 w-9 rounded-md" />
+            <Skeleton className="h-6 w-64" />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Skeleton className="h-9 w-24 rounded-lg" />
+            <Skeleton className="h-9 w-28 rounded-lg" />
+            <Skeleton className="h-9 w-20 rounded-lg" />
+          </div>
         </div>
       </div>
 

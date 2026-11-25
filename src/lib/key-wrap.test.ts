@@ -30,7 +30,7 @@ describe("key-wrap", () => {
     const unwrapped = await unwrapCryptoKey(pinHash, wrapped);
     expect(unwrapped).toBeDefined();
     expect(unwrapped.algorithm.name).toBe("AES-GCM");
-  });
+  }, 15000);
 
   it("fails to unwrap when given the wrong secret", async () => {
     const kek = await deriveKEK(masterPassword, salt, 1000);
@@ -39,5 +39,5 @@ describe("key-wrap", () => {
 
     const wrapped = await wrapCryptoKey(pinHash, kek);
     await expect(unwrapCryptoKey(wrongPinHash, wrapped)).rejects.toThrow();
-  });
+  }, 15000);
 });

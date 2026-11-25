@@ -1,6 +1,5 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { PageHeader } from "@/components/shell/PageHeader";
 import { Mail } from "lucide-react";
 import { EmailSyncClient } from "./EmailSyncClient";
@@ -122,14 +121,7 @@ export default async function EmailSyncPage({
 
   return (
     <>
-      <Breadcrumbs items={[{ label: "Dashboard", href: "/dashboard" }, { label: "Email Sync" }]} />
-      <PageHeader
-        eyebrow="Inbox Automation"
-        title="Email Sync"
-        description="Connect your read-only email inboxes to automatically discover wealth transactions, scan important documents, and track upcoming payment and expiry reminders."
-        icon={<Mail className="h-5 w-5" />}
-        tone="violet"
-      />
+      <PageHeader title="Email Sync" icon={<Mail className="h-5 w-5" />} />
 
       <EmailSyncClient
         initialInboundConfig={initialInboundConfig}

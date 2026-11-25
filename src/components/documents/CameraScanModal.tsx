@@ -20,11 +20,11 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Select } from "@/components/ui/Select";
 import { Label } from "@/components/ui/Label";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { Alert } from "@/components/ui/Alert";
 import { Blade } from "@/components/ui/Blade";
+import { FolderTreeSelect } from "@/components/ui/FolderTreeSelect";
 import { MultiSelectPills, type MultiSelectOption } from "@/components/ui/MultiSelectPills";
 import { csrfHeaders } from "@/lib/csrf-client";
 import {
@@ -1231,21 +1231,12 @@ export function CameraScanModal({
 
               <div>
                 <Label>Target Vault Folder</Label>
-                <Select
+                <FolderTreeSelect
+                  folders={folders}
                   value={selectedFolderId}
-                  onChange={(e) => setSelectedFolderId(e.target.value)}
-                  className="w-full"
-                >
-                  {folders.length === 0 ? (
-                    <option value="">No folders found</option>
-                  ) : (
-                    folders.map((f) => (
-                      <option key={f.id} value={f.id}>
-                        {f.name}
-                      </option>
-                    ))
-                  )}
-                </Select>
+                  onChange={setSelectedFolderId}
+                  placeholder="Select folder..."
+                />
               </div>
 
               <div>

@@ -1,8 +1,8 @@
 "use client";
 
 import { useDeferredValue, useMemo, useState } from "react";
-import Link from "next/link";
 import { PageHeader } from "@/components/shell/PageHeader";
+import { CommandBar, CommandBarButton, CommandBarDivider } from "@/components/ui/CommandBar";
 import { TransactionList } from "@/components/wealth/TransactionList";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Button } from "@/components/ui/Button";
@@ -100,20 +100,31 @@ export function TransactionsClient({ transactions }: TransactionsClientProps) {
 
   return (
     <>
-      <PageHeader
-        eyebrow="Activity ledger"
-        title="Wealth Transactions"
-        description="All transactions across your wealth accounts."
-        icon={<Receipt className="h-5 w-5" />}
-        actions={
-          <Link href="/wealth">
-            <Button variant="secondary">
-              <ArrowLeft className="h-4 w-4" />
-              Back to wealth
-            </Button>
-          </Link>
-        }
-      />
+      <div className="space-y-3">
+        <PageHeader title="Wealth Transactions" icon={<Receipt className="h-5 w-5" />} />
+
+        <CommandBar
+          farItems={
+            <span className="text-xs text-text-muted px-2">
+              {filteredTransactions.length} transaction
+              {filteredTransactions.length === 1 ? "" : "s"}
+            </span>
+          }
+        >
+          <CommandBarButton
+            icon={<ArrowLeft className="h-3.5 w-3.5" />}
+            item={{ key: "back", label: "Back to wealth", href: "/wealth" }}
+          />
+          {hasFilters && (
+            <>
+              <CommandBarDivider />
+              <CommandBarButton icon={<X className="h-3.5 w-3.5" />} onClick={clearFilters}>
+                Clear filters
+              </CommandBarButton>
+            </>
+          )}
+        </CommandBar>
+      </div>
 
       <div className="toolbar-surface p-3">
         <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-12 sm:items-center">

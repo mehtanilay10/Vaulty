@@ -2,7 +2,6 @@ import { Suspense } from "react";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { DocumentsOverviewClient } from "@/components/documents/DocumentsOverviewClient";
-import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 
 export default async function DocumentsPage() {
   const session = await auth();
@@ -86,7 +85,6 @@ export default async function DocumentsPage() {
 
   return (
     <>
-      <Breadcrumbs items={[{ label: "Dashboard", href: "/dashboard" }, { label: "Documents" }]} />
       <Suspense fallback={null}>
         <DocumentsOverviewClient
           recentDocuments={JSON.parse(JSON.stringify(recentDocuments))}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowDownLeft,
@@ -28,7 +28,7 @@ import { Checkbox } from "@/components/ui/Checkbox";
 import { useFeedback } from "@/components/providers/FeedbackProvider";
 import { formatCurrency } from "@/lib/wealth";
 import { csrfHeaders } from "@/lib/csrf-client";
-import { buildFolderTree } from "@/lib/folders/folder-tree";
+import { FolderTreeSelect } from "@/components/ui/FolderTreeSelect";
 
 type EmailConnection = {
   emailAddress: string;
@@ -212,7 +212,6 @@ export function EmailSyncClient({
   const [docLoading, setDocLoading] = useState(false);
   const [docActingId, setDocActingId] = useState<string | null>(null);
   const [docBulkBusy, setDocBulkBusy] = useState<"import" | "dismiss" | null>(null);
-  const folderTree = useMemo(() => buildFolderTree(folders), [folders]);
 
   // Reminders State
   const [now] = useState(() => Date.now());
@@ -1562,24 +1561,19 @@ export function EmailSyncClient({
                       </div>
 
                       <div className="flex items-center gap-3 self-end md:self-center shrink-0">
-                        <Select
+                        <FolderTreeSelect
+                          folders={folders}
                           value={selectedFolders[d.id] || ""}
-                          onChange={(e) =>
+                          onChange={(id) =>
                             setSelectedFolders((prev) => ({
                               ...prev,
-                              [d.id]: e.target.value,
+                              [d.id]: id,
                             }))
                           }
-                          className="text-xs h-8 w-48 font-mono"
-                          title="Choose destination folder location in hierarchy"
-                        >
-                          <option value="">📁 Default folder (Root)</option>
-                          {folderTree.map((f) => (
-                            <option key={f.id} value={f.id}>
-                              {f.treeLabel}
-                            </option>
-                          ))}
-                        </Select>
+                          rootOptionLabel="Default folder (Root)"
+                          size="sm"
+                          className="w-48"
+                        />
 
                         <Button
                           variant="secondary"

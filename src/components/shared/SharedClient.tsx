@@ -12,12 +12,7 @@ import type { FolderWithCounts } from "@/types";
 export function SharedClient({ sharedFolders }: { sharedFolders: FolderWithCounts[] }) {
   return (
     <>
-      <PageHeader
-        eyebrow="Collaboration"
-        title="Shared With Me"
-        description={`Folders shared with you by family members and registered users (${sharedFolders.length})`}
-        icon={<Users className="h-5 w-5 text-success" />}
-      />
+      <PageHeader title="Shared With Me" icon={<Users className="h-5 w-5 text-success" />} />
 
       <div className="flex items-start gap-3 rounded-lg border border-info/20 bg-info-subtle px-4 py-3">
         <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-info" />

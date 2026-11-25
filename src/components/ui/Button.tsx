@@ -13,7 +13,7 @@ export function Button({
   size?: "sm" | "md" | "lg";
 }) {
   const base =
-    "btn inline-flex items-center justify-center gap-2 whitespace-nowrap font-semibold transition-all disabled:pointer-events-none";
+    "btn inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium rounded-md transition-all disabled:pointer-events-none select-none";
 
   const variants = {
     primary: "btn-primary",
@@ -24,8 +24,8 @@ export function Button({
 
   const sizes = {
     sm: "h-8 px-2.5 text-xs",
-    md: "h-9 px-3.5 text-[13px]",
-    lg: "h-11 px-5 text-sm",
+    md: "h-8.5 sm:h-9 px-3 text-[13px]",
+    lg: "h-10 px-4 text-sm",
   };
 
   return (
@@ -46,7 +46,7 @@ export function IconButton({
   size?: "sm" | "md" | "lg";
 }) {
   const base =
-    "btn inline-flex items-center justify-center whitespace-nowrap font-semibold transition-all disabled:pointer-events-none";
+    "btn inline-flex items-center justify-center whitespace-nowrap font-medium rounded-md transition-all disabled:pointer-events-none select-none";
 
   const variants = {
     primary: "btn-primary",
@@ -57,8 +57,8 @@ export function IconButton({
 
   const sizes = {
     sm: "h-8 w-8 text-xs",
-    md: "h-9 w-9 text-[13px]",
-    lg: "h-11 w-11 text-sm",
+    md: "h-8.5 w-8.5 sm:h-9 sm:w-9 text-[13px]",
+    lg: "h-10 w-10 text-sm",
   };
 
   return (

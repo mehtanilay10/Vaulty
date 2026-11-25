@@ -5,7 +5,6 @@ import { PageHeader } from "@/components/shell/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { notFound } from "next/navigation";
 import { hasFamilyModuleAccess } from "@/lib/family-access";
 import { Bell, Clock3, Lock, User } from "lucide-react";
@@ -28,11 +27,8 @@ export default async function FamilyOwnerRemindersPage({
 
   return (
     <>
-      <Breadcrumbs items={[{ label: "Family", href: "/family" }, { label: "Reminders" }]} />
       <PageHeader
-        eyebrow="Family shared"
         title="Reminders"
-        description="Read-only reminders shared by your family. You can view upcoming payment due dates and renewals."
         icon={<Bell className="h-5 w-5" />}
         actions={
           <Link

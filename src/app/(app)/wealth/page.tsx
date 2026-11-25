@@ -2,7 +2,6 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { calculateWealthSummary, withoutPin } from "@/lib/wealth";
 import { WealthClient } from "./WealthClient";
-import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 
 export default async function WealthPage() {
   const session = await auth();
@@ -21,7 +20,6 @@ export default async function WealthPage() {
 
   return (
     <>
-      <Breadcrumbs items={[{ label: "Dashboard", href: "/dashboard" }, { label: "Wealth" }]} />
       <WealthClient
         summary={{ ...summary, currency }}
         breakdown={breakdown}

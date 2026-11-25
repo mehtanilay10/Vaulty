@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { RemindersClient } from "@/components/reminders/RemindersClient";
 
 export default async function RemindersPage() {
@@ -20,7 +19,6 @@ export default async function RemindersPage() {
 
   return (
     <>
-      <Breadcrumbs items={[{ label: "Dashboard", href: "/dashboard" }, { label: "Reminders" }]} />
       <Suspense fallback={null}>
         <RemindersClient
           initialReminders={JSON.parse(JSON.stringify(reminders))}

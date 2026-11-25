@@ -2,7 +2,6 @@ import { Suspense } from "react";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { DocumentsClient } from "@/components/documents/DocumentsClient";
-import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 
 export default async function DocumentLibraryPage() {
   const session = await auth();
@@ -28,19 +27,12 @@ export default async function DocumentLibraryPage() {
 
   const folders = await prisma.folder.findMany({
     where: { ownerId: userId },
-    select: { id: true, name: true },
+    select: { id: true, name: true, parentId: true },
     orderBy: { name: "asc" },
   });
 
   return (
     <>
-      <Breadcrumbs
-        items={[
-          { label: "Dashboard", href: "/dashboard" },
-          { label: "Documents", href: "/documents" },
-          { label: "Library" },
-        ]}
-      />
       <Suspense fallback={null}>
         <DocumentsClient
           initialDocuments={JSON.parse(JSON.stringify(documents))}

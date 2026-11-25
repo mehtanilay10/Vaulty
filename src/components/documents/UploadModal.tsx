@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { csrfHeaders } from "@/lib/csrf-client";
 import {
@@ -20,14 +20,13 @@ const CameraScanModal = dynamic(
 );
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Select } from "@/components/ui/Select";
 import { Label } from "@/components/ui/Label";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { Blade } from "@/components/ui/Blade";
 import { Alert } from "@/components/ui/Alert";
 import { Card } from "@/components/ui/Card";
 import { MultiSelectPills, type MultiSelectOption } from "@/components/ui/MultiSelectPills";
-import { buildFolderTree } from "@/lib/folders/folder-tree";
+import { FolderTreeSelect } from "@/components/ui/FolderTreeSelect";
 
 interface FolderOption {
   id: string;
@@ -75,8 +74,6 @@ export function UploadModal({
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [isCameraScanOpen, setIsCameraScanOpen] = useState(false);
-
-  const folderTree = useMemo(() => buildFolderTree(folders), [folders]);
 
   useEffect(() => {
     if (isOpen) {
@@ -423,21 +420,12 @@ export function UploadModal({
           <Label>Destination Folder</Label>
           {mode === "select" ? (
             <div className="space-y-2">
-              <Select
+              <FolderTreeSelect
+                folders={folders}
                 value={selectedFolderId}
-                onChange={(e) => setSelectedFolderId(e.target.value)}
-                className="w-full text-xs font-mono"
-              >
-                {folderTree.length === 0 ? (
-                  <option value="">No folders found. Create one below.</option>
-                ) : (
-                  folderTree.map((f) => (
-                    <option key={f.id} value={f.id}>
-                      {f.treeLabel}
-                    </option>
-                  ))
-                )}
-              </Select>
+                onChange={setSelectedFolderId}
+                placeholder="Select destination folder..."
+              />
               <Button
                 type="button"
                 variant="secondary"

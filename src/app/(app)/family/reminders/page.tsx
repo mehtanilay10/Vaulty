@@ -2,7 +2,6 @@ import { auth } from "@/auth";
 import Link from "next/link";
 import { getFamilySharedReminders } from "@/lib/family-service";
 import { PageHeader } from "@/components/shell/PageHeader";
-import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -29,11 +28,8 @@ export default async function FamilyRemindersPage({
 
   return (
     <>
-      <Breadcrumbs items={[{ label: "Family", href: "/family" }, { label: "Reminders" }]} />
       <PageHeader
-        eyebrow="Family shared"
         title="Reminders"
-        description="Read-only reminders shared by your family members. You can view upcoming payment due dates and renewals."
         icon={<Bell className="h-5 w-5" />}
         actions={
           <Link

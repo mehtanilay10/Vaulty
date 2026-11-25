@@ -1,7 +1,6 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { ChatClient } from "@/components/chat/ChatClient";
-import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 
 export default async function ChatPage() {
   const session = await auth();
@@ -23,7 +22,6 @@ export default async function ChatPage() {
 
   return (
     <>
-      <Breadcrumbs items={[{ label: "Dashboard", href: "/dashboard" }, { label: "AI Chat" }]} />
       <ChatClient sessions={serializedSessions} />
     </>
   );

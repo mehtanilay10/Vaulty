@@ -1,6 +1,5 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import {
   ReminderCalendarClient,
   type CalendarEvent,
@@ -82,13 +81,6 @@ export default async function ReminderCalendarPage() {
 
   return (
     <div className="space-y-6">
-      <Breadcrumbs
-        items={[
-          { label: "Dashboard", href: "/dashboard" },
-          { label: "Reminders", href: "/reminders" },
-          { label: "Calendar View" },
-        ]}
-      />
       <ReminderCalendarClient events={events} />
     </div>
   );

@@ -2,7 +2,6 @@ import { auth } from "@/auth";
 import Link from "next/link";
 import { getFamilySharedDocuments } from "@/lib/family-service";
 import { PageHeader } from "@/components/shell/PageHeader";
-import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -29,11 +28,8 @@ export default async function FamilyDocumentsPage({
 
   return (
     <>
-      <Breadcrumbs items={[{ label: "Family", href: "/family" }, { label: "Documents" }]} />
       <PageHeader
-        eyebrow="Family shared"
         title="Documents"
-        description="Read-only document folders shared by your family. Files stay in the owner's storage and cannot be edited or re-shared by you."
         icon={<Folder className="h-5 w-5" />}
         actions={
           <Link

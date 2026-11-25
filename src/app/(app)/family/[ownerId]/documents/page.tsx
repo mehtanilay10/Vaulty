@@ -5,7 +5,6 @@ import { PageHeader } from "@/components/shell/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { notFound } from "next/navigation";
 import { hasFamilyModuleAccess } from "@/lib/family-access";
 import { Folder, FileText, Lock, User, ChevronRight } from "lucide-react";
@@ -29,11 +28,8 @@ export default async function FamilyOwnerDocumentsPage({
 
   return (
     <>
-      <Breadcrumbs items={[{ label: "Family", href: "/family" }, { label: "Documents" }]} />
       <PageHeader
-        eyebrow="Family shared"
         title="Documents"
-        description="Read-only document folders shared by your family. Files stay in the owner's storage and cannot be edited or re-shared by you."
         icon={<Folder className="h-5 w-5" />}
         actions={
           <Link

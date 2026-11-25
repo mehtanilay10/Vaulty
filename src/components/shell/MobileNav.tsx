@@ -167,7 +167,7 @@ export function MobileNav({
               </button>
             )}
 
-            {/* Quick add actions grid */}
+            {/* Quick add actions grid organized by module */}
             <div className="mb-4 grid grid-cols-3 gap-2">
               <button
                 type="button"
@@ -186,6 +186,17 @@ export function MobileNav({
                 type="button"
                 onClick={() => {
                   setMoreOpen(false);
+                  router.push("/credentials?tab=APP&action=new");
+                }}
+                className="flex flex-col items-center justify-center rounded-xl border border-border-subtle bg-surface-muted/50 p-2.5 text-center transition-colors hover:bg-surface-muted"
+              >
+                <Lock className="mb-1 h-4 w-4 text-brand" />
+                <span className="text-[11px] font-medium text-text-primary">+ App Pass</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMoreOpen(false);
                   router.push("/credentials?tab=AUTH&action=new");
                 }}
                 className="flex flex-col items-center justify-center rounded-xl border border-border-subtle bg-surface-muted/50 p-2.5 text-center transition-colors hover:bg-surface-muted"
@@ -197,34 +208,23 @@ export function MobileNav({
                 type="button"
                 onClick={() => {
                   setMoreOpen(false);
-                  router.push("/notes?action=new");
-                }}
-                className="flex flex-col items-center justify-center rounded-xl border border-border-subtle bg-surface-muted/50 p-2.5 text-center transition-colors hover:bg-surface-muted"
-              >
-                <StickyNote className="mb-1 h-4 w-4 text-brand" />
-                <span className="text-[11px] font-medium text-text-primary">+ New Note</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setMoreOpen(false);
-                  router.push("/credentials?action=new");
-                }}
-                className="flex flex-col items-center justify-center rounded-xl border border-border-subtle bg-surface-muted/50 p-2.5 text-center transition-colors hover:bg-surface-muted"
-              >
-                <Lock className="mb-1 h-4 w-4 text-brand" />
-                <span className="text-[11px] font-medium text-text-primary">+ Credential</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setMoreOpen(false);
                   router.push("/wealth/accounts?action=new");
                 }}
                 className="flex flex-col items-center justify-center rounded-xl border border-border-subtle bg-surface-muted/50 p-2.5 text-center transition-colors hover:bg-surface-muted"
               >
                 <Wallet className="mb-1 h-4 w-4 text-brand" />
                 <span className="text-[11px] font-medium text-text-primary">+ Account</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMoreOpen(false);
+                  router.push("/notes?action=new");
+                }}
+                className="flex flex-col items-center justify-center rounded-xl border border-border-subtle bg-surface-muted/50 p-2.5 text-center transition-colors hover:bg-surface-muted"
+              >
+                <StickyNote className="mb-1 h-4 w-4 text-brand" />
+                <span className="text-[11px] font-medium text-text-primary">+ Note</span>
               </button>
               <button
                 type="button"

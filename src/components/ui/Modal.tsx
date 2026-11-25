@@ -86,19 +86,19 @@ export function Modal({
           "modal-content w-full bg-surface-elevated border border-border-subtle shadow-fluent-64",
           fullScreenMobile
             ? "max-sm:fixed max-sm:inset-0 max-sm:h-[100dvh] max-sm:w-full max-sm:max-h-[100dvh] max-sm:rounded-none max-sm:flex max-sm:flex-col max-sm:overflow-hidden"
-            : "max-sm:fixed max-sm:inset-x-0 max-sm:bottom-0 max-sm:rounded-b-none max-sm:rounded-t-2xl max-sm:max-h-[90svh] max-sm:overflow-y-auto",
-          "sm:relative sm:rounded-2xl sm:max-h-[85vh] sm:mx-auto",
+            : "max-sm:fixed max-sm:inset-x-0 max-sm:bottom-0 max-sm:rounded-b-none max-sm:rounded-t-lg max-sm:max-h-[90svh] max-sm:overflow-y-auto",
+          "sm:relative sm:rounded-lg sm:max-h-[85vh] sm:mx-auto",
           maxWidthClasses[maxWidth],
         )}
       >
         {/* Mobile handle indicator */}
         {!fullScreenMobile && (
           <div className="flex justify-center pt-2.5 pb-0 sm:hidden">
-            <div className="h-1.5 w-10 rounded-full bg-border" />
+            <div className="h-1 w-8 rounded-full bg-border" />
           </div>
         )}
 
-        <div className="flex shrink-0 items-start justify-between gap-4 border-b border-border-subtle px-5 py-4 sm:px-6">
+        <div className="flex shrink-0 items-start justify-between gap-4 border-b border-border-subtle px-5 py-3.5 sm:px-6">
           <div className="min-w-0">
             <h2 id={titleId} className="text-[15px] font-semibold text-text-primary tracking-tight">
               {title}
@@ -109,7 +109,7 @@ export function Modal({
             type="button"
             onClick={onClose}
             aria-label="Close dialog"
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-surface-muted hover:text-text-primary active:scale-95"
+            className="flex h-7 w-7 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-surface-muted hover:text-text-primary active:scale-95"
           >
             <X className="h-4 w-4" />
           </button>

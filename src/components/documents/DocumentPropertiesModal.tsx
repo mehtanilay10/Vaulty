@@ -1,19 +1,18 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { Trash2, AlertTriangle, Check, Sparkles, RefreshCw, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Blade } from "@/components/ui/Blade";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Select } from "@/components/ui/Select";
 import { Label } from "@/components/ui/Label";
 import { Alert } from "@/components/ui/Alert";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { MultiSelectPills, type MultiSelectOption } from "@/components/ui/MultiSelectPills";
+import { FolderTreeSelect } from "@/components/ui/FolderTreeSelect";
 import { csrfHeaders } from "@/lib/csrf-client";
-import { buildFolderTree } from "@/lib/folders/folder-tree";
 import type { DocumentWithRelations } from "@/types";
 
 const DOCUMENT_TAG_SUGGESTIONS: MultiSelectOption[] = [
@@ -43,7 +42,6 @@ export function DocumentPropertiesModal({
   onDocumentUpdated?: () => void;
 }) {
   const router = useRouter();
-  const folderTree = useMemo(() => buildFolderTree(folders), [folders]);
   const [docName, setDocName] = useState(document?.name || "");
   const [targetFolderId, setTargetFolderId] = useState(document?.folderId || "");
   const [expiryDate, setExpiryDate] = useState(
@@ -218,17 +216,12 @@ export function DocumentPropertiesModal({
 
             <div>
               <Label>Folder Location</Label>
-              <Select
+              <FolderTreeSelect
+                folders={folders}
                 value={targetFolderId}
-                onChange={(e) => setTargetFolderId(e.target.value)}
-                className="w-full text-xs font-mono"
-              >
-                {folderTree.map((f) => (
-                  <option key={f.id} value={f.id}>
-                    {f.treeLabel}
-                  </option>
-                ))}
-              </Select>
+                onChange={setTargetFolderId}
+                placeholder="Select destination folder..."
+              />
             </div>
 
             <div>

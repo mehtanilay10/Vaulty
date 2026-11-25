@@ -7,23 +7,10 @@ export function SiteFooter() {
   const pathname = usePathname();
   const year = new Date().getFullYear();
 
-  // Omit global footer on authenticated app pages and auth pages,
-  // where AppShell / AuthShell already render the unified footer inside the layout.
-  const isAppOrAuthPage =
-    pathname?.startsWith("/dashboard") ||
-    pathname?.startsWith("/documents") ||
-    pathname?.startsWith("/wealth") ||
-    pathname?.startsWith("/credentials") ||
-    pathname?.startsWith("/reminders") ||
-    pathname?.startsWith("/chat") ||
-    pathname?.startsWith("/email-sync") ||
-    pathname?.startsWith("/family") ||
-    pathname?.startsWith("/notes") ||
-    pathname?.startsWith("/settings") ||
-    pathname?.startsWith("/notifications") ||
-    pathname?.startsWith("/auth");
-
-  if (isAppOrAuthPage) {
+  // AppShell (all authenticated (app) routes), AuthShell (all /auth routes),
+  // and the landing page (/) already render their own footers.
+  // SiteFooter is only for standalone external pages (such as public /share/[token]) that have no shell.
+  if (!pathname || !pathname.startsWith("/share")) {
     return null;
   }
 

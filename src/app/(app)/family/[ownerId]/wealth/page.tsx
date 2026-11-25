@@ -6,7 +6,6 @@ import { PageHeader } from "@/components/shell/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { notFound } from "next/navigation";
 import { hasFamilyModuleAccess } from "@/lib/family-access";
 import { Building2, CreditCard, Lock, User, Wallet } from "lucide-react";
@@ -30,11 +29,8 @@ export default async function FamilyOwnerWealthPage({
 
   return (
     <>
-      <Breadcrumbs items={[{ label: "Family", href: "/family" }, { label: "Wealth" }]} />
       <PageHeader
-        eyebrow="Family shared"
         title="Wealth"
-        description="Read-only wealth accounts shared by your family. You cannot add, edit, delete or import transactions for these accounts."
         icon={<Wallet className="h-5 w-5" />}
         actions={
           <Link

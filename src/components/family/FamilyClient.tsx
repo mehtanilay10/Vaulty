@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/shell/PageHeader";
+import { CommandBar, CommandBarButton } from "@/components/ui/CommandBar";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -442,19 +443,19 @@ export function FamilyClient({ overview }: { overview: FamilyOverview }) {
 
   return (
     <>
-      <PageHeader
-        eyebrow="Family sharing"
-        title="Family"
-        description="Add family members and choose exactly which parts of your account they can view. Family access is always read-only."
-        icon={<Users className="h-5 w-5" />}
-        tone="rose"
-        actions={
-          <Button onClick={openInvite}>
-            <UserPlus className="h-4 w-4" />
+      <div className="space-y-3">
+        <PageHeader title="Family" icon={<Users className="h-5 w-5" />} />
+
+        <CommandBar>
+          <CommandBarButton
+            primary
+            icon={<UserPlus className="h-3.5 w-3.5 text-white" />}
+            onClick={openInvite}
+          >
             Add family member
-          </Button>
-        }
-      />
+          </CommandBarButton>
+        </CommandBar>
+      </div>
 
       <div className="mt-6 space-y-6">
         {banner && <Alert variant={banner.variant}>{banner.message}</Alert>}

@@ -79,7 +79,10 @@ export function StatCard({
     >
       <div className="flex items-start justify-between gap-3">
         <div
-          className={cn("flex h-9 w-9 items-center justify-center rounded-xl border", style.tile)}
+          className={cn(
+            "flex h-8.5 w-8.5 items-center justify-center rounded-md border",
+            style.tile,
+          )}
         >
           {icon}
         </div>

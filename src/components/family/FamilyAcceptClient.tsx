@@ -65,11 +65,7 @@ export function FamilyAcceptClient({
   if (error) {
     return (
       <div className="mx-auto max-w-xl">
-        <PageHeader
-          eyebrow="Family invitation"
-          title={error.title}
-          icon={<UserPlus className="h-5 w-5" />}
-        />
+        <PageHeader title={error.title} icon={<UserPlus className="h-5 w-5" />} />
         <Card className="mt-6 text-center">
           <div className="flex flex-col items-center gap-3 py-4">
             <div className="flex h-14 w-14 items-center justify-center rounded-xl border border-warning/25 bg-warning-subtle text-warning">
@@ -96,12 +92,7 @@ export function FamilyAcceptClient({
 
   return (
     <div className="mx-auto max-w-xl">
-      <PageHeader
-        eyebrow="Family invitation"
-        title="Join a Vaulty family"
-        description="Family access is read-only. You can view only the modules the owner enables, and they can revoke access at any time."
-        icon={<UserPlus className="h-5 w-5" />}
-      />
+      <PageHeader title="Join a Vaulty family" icon={<UserPlus className="h-5 w-5" />} />
 
       <Card className="mt-6">
         <div className="flex items-start justify-between gap-3">

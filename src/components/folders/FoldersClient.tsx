@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/shell/PageHeader";
+import { CommandBar, CommandBarButton } from "@/components/ui/CommandBar";
 import { CreateFolderModal } from "@/components/folders/CreateFolderModal";
 import { UploadModal } from "@/components/documents/UploadModal";
 import { useUpload } from "@/app/contexts/UploadContext";
@@ -34,18 +35,20 @@ export function FoldersClient({ initialFolders }: { initialFolders: FolderWithCo
 
   return (
     <>
-      <PageHeader
-        eyebrow="Organisation"
-        title="My Folders"
-        description={`Root folder hierarchy in your vault (${folders.length})`}
-        icon={<Folder className="h-5 w-5" />}
-        actions={
-          <Button onClick={() => setIsCreateOpen(true)} disabled={!isConnected}>
-            <FolderPlus className="h-4 w-4" />
+      <div className="space-y-3">
+        <PageHeader title="My Folders" icon={<Folder className="h-5 w-5" />} />
+
+        <CommandBar>
+          <CommandBarButton
+            primary
+            icon={<FolderPlus className="h-3.5 w-3.5 text-white" />}
+            onClick={() => setIsCreateOpen(true)}
+            disabled={!isConnected}
+          >
             Create folder
-          </Button>
-        }
-      />
+          </CommandBarButton>
+        </CommandBar>
+      </div>
 
       <section className="space-y-3">
         <SectionHeader

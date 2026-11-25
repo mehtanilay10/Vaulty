@@ -7,6 +7,8 @@ import { WealthSummaryCard } from "@/components/wealth/WealthSummaryCard";
 import { AccountList } from "@/components/wealth/AccountList";
 import { WealthBreakdownChart } from "@/components/wealth/WealthBreakdownChart";
 import { PageHeader } from "@/components/shell/PageHeader";
+import { CommandBar, CommandBarButton, CommandBarDivider } from "@/components/ui/CommandBar";
+import { cn } from "@/lib/utils";
 
 const AccountFormModal = dynamic(
   () => import("@/components/wealth/AccountFormModal").then((mod) => mod.AccountFormModal),
@@ -19,11 +21,9 @@ const StatementImportClient = dynamic(
     ),
   { ssr: false },
 );
-import { Button } from "@/components/ui/Button";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Modal } from "@/components/ui/Modal";
 import { Plus, ChevronRight, Wallet, PieChart, Upload, Mail } from "lucide-react";
-import { Tabs, Tab } from "@/components/ui/Tabs";
 import type { WealthAccountDTO } from "@/types";
 import Link from "next/link";
 
@@ -88,50 +88,53 @@ export function WealthClient({ summary, breakdown, accounts }: WealthClientProps
 
   return (
     <>
-      <PageHeader
-        eyebrow="Financial overview"
-        title="Wealth Management"
-        description="Track your savings, investments, loans, and net worth."
-        icon={<Wallet className="h-5 w-5" />}
-        actions={
-          <>
-            <Button onClick={openAddAccount}>
-              <Plus className="h-4 w-4" />
-              Add account
-            </Button>
-            <Button variant="secondary" onClick={() => setIsImportOpen(true)}>
-              <Upload className="h-4 w-4" />
-              Import statement
-            </Button>
-            <Link href="/email-sync">
-              <Button variant="secondary">
-                <Mail className="h-4 w-4" />
-                Sync email
-              </Button>
-            </Link>
-          </>
-        }
-      />
+      <div className="space-y-3">
+        <PageHeader title="Wealth Management" icon={<Wallet className="h-5 w-5" />} />
 
-      {visibleTotals.length > 1 && (
-        <div className="mb-3">
-          <Tabs>
-            {visibleTotals.map((tot) => (
-              <Tab
-                key={tot.currency}
-                value={tot.currency}
-                active={selectedCurrency === tot.currency}
-                onClick={() => setSelectedCurrency(tot.currency)}
-              >
-                <span>{tot.currency}</span>
-                <span className="ml-1 text-[10px] text-text-muted font-normal">
-                  ({tot.accountCount})
-                </span>
-              </Tab>
-            ))}
-          </Tabs>
-        </div>
-      )}
+        <CommandBar
+          farItems={
+            visibleTotals.length > 1 ? (
+              <div className="flex items-center gap-1">
+                {visibleTotals.map((tot) => (
+                  <button
+                    key={tot.currency}
+                    type="button"
+                    onClick={() => setSelectedCurrency(tot.currency)}
+                    className={cn(
+                      "px-2 py-1 rounded text-xs transition-colors",
+                      selectedCurrency === tot.currency
+                        ? "bg-brand text-white font-semibold"
+                        : "text-text-muted hover:bg-surface-muted hover:text-text-primary",
+                    )}
+                  >
+                    {tot.currency}
+                    <span className="ml-1 opacity-70 text-[10px]">({tot.accountCount})</span>
+                  </button>
+                ))}
+              </div>
+            ) : undefined
+          }
+        >
+          <CommandBarButton
+            primary
+            icon={<Plus className="h-3.5 w-3.5 text-white" />}
+            onClick={openAddAccount}
+          >
+            Add account
+          </CommandBarButton>
+          <CommandBarButton
+            icon={<Upload className="h-3.5 w-3.5" />}
+            onClick={() => setIsImportOpen(true)}
+          >
+            Import statement
+          </CommandBarButton>
+          <CommandBarDivider />
+          <CommandBarButton
+            icon={<Mail className="h-3.5 w-3.5" />}
+            item={{ key: "email-sync", label: "Sync email", href: "/email-sync" }}
+          />
+        </CommandBar>
+      </div>
 
       <WealthSummaryCard
         totalAssets={totalAssets}

@@ -181,9 +181,7 @@ export function FamilyCredentialsClient({
   return (
     <>
       <PageHeader
-        eyebrow="Family shared"
         title="Credentials"
-        description="Credentials shared by your family are decrypted only in your browser. The server, AI features and other users never receive plaintext passwords or keys."
         icon={<KeyRound className="h-5 w-5" />}
         actions={
           <Link

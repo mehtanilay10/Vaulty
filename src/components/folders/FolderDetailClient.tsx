@@ -5,6 +5,7 @@ import { useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { PageHeader } from "@/components/shell/PageHeader";
+import { CommandBar, CommandBarButton, CommandBarDivider } from "@/components/ui/CommandBar";
 import { useUpload } from "@/app/contexts/UploadContext";
 
 const CreateFolderModal = dynamic(
@@ -29,7 +30,6 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { AiStatusBadge } from "@/components/ui/AiStatusBadge";
-import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import {
   Folder,
@@ -97,58 +97,57 @@ export function FolderDetailClient({
   return (
     <>
       <div className="space-y-3">
-        <Breadcrumbs items={crumbItems} />
-
-        <PageHeader
-          eyebrow="Folder"
-          title={folder.name}
-          description={`Owner: ${folder.owner?.name || folder.owner?.email} · ${folder.documents?.length || 0} files · ${folder.children?.length || 0} subfolders`}
-          icon={<Folder className="h-5 w-5" />}
-          actions={
-            <>
-              {!isOwner && (
+        <div className="space-y-3">
+          <PageHeader
+            breadcrumbs={crumbItems}
+            title={folder.name}
+            icon={<Folder className="h-5 w-5" />}
+            actions={
+              !isOwner ? (
                 <Badge variant="info">
                   <Lock className="h-3 w-3" />
                   Shared read only
                 </Badge>
-              )}
-              <Button
-                variant="ghost"
-                onClick={() => setIsPropertiesOpen(true)}
-                aria-label="Folder properties and sharing"
-                title="Folder properties & sharing"
-                className="px-2"
-              >
-                <Settings className="h-4 w-4" />
-              </Button>
+              ) : undefined
+            }
+          />
 
-              {canAskAi && (
-                <Button
-                  variant="secondary"
-                  onClick={() => setIsQaOpen(true)}
-                  aria-label="Ask AI about folder documents"
-                  title="Ask AI about folder documents"
+          <CommandBar>
+            {isOwner && isConnected && (
+              <>
+                <CommandBarButton
+                  primary
+                  icon={<Upload className="h-3.5 w-3.5 text-white" />}
+                  onClick={openUpload}
                 >
-                  <Sparkles className="h-4 w-4 text-brand" />
-                  Ask AI
-                </Button>
-              )}
-
-              {isOwner && isConnected && (
-                <>
-                  <Button variant="secondary" onClick={() => setIsCreateSubfolderOpen(true)}>
-                    <FolderPlus className="h-4 w-4" />
-                    New subfolder
-                  </Button>
-                  <Button onClick={openUpload}>
-                    <Upload className="h-4 w-4" />
-                    Upload file
-                  </Button>
-                </>
-              )}
-            </>
-          }
-        />
+                  Upload file
+                </CommandBarButton>
+                <CommandBarButton
+                  icon={<FolderPlus className="h-3.5 w-3.5" />}
+                  onClick={() => setIsCreateSubfolderOpen(true)}
+                >
+                  New subfolder
+                </CommandBarButton>
+              </>
+            )}
+            {canAskAi && (
+              <CommandBarButton
+                icon={<Sparkles className="h-3.5 w-3.5 text-brand" />}
+                onClick={() => setIsQaOpen(true)}
+              >
+                Ask AI
+              </CommandBarButton>
+            )}
+            <CommandBarDivider />
+            <CommandBarButton
+              icon={<Settings className="h-3.5 w-3.5" />}
+              onClick={() => setIsPropertiesOpen(true)}
+              title="Folder properties & sharing"
+            >
+              Properties
+            </CommandBarButton>
+          </CommandBar>
+        </div>
       </div>
 
       {folder.children && folder.children.length > 0 && (

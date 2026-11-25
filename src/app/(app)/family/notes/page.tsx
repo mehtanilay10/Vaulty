@@ -2,12 +2,12 @@ import { auth } from "@/auth";
 import Link from "next/link";
 import { getFamilySharedNotes } from "@/lib/family-service";
 import { PageHeader } from "@/components/shell/PageHeader";
-import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { notFound } from "next/navigation";
 import { hasFamilyModuleAccess } from "@/lib/family-access";
+import { NoteMarkdown } from "@/components/notes/NoteMarkdown";
 import { StickyNote, User, Pin, ChevronRight } from "lucide-react";
 
 export const metadata = {
@@ -34,11 +34,8 @@ export default async function FamilyNotesPage({
 
   return (
     <>
-      <Breadcrumbs items={[{ label: "Family", href: "/family" }, { label: "Notes" }]} />
       <PageHeader
-        eyebrow="Family shared"
         title="Family Notes"
-        description="Read-only notes, checklists, and rich pages shared by your family members."
         icon={<StickyNote className="h-5 w-5 text-teal-600 dark:text-teal-400" />}
         actions={
           <Link
@@ -104,10 +101,14 @@ export default async function FamilyNotesPage({
                             <Pin className="h-3.5 w-3.5 text-amber-500 fill-amber-500 shrink-0" />
                           )}
                         </div>
-                        <div
-                          className="mt-2 text-xs text-text-muted line-clamp-3 prose dark:prose-invert"
-                          dangerouslySetInnerHTML={{ __html: note.content || "Empty page" }}
-                        />
+                        {note.content ? (
+                          <NoteMarkdown
+                            content={note.content}
+                            className="mt-2 text-xs text-text-muted line-clamp-3"
+                          />
+                        ) : (
+                          <div className="mt-2 text-xs text-text-muted">Empty page</div>
+                        )}
                       </div>
                       <div className="mt-3 pt-2 border-t border-border-subtle flex items-center justify-between text-[11px] text-text-muted">
                         <span>View note</span>

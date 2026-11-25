@@ -19,6 +19,7 @@ const BulkDeleteAccountModal = dynamic(
   { ssr: false },
 );
 import { PageHeader } from "@/components/shell/PageHeader";
+import { CommandBar, CommandBarButton } from "@/components/ui/CommandBar";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Input } from "@/components/ui/Input";
@@ -152,42 +153,69 @@ export function AccountsClient({ accounts }: AccountsClientProps) {
 
   return (
     <>
-      <PageHeader
-        eyebrow="Portfolio"
-        title="Wealth Accounts"
-        description="Manage all your savings, investments, credit cards, and loans."
-        icon={<Wallet className="h-5 w-5" />}
-        actions={
-          mergeMode || deleteMode ? (
-            <Button
-              variant="secondary"
+      <div className="space-y-3">
+        <PageHeader title="Wealth Accounts" icon={<Wallet className="h-5 w-5" />} />
+
+        <CommandBar
+          farItems={
+            <div className="relative w-40 sm:w-56">
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-muted" />
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Filter accounts..."
+                className="h-7 w-full rounded-md border border-border-subtle bg-surface-muted/50 pl-8 pr-6 text-xs text-text-primary placeholder:text-text-muted focus:border-brand focus:outline-none"
+              />
+              {query.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setQuery("")}
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+            </div>
+          }
+        >
+          {mergeMode || deleteMode ? (
+            <CommandBarButton
+              icon={<X className="h-3.5 w-3.5" />}
               onClick={mergeMode ? handleExitMergeMode : handleExitDeleteMode}
             >
-              <X className="h-4 w-4" />
-              Cancel
-            </Button>
+              Cancel {mergeMode ? "Merge" : "Delete"}
+            </CommandBarButton>
           ) : (
-            <div className="flex items-center gap-2">
-              {accounts.length >= 1 && (
-                <Button variant="secondary" onClick={() => setDeleteMode(true)}>
-                  <Trash2 className="h-4 w-4" />
-                  Delete accounts
-                </Button>
-              )}
-              {accounts.length >= 2 && (
-                <Button variant="secondary" onClick={() => setMergeMode(true)}>
-                  <GitMerge className="h-4 w-4" />
-                  Merge accounts
-                </Button>
-              )}
-              <Button onClick={openAddAccount}>
-                <Plus className="h-4 w-4" />
+            <>
+              <CommandBarButton
+                primary
+                icon={<Plus className="h-3.5 w-3.5 text-white" />}
+                onClick={openAddAccount}
+              >
                 Add account
-              </Button>
-            </div>
-          )
-        }
-      />
+              </CommandBarButton>
+              {accounts.length >= 2 && (
+                <CommandBarButton
+                  icon={<GitMerge className="h-3.5 w-3.5" />}
+                  onClick={() => setMergeMode(true)}
+                >
+                  Merge
+                </CommandBarButton>
+              )}
+              {accounts.length >= 1 && (
+                <CommandBarButton
+                  danger
+                  icon={<Trash2 className="h-3.5 w-3.5" />}
+                  onClick={() => setDeleteMode(true)}
+                >
+                  Delete
+                </CommandBarButton>
+              )}
+            </>
+          )}
+        </CommandBar>
+      </div>
 
       {/* Merge mode banner */}
       {mergeMode && (
