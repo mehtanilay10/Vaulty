@@ -656,9 +656,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@google/genai@npm:^3.0.0":
-  version: 3.0.0
-  resolution: "@google/genai@npm:3.0.0"
+"@google/genai@npm:^3.6.1":
+  version: 3.6.1
+  resolution: "@google/genai@npm:3.6.1"
   dependencies:
     google-auth-library: "npm:^10.3.0"
     p-retry: "npm:^4.6.2"
@@ -669,7 +669,7 @@ __metadata:
   peerDependenciesMeta:
     "@modelcontextprotocol/sdk":
       optional: true
-  checksum: 10c0/ee260bebb23f19243a259c0255bccc4d834b6952dad1669c4dc3cd3cf15ee4466abef484d9382819f1d13f60e4a65f4ab69338eb83f76bedd31e237f85364fc3
+  checksum: 10c0/abb90952d03be0999c2bcf843e817ca05913be1e0acc65b5019963104687cf2775daa39aae390bdfa31dd9321c092c052bf5c30df4af702689a95abb7b79d57b
   languageName: node
   linkType: hard
 
@@ -9335,7 +9335,7 @@ __metadata:
   resolution: "vaulty@workspace:."
   dependencies:
     "@auth/prisma-adapter": "npm:^2.11.3"
-    "@google/genai": "npm:^3.0.0"
+    "@google/genai": "npm:^3.6.1"
     "@playwright/test": "npm:^1.65.0"
     "@prisma/client": "npm:^6.3.0"
     "@tailwindcss/postcss": "npm:^4"
