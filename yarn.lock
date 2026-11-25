@@ -1329,18 +1329,27 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@prisma/client@npm:^6.3.0":
-  version: 6.19.3
-  resolution: "@prisma/client@npm:6.19.3"
+"@prisma/client-runtime-utils@npm:7.10.1":
+  version: 7.10.1
+  resolution: "@prisma/client-runtime-utils@npm:7.10.1"
+  checksum: 10c0/516f7d049381108d0f5d6014e206c5224878350ce08bc85ef63ff3a809321f559f03264b880fde88cd1fd04bd06779016428b7a032b1fa521aa57b54adebc93e
+  languageName: node
+  linkType: hard
+
+"@prisma/client@npm:^7.10.1":
+  version: 7.10.1
+  resolution: "@prisma/client@npm:7.10.1"
+  dependencies:
+    "@prisma/client-runtime-utils": "npm:7.10.1"
   peerDependencies:
     prisma: "*"
-    typescript: ">=5.1.0"
+    typescript: ">=5.4.0"
   peerDependenciesMeta:
     prisma:
       optional: true
     typescript:
       optional: true
-  checksum: 10c0/50dbdd80181d5f020e311f3055a3664a2a36afda39e9e14cf1e2be80e11253bbfce5f6e1cb4fbfbdc955a91be26cb4c55cae659e950ce1b58085e38ca567878c
+  checksum: 10c0/742cf5c6c8a1160a8ef7c7e14e3dc1072d6430e4f258a47b41b4f1d96d39b2f0616691d597862cb78613efd72a99376e413c01dc6cebde3b89f7020b1d1fc74a
   languageName: node
   linkType: hard
 
@@ -9337,7 +9346,7 @@ __metadata:
     "@auth/prisma-adapter": "npm:^2.11.3"
     "@google/genai": "npm:^3.0.0"
     "@playwright/test": "npm:^1.65.0"
-    "@prisma/client": "npm:^6.3.0"
+    "@prisma/client": "npm:^7.10.1"
     "@tailwindcss/postcss": "npm:^4"
     "@tiptap/extension-highlight": "npm:^3.35.0"
     "@tiptap/extension-image": "npm:^3.35.0"
