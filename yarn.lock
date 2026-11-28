@@ -8254,9 +8254,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"resend@npm:^6.37.0":
-  version: 6.37.0
-  resolution: "resend@npm:6.37.0"
+"resend@npm:^6.39.0":
+  version: 6.39.0
+  resolution: "resend@npm:6.39.0"
   dependencies:
     postal-mime: "npm:2.7.6"
     standardwebhooks: "npm:1.1.1"
@@ -8265,7 +8265,7 @@ __metadata:
   peerDependenciesMeta:
     "@react-email/render":
       optional: true
-  checksum: 10c0/784cc63ae291ea88c4d3273828b15887f13ee1e5b93385368cc4901d7d34ac546f61358aa7543b593d9dc736c8f8c66246a7fa66120351fa40f2a6a5bd6b96b8
+  checksum: 10c0/de92c6c6aad5ae128a7c27bfd9aff647cdd18721e873c60ad0dd6b044d6e107513f3e11e174a0e0de437c6e055005e0509c4fe9796f55fae5b3947c77b013426
   languageName: node
   linkType: hard
 
@@ -9412,7 +9412,7 @@ __metadata:
     react-markdown: "npm:^10.1.0"
     react-pdf: "npm:^11.0.0"
     remark-gfm: "npm:^4.0.1"
-    resend: "npm:^6.37.0"
+    resend: "npm:^6.39.0"
     tailwind-merge: "npm:^3.7.0"
     tailwindcss: "npm:^4"
     tsx: "npm:^4.23.13"
