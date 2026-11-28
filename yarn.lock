@@ -1123,7 +1123,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@napi-rs/canvas@npm:^1.0.0, @napi-rs/canvas@npm:^1.0.13":
+"@napi-rs/canvas@npm:^1.0.13":
   version: 1.1.0
   resolution: "@napi-rs/canvas@npm:1.1.0"
   dependencies:
@@ -7664,19 +7664,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"pdfjs-dist@npm:6.3.289":
-  version: 6.3.289
-  resolution: "pdfjs-dist@npm:6.3.289"
-  dependencies:
-    "@napi-rs/canvas": "npm:^1.0.0"
-  dependenciesMeta:
-    "@napi-rs/canvas":
-      optional: true
-  checksum: 10c0/bb65e7fa9e32a2c2b84f24fb114552fb0e0014ed74bdca5b66005fc7793ff4d27bf66adfbcd8b11a1cdc5705303da8bb08ec24c6b4d823c29e4a4808be89ede2
-  languageName: node
-  linkType: hard
-
-"pdfjs-dist@npm:^6.5.438":
+"pdfjs-dist@npm:6.5.438, pdfjs-dist@npm:^6.5.438":
   version: 6.5.438
   resolution: "pdfjs-dist@npm:6.5.438"
   dependencies:
@@ -8136,9 +8124,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-pdf@npm:^11.0.0":
-  version: 11.0.0
-  resolution: "react-pdf@npm:11.0.0"
+"react-pdf@npm:^11.1.0":
+  version: 11.1.0
+  resolution: "react-pdf@npm:11.1.0"
   dependencies:
     clsx: "npm:^2.0.0"
     dequal: "npm:^2.0.3"
@@ -8146,7 +8134,7 @@ __metadata:
     make-cancellable-promise: "npm:^2.0.0"
     make-event-props: "npm:^2.0.0"
     merge-refs: "npm:^2.0.0"
-    pdfjs-dist: "npm:6.3.289"
+    pdfjs-dist: "npm:6.5.438"
     tiny-invariant: "npm:^1.0.0"
     warning: "npm:^4.0.0"
   peerDependencies:
@@ -8156,7 +8144,7 @@ __metadata:
   peerDependenciesMeta:
     "@types/react":
       optional: true
-  checksum: 10c0/099014d1915774003a6771adcf15dac3c2bea981d1df706333754454ca0be39a53a3bb9fcb2ffab4a7e6d02238b4dc738a3dc262a2c2275afe9d56862f88b856
+  checksum: 10c0/1cbf4039616ad4e6dfd8ce79ae1c56270ed4e3e96de77784d2c1a92b1d7a5e2d9b6e0f96fab02e5cf24df805fff25ae23f5172811232275515f267cd112a81ce
   languageName: node
   linkType: hard
 
@@ -9410,7 +9398,7 @@ __metadata:
     react: "npm:19.3.1"
     react-dom: "npm:19.3.1"
     react-markdown: "npm:^10.1.0"
-    react-pdf: "npm:^11.0.0"
+    react-pdf: "npm:^11.1.0"
     remark-gfm: "npm:^4.0.1"
     resend: "npm:^6.37.0"
     tailwind-merge: "npm:^3.7.0"
