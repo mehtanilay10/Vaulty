@@ -72,11 +72,11 @@ export function TransactionList({
           return (
             <div
               key={transaction.id}
-              className="feed-row flex items-center justify-between gap-3 px-4 py-3 transition-colors hover:bg-surface-muted/60"
+              className="group flex items-center justify-between gap-3 px-4 py-3.5 transition-colors hover:bg-surface-muted/60"
             >
               <div className="flex min-w-0 items-center gap-3">
                 <div
-                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md border ${toneStyle}`}
+                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border ${toneStyle}`}
                 >
                   {positive ? (
                     <ArrowUpRight className="h-4 w-4" />
@@ -88,27 +88,27 @@ export function TransactionList({
                   <p className="truncate text-[13px] font-semibold text-text-primary">
                     {transaction.description}
                   </p>
-                  <p className="truncate text-[11px] text-text-muted">
+                  <p className="truncate font-mono text-[11px] tabular-nums text-text-muted">
                     {showAccount && transaction.account?.name ? (
                       <>
                         <Link
                           href={`/wealth/accounts/${transaction.accountId}`}
-                          className="font-medium text-text-primary hover:text-brand hover:underline"
+                          className="font-sans font-medium text-text-secondary hover:text-brand hover:underline"
                         >
                           {transaction.account.name}
                         </Link>
                         <span> · </span>
                       </>
                     ) : null}
-                    {new Date(transaction.date).toLocaleDateString()} &bull;{" "}
+                    {new Date(transaction.date).toLocaleDateString()} ·{" "}
                     {transaction.type.replace(/_/g, " ")}
                   </p>
                 </div>
               </div>
-              <div className="flex shrink-0 items-center gap-3 ml-auto">
-                <div className="text-right min-w-[110px]">
+              <div className="ml-auto flex shrink-0 items-center gap-3">
+                <div className="min-w-[110px] text-right">
                   <p
-                    className={`text-[13px] font-semibold tabular-nums ${
+                    className={`font-mono text-[13px] font-semibold tabular-nums ${
                       positive ? "text-success" : "text-danger"
                     }`}
                   >
@@ -127,7 +127,7 @@ export function TransactionList({
                       <button
                         type="button"
                         onClick={() => onEdit(transaction)}
-                        className="rounded p-1 text-text-muted hover:bg-surface-muted hover:text-text-primary"
+                        className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-surface-elevated hover:text-text-primary"
                         aria-label="Edit transaction"
                       >
                         <Pencil className="h-3.5 w-3.5" />
@@ -137,7 +137,7 @@ export function TransactionList({
                       <button
                         type="button"
                         onClick={() => onDelete(transaction)}
-                        className="rounded p-1 text-text-muted hover:bg-surface-muted hover:text-danger"
+                        className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-danger-subtle hover:text-danger"
                         aria-label="Delete transaction"
                       >
                         <Trash2 className="h-3.5 w-3.5" />

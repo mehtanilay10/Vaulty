@@ -56,12 +56,12 @@ export function AccountCard({ account, selectable, selected, onToggleSelect }: A
 
   const cardContent = (
     <>
-      <div className="mb-3 flex items-start justify-between gap-2">
+      <div className="mb-3.5 flex items-start justify-between gap-2">
         <div
-          className={`flex h-10 w-10 items-center justify-center rounded-xl border ${
+          className={`flex h-10 w-10 items-center justify-center rounded-lg border ${
             liability
-              ? "border-rose-500/20 bg-rose-500/10 text-rose-600 dark:text-rose-400"
-              : "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+              ? "border-danger/25 bg-danger-subtle/70 text-danger"
+              : "border-success/25 bg-success-subtle/70 text-success"
           }`}
         >
           <Icon className="h-5 w-5" />
@@ -69,7 +69,7 @@ export function AccountCard({ account, selectable, selected, onToggleSelect }: A
         {selectable ? (
           <div
             className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-colors ${
-              selected ? "border-primary bg-primary text-white" : "border-border bg-surface"
+              selected ? "border-brand bg-brand text-white" : "border-border-strong bg-surface"
             }`}
           >
             {selected && <Check className="h-3 w-3" />}
@@ -79,25 +79,27 @@ export function AccountCard({ account, selectable, selected, onToggleSelect }: A
         )}
       </div>
 
-      <h3 className="mb-1 truncate text-[13px] font-semibold text-text-primary">{account.name}</h3>
-      <p className="mb-2 truncate text-[11px] text-text-muted">
+      <p className="mb-0.5 truncate font-mono text-[10px] uppercase tracking-wider text-text-muted">
         {account.provider || account.bankName || account.type.replace(/_/g, " ")}
       </p>
+      <h3 className="mb-2 truncate text-[14px] font-semibold tracking-tight text-text-primary group-hover:text-brand">
+        {account.name}
+      </h3>
       {account.category && (
-        <div className="mb-1">
+        <div className="mb-2">
           <Badge variant="default">{account.category}</Badge>
         </div>
       )}
 
-      <div className="mt-auto border-t border-border-subtle pt-2.5">
+      <div className="mt-auto border-t border-border-subtle pt-3">
         <p
-          className={`text-lg font-semibold leading-6 ${
+          className={`font-mono text-lg font-bold tracking-tight tabular-nums leading-6 ${
             liability ? "text-danger" : "text-text-primary"
           }`}
         >
           {formatCurrency(account.currentBalance, account.currency)}
         </p>
-        <div className="mt-0.5 flex items-center justify-between text-[11px] text-text-muted">
+        <div className="mt-1 flex items-center justify-between font-mono text-[11px] tabular-nums text-text-muted">
           <span>{account._count?.transactions || 0} transactions</span>
           {!selectable && (
             <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
@@ -112,8 +114,10 @@ export function AccountCard({ account, selectable, selected, onToggleSelect }: A
       <button
         type="button"
         onClick={() => onToggleSelect?.(account.id)}
-        className={`card flex flex-col p-4 text-left transition-all ${
-          selected ? "ring-2 ring-primary ring-offset-1" : "hover:ring-1 hover:ring-border"
+        className={`group flex flex-col rounded-xl border bg-surface p-4 text-left shadow-xs transition-all ${
+          selected
+            ? "border-brand ring-2 ring-brand/25"
+            : "border-border-subtle hover:border-border-strong hover:bg-surface-elevated"
         }`}
       >
         {cardContent}
@@ -124,7 +128,7 @@ export function AccountCard({ account, selectable, selected, onToggleSelect }: A
   return (
     <Link
       href={`/wealth/accounts/${account.id}`}
-      className="card card-hover group flex flex-col p-4"
+      className="group flex flex-col rounded-xl border border-border-subtle bg-surface p-4 shadow-xs transition-all hover:border-border-strong hover:bg-surface-elevated hover:shadow-sm"
     >
       {cardContent}
     </Link>

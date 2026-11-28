@@ -350,9 +350,9 @@ export function NotesClient({ initialNotes, hasFamilyNotes = false }: NotesClien
   };
 
   return (
-    <>
+    <div className="space-y-4">
       <div className="space-y-3">
-        <PageHeader title="Notes" />
+        <PageHeader title="Notes" icon={<StickyNote className="h-5 w-5" />} />
 
         <CommandBar>
           <CommandBarButton
@@ -374,28 +374,28 @@ export function NotesClient({ initialNotes, hasFamilyNotes = false }: NotesClien
         </CommandBar>
       </div>
 
-      {/* Main split canvas: Flat List of Pages (Left) | OneNote Page Canvas (Right) */}
-      <div className="mt-4 flex flex-col lg:flex-row gap-4 h-[calc(100vh-210px)] min-h-[600px]">
+      {/* Main split canvas: Page Index (Left) | Editorial Canvas (Right) */}
+      <div className="flex h-[calc(100vh-225px)] min-h-[600px] flex-col gap-4 lg:flex-row">
         {/* Left Pane: Flat List of Pages */}
         <div
           className={cn(
-            "w-full lg:w-80 shrink-0 flex flex-col rounded-xl border border-border-subtle bg-surface shadow-xs overflow-hidden",
+            "flex w-full shrink-0 flex-col overflow-hidden rounded-xl border border-border-subtle bg-surface shadow-xs lg:w-80",
             mobileView === "editor" ? "hidden lg:flex" : "flex",
           )}
         >
           {/* Top search & filter */}
-          <div className="p-3 border-b border-border-subtle bg-surface space-y-2">
+          <div className="space-y-2.5 border-b border-border-subtle bg-surface p-3">
             <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-text-muted" />
+              <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-muted" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search pages..."
-                className="w-full h-8 pl-8 pr-3 text-xs rounded-lg border border-border-subtle bg-surface-muted/60 text-text-primary focus:outline-none focus:border-brand"
+                className="h-8.5 w-full rounded-lg border border-border-subtle bg-surface-muted/60 pl-8.5 pr-3 text-xs text-text-primary focus:border-brand focus:outline-none"
               />
             </div>
-            <div className="flex items-center justify-between text-xs px-1">
+            <div className="flex items-center justify-between px-1 text-xs">
               <button
                 type="button"
                 onClick={() => setFilterPinnedOnly((prev) => !prev)}
@@ -407,7 +407,9 @@ export function NotesClient({ initialNotes, hasFamilyNotes = false }: NotesClien
                 <Pin className="h-3 w-3" />
                 Pinned only
               </button>
-              <span className="text-text-muted">{filteredNotes.length} pages</span>
+              <span className="font-mono text-[11px] tabular-nums text-text-muted">
+                {filteredNotes.length} pages
+              </span>
             </div>
           </div>
 
@@ -605,7 +607,7 @@ export function NotesClient({ initialNotes, hasFamilyNotes = false }: NotesClien
               </h3>
               <p className="text-xs text-text-muted max-w-sm mt-1">
                 Take rich notes, format text, paste screenshots, and check off tasks all inside the
-                same OneNote page.
+                same notebook page.
               </p>
               <Button onClick={handleCreatePage} className="mt-4" size="sm">
                 <Plus className="h-4 w-4 mr-1" />
@@ -615,6 +617,6 @@ export function NotesClient({ initialNotes, hasFamilyNotes = false }: NotesClien
           )}
         </div>
       </div>
-    </>
+    </div>
   );
 }

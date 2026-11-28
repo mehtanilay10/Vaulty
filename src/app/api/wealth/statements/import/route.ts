@@ -7,6 +7,8 @@ import { getBalanceDelta, getStoredTransactionAmount } from "@/lib/wealth";
 import { removeDuplicateTransactions } from "@/lib/gmail/dedupe-transactions";
 import { createAuditLog, extractIpAddress, extractUserAgent } from "@/lib/audit-log";
 import { validateCSRFRequest } from "@/lib/csrf";
+import { userRateLimitResponse } from "@/lib/security-rate-limit";
+import { RATE_LIMITS } from "@/lib/rate-limits";
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,6 +16,12 @@ export async function POST(req: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const rateLimited = await userRateLimitResponse({
+      userId: user.id,
+      ...RATE_LIMITS.statementsImport,
+    });
+    if (rateLimited) return rateLimited;
 
     if (!validateCSRFRequest(req)) {
       return NextResponse.json({ error: "Invalid CSRF token." }, { status: 403 });

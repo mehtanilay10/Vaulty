@@ -8,6 +8,8 @@ import { validateCSRFRequest } from "@/lib/csrf";
 import { CURRENT_PBKDF2_ITERATIONS } from "@/lib/kdf-config";
 import { MAX_FAILED_ATTEMPTS, LOCK_DURATION_MINUTES } from "@/lib/constants";
 import { Prisma } from "@prisma/client";
+import { userRateLimitResponse } from "@/lib/security-rate-limit";
+import { RATE_LIMITS } from "@/lib/rate-limits";
 
 interface AppCredentialPayload {
   id: string;
@@ -97,6 +99,12 @@ export async function POST(req: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const rateLimited = await userRateLimitResponse({
+      userId: session.user.id,
+      ...RATE_LIMITS.passwordsChangeMaster,
+    });
+    if (rateLimited) return rateLimited;
 
     if (!validateCSRFRequest(req)) {
       return NextResponse.json({ error: "Invalid CSRF token" }, { status: 403 });

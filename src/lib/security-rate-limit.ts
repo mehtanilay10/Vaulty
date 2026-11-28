@@ -1,3 +1,4 @@
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 export type RateLimitResult = { allowed: boolean; remaining: number; retryAfterSeconds?: number };
@@ -62,4 +63,30 @@ export async function consumeSecurityAttempt(input: {
 export async function clearSecurityAttempts(key: string): Promise<void> {
   if (!isValidSecurityKey(key)) return;
   await prisma.securityRateLimit.deleteMany({ where: { key } });
+}
+
+/**
+ * Convenience wrapper for authenticated routes: consumes one attempt for the
+ * user+scope and returns a 429 NextResponse when over the limit, or null when
+ * the request may proceed.
+ */
+export async function userRateLimitResponse(input: {
+  userId: string;
+  scope: string;
+  limit: number;
+  windowMs?: number;
+}): Promise<NextResponse | null> {
+  const result = await consumeSecurityAttempt({
+    key: `rl:${input.scope}:${input.userId}`,
+    limit: input.limit,
+    windowMs: input.windowMs ?? 60_000,
+  });
+  if (result.allowed) return null;
+  return NextResponse.json(
+    { error: "Too many requests. Please try again later." },
+    {
+      status: 429,
+      headers: { "Retry-After": String(result.retryAfterSeconds ?? 60) },
+    },
+  );
 }

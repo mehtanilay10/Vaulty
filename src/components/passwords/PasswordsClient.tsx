@@ -771,15 +771,15 @@ export function PasswordsClient({
   };
 
   return (
-    <>
+    <div className="space-y-5">
       <div className="space-y-3">
-        <PageHeader title={pageTitle} />
+        <PageHeader title={pageTitle} icon={<Lock className="h-5 w-5" />} />
 
         <CommandBar>
           {currentTab === "authenticator" ? (
             <CommandBarButton
               primary
-              icon={<Camera className="h-3.5 w-3.5 text-white mr-1" />}
+              icon={<Camera className="mr-1 h-3.5 w-3.5 text-white" />}
               onClick={() => setIsQRScannerOpen(true)}
             >
               Scan QR Code
@@ -787,7 +787,7 @@ export function PasswordsClient({
           ) : (
             <CommandBarButton
               primary
-              icon={<Plus className="h-3.5 w-3.5 text-white mr-1" />}
+              icon={<Plus className="mr-1 h-3.5 w-3.5 text-white" />}
               onClick={() => handleAddCredential(activeTab)}
             >
               Add {activeTab === "BANK" ? "Bank" : "App"} Credential
@@ -814,7 +814,7 @@ export function PasswordsClient({
         </CommandBar>
       </div>
 
-      <div className="pt-1 pb-3">
+      <div>
         <Tabs>
           <Tab
             value="account"
@@ -822,13 +822,13 @@ export function PasswordsClient({
             onClick={() => switchToTab("account")}
           >
             <span>App Pass</span>
-            <span className="ml-1.5 rounded-full bg-surface-muted px-1.5 py-0.5 text-[11px] font-normal text-text-muted">
+            <span className="ml-1.5 rounded-full bg-surface-muted px-2 py-0.5 font-mono text-[11px] tabular-nums font-normal text-text-muted">
               {appCredentials.length}
             </span>
           </Tab>
           <Tab value="bank" active={currentTab === "bank"} onClick={() => switchToTab("bank")}>
             <span>Bank Pass</span>
-            <span className="ml-1.5 rounded-full bg-surface-muted px-1.5 py-0.5 text-[11px] font-normal text-text-muted">
+            <span className="ml-1.5 rounded-full bg-surface-muted px-2 py-0.5 font-mono text-[11px] tabular-nums font-normal text-text-muted">
               {bankCredentials.length}
             </span>
           </Tab>
@@ -838,10 +838,10 @@ export function PasswordsClient({
             onClick={() => switchToTab("authenticator")}
           >
             <span className="flex items-center gap-1.5">
-              <ShieldCheck className="h-3.5 w-3.5 text-blue-500" />
+              <ShieldCheck className="h-3.5 w-3.5 text-brand" />
               Authenticator
             </span>
-            <span className="ml-1.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 text-[11px] font-semibold">
+            <span className="ml-1.5 rounded-full bg-brand-subtle px-2 py-0.5 font-mono text-[11px] tabular-nums font-semibold text-brand">
               {authenticatorCredentials.length}
             </span>
           </Tab>
@@ -850,14 +850,14 @@ export function PasswordsClient({
 
       {currentTab === "authenticator" ? (
         isAutoUnlocking ? (
-          <div className="flex flex-col items-center justify-center p-12 space-y-2">
-            <div className="animate-spin rounded-full h-7 w-7 border-b-2 border-brand" />
+          <div className="flex flex-col items-center justify-center space-y-2 p-12">
+            <div className="h-7 w-7 animate-spin rounded-full border-b-2 border-brand" />
             <span className="text-xs text-text-muted">Unlocking authenticator…</span>
           </div>
         ) : !vaultUnlocked ? (
-          <Card className="p-6 max-w-md mx-auto mt-4">
-            <div className="text-center space-y-1 mb-4">
-              <div className="h-10 w-10 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto mb-2">
+          <Card className="mx-auto mt-4 max-w-md p-6 sm:p-7">
+            <div className="mb-5 space-y-1.5 text-center">
+              <div className="mx-auto mb-2.5 flex h-11 w-11 items-center justify-center rounded-xl border border-brand/20 bg-brand-subtle text-brand">
                 <ShieldCheck className="h-5 w-5" />
               </div>
               <h4 className="text-sm font-semibold text-text-primary">Unlock Authenticator</h4>
@@ -869,10 +869,9 @@ export function PasswordsClient({
           </Card>
         ) : (
           <div className="flex flex-col gap-4">
-            {/* Top search & Scan QR button */}
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="relative flex-1 min-w-[200px] max-w-sm">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-text-muted" />
+            <div className="toolbar-surface flex flex-wrap items-center justify-between gap-3 p-3">
+              <div className="relative min-w-[200px] max-w-sm flex-1">
+                <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-muted" />
                 <Input
                   id="search-authenticator"
                   value={searchQuery}
@@ -884,27 +883,26 @@ export function PasswordsClient({
 
               <div className="flex items-center gap-2">
                 <Button size="sm" onClick={() => setIsQRScannerOpen(true)}>
-                  <Camera className="h-3.5 w-3.5 mr-1" />
+                  <Camera className="mr-1 h-3.5 w-3.5" />
                   Scan QR Code
                 </Button>
               </div>
             </div>
 
-            {/* Authenticator Cards Grid */}
             {authenticatorCredentials.length === 0 ? (
               <EmptyState
-                icon={<ShieldCheck className="h-8 w-8 text-blue-500" />}
+                icon={<ShieldCheck className="h-7 w-7 text-brand" />}
                 title="No 2-Step Accounts Configured"
                 description="Scan a QR code from Microsoft, Google, GitHub, Amazon, or other accounts to set up this app as your 2-step verification authenticator."
                 action={
                   <Button onClick={() => setIsQRScannerOpen(true)}>
-                    <Camera className="h-4 w-4 mr-1.5" />
+                    <Camera className="mr-1.5 h-4 w-4" />
                     Scan QR Code
                   </Button>
                 }
               />
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {authenticatorCredentials
                   .filter((cred) => {
                     if (!searchQuery.trim()) return true;
@@ -927,14 +925,14 @@ export function PasswordsClient({
           </div>
         )
       ) : isAutoUnlocking ? (
-        <div className="flex flex-col items-center justify-center p-12 space-y-2">
-          <div className="animate-spin rounded-full h-7 w-7 border-b-2 border-brand" />
+        <div className="flex flex-col items-center justify-center space-y-2 p-12">
+          <div className="h-7 w-7 animate-spin rounded-full border-b-2 border-brand" />
           <span className="text-xs text-text-muted">Unlocking credential vault…</span>
         </div>
       ) : !vaultUnlocked ? (
-        <Card className="p-6 max-w-md mx-auto mt-4">
-          <div className="text-center space-y-1 mb-4">
-            <div className="h-10 w-10 rounded-2xl bg-brand/10 text-brand flex items-center justify-center mx-auto mb-2">
+        <Card className="mx-auto mt-4 max-w-md p-6 sm:p-7">
+          <div className="mb-5 space-y-1.5 text-center">
+            <div className="mx-auto mb-2.5 flex h-11 w-11 items-center justify-center rounded-xl border border-brand/20 bg-brand-subtle text-brand">
               <Lock className="h-5 w-5" />
             </div>
             <h4 className="text-sm font-semibold text-text-primary">
@@ -947,39 +945,41 @@ export function PasswordsClient({
           {renderInlineUnlockForm(false)}
         </Card>
       ) : (
-        <div className="flex flex-col gap-3">
-          <div className="flex flex-wrap items-center gap-3">
-            <Label
-              htmlFor="favorites-toggle"
-              className="text-xs text-text-muted flex items-center gap-1 cursor-pointer select-none"
-            >
-              <input
-                id="favorites-toggle"
-                type="checkbox"
-                checked={showFavorites}
-                onChange={(e) => setShowFavorites(e.target.checked)}
-                className="rounded border-border-subtle bg-surface text-text-primary focus:ring-brand"
-              />
-              <Star className="h-3.5 w-3.5 fill-current text-text-muted" />
-              <span>Favorites only</span>
-            </Label>
-            <div className="relative flex-1 min-w-[180px] max-w-xs">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-text-muted" />
-              <Input
-                id="search"
-                ref={searchInputRef}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search name, username, URL..."
-                className="h-8 pl-9 pr-3 text-[12px]"
-              />
+        <div className="flex flex-col gap-4">
+          <div className="toolbar-surface flex flex-wrap items-center justify-between gap-3 p-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="relative min-w-[200px] max-w-xs flex-1">
+                <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-muted" />
+                <Input
+                  id="search"
+                  ref={searchInputRef}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search name, username, URL..."
+                  className="h-8 pl-9 pr-3 text-[12px]"
+                />
+              </div>
+              <Label
+                htmlFor="favorites-toggle"
+                className="flex cursor-pointer select-none items-center gap-1.5 text-xs text-text-muted hover:text-text-primary"
+              >
+                <input
+                  id="favorites-toggle"
+                  type="checkbox"
+                  checked={showFavorites}
+                  onChange={(e) => setShowFavorites(e.target.checked)}
+                  className="rounded border-border-subtle bg-surface accent-[var(--brand)]"
+                />
+                <Star className="h-3.5 w-3.5 fill-current text-warning" />
+                <span>Favorites only</span>
+              </Label>
             </div>
-            <div className="w-36 shrink-0">
+            <div className="w-40 shrink-0">
               <Select
                 id="sort-credentials"
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as "recent" | "name" | "accessed")}
-                className="h-8 text-[12px] py-1"
+                className="h-8 py-1 text-[12px]"
               >
                 <option value="recent">Recently added</option>
                 <option value="name">Name (A–Z)</option>
@@ -988,23 +988,25 @@ export function PasswordsClient({
             </div>
           </div>
 
-          <div className="mt-3">
+          <div>
             {sortedCredentials.length === 0 ? (
-              <EmptyState
-                icon={<Globe className="h-6 w-6" />}
-                title={showFavorites ? "No favorite credentials" : "No credentials yet"}
-                description={
-                  showFavorites
-                    ? "Star credentials to see them here."
-                    : "Add your first credential to get started."
-                }
-                action={
-                  <Button onClick={() => handleAddCredential(activeTab)}>
-                    <Plus className="h-4 w-4" />
-                    Add {activeTab === "APP" ? "App" : "Bank"} Credential
-                  </Button>
-                }
-              />
+              <Card className="p-0">
+                <EmptyState
+                  icon={<Globe className="h-6 w-6" />}
+                  title={showFavorites ? "No favorite credentials" : "No credentials yet"}
+                  description={
+                    showFavorites
+                      ? "Star credentials to see them here."
+                      : "Add your first credential to get started."
+                  }
+                  action={
+                    <Button onClick={() => handleAddCredential(activeTab)}>
+                      <Plus className="h-4 w-4" />
+                      Add {activeTab === "APP" ? "App" : "Bank"} Credential
+                    </Button>
+                  }
+                />
+              </Card>
             ) : (
               <div className="grid grid-cols-1 gap-3">
                 {sortedCredentials.map((cred) => (
@@ -1054,6 +1056,6 @@ export function PasswordsClient({
         onClose={() => setIsQRScannerOpen(false)}
         onScanned={handleScanned2FA}
       />
-    </>
+    </div>
   );
 }

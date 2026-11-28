@@ -1,155 +1,63 @@
-# UI & Design System Guide
+# Vaulty — UI Design System & Patterns
 
-> **Scope:** Comprehensive reference for Vaulty's visual design system, UI primitives, interaction patterns, typography, spacing cadence, and component standards.
-
----
-
-## 1. Visual Philosophy & Design Language
-
-Vaulty's visual design is inspired by modern productivity software and personal vaults (such as Microsoft 365, Fluent 2, and linear productivity tools). It is characterized by:
-
-- **Calm, Crisp Neutral Surfaces:** Soft background surfaces with subtle borders (`border-border-subtle`) and low-diffusion elevation shadows (`shadow-fluent-*`).
-- **Domain-Specific Color Signposts:**
-  - **Documents:** Cobalt Sapphire (`#2557e0` / `var(--brand)`)
-  - **Credentials & Passwords:** Royal Amethyst (`#7C3AED` / `text-purple-600`)
-  - **Wealth & Finance:** Forest Emerald (`#059669` / `text-emerald-600`)
-  - **Reminders & Expiries:** Warm Amber (`#D97706` / `text-amber-600`)
-  - **Family Sharing:** Coral Rose (`#E11D48` / `text-rose-600`)
-  - **AI Intelligence:** Steel Cyan (`#0891B2` / `text-cyan-600`)
-- **No Decorative Excess:** No floating action buttons (FABs), no noisy background mesh gradients, and no generic purple glow borders.
+Vaulty uses an **Obsidian Atelier** (dark default) / **Warm Alabaster** (light) archival aesthetic built with Tailwind CSS v4 (`src/app/globals.css`).
 
 ---
 
-## 2. Design Tokens & Semantic Variables
+## Color & Theme Tokens (`src/app/globals.css`)
 
-All semantic tokens are defined in `src/app/globals.css` and exposed as Tailwind CSS v4 variables:
+### Dark Theme (`html.dark` — Default)
 
-### Colors & Surfaces
+- `--background`: `#0b0e14` | `--surface`: `#12161f` | `--surface-elevated`: `#171d29` | `--surface-muted`: `#1b2230`
+- `--foreground` / `--text-primary`: `#f2f0eb` | `--text-secondary`: `#c5c9d3` | `--text-muted`: `#8a92a3`
+- `--brand`: `#5b87ff` | `--brand-hover`: `#799eff` | `--brand-subtle`: `rgba(91, 135, 255, 0.14)`
+- `--border`: `rgba(242, 240, 235, 0.12)` | `--border-subtle`: `rgba(242, 240, 235, 0.07)`
+- Semantic statuses: `--success` (`#10b981`), `--warning` (`#f59e0b`), `--danger` (`#fb7185`), `--info` (`#38bdf8`)
 
-| Token                | Light Mode Value | Dark Mode Value | Usage                                           |
-| :------------------- | :--------------- | :-------------- | :---------------------------------------------- |
-| `--background`       | `#f8f9fb`        | `#090d16`       | Page root background                            |
-| `--surface`          | `#ffffff`        | `#101726`       | Standard cards, command bars, dropdown triggers |
-| `--surface-elevated` | `#ffffff`        | `#161f33`       | Modals, popovers, blades, tooltips              |
-| `--surface-muted`    | `#f1f4f8`        | `#1a243b`       | Table headers, code blocks, active items        |
-| `--border`           | `#dbe1eb`        | `#22304d`       | Inputs, card dividers                           |
-| `--border-subtle`    | `#ebedf2`        | `#1d2840`       | Table grid lines, subtle component borders      |
-| `--text-primary`     | `#0f172a`        | `#f8fafc`       | Headings, primary content, table values         |
-| `--text-secondary`   | `#475569`        | `#94a3b8`       | Labels, descriptions, secondary items           |
-| `--text-muted`       | `#64748b`        | `#64748b`       | Timestamps, helper text, empty state icons      |
-| `--brand`            | `#2557e0`        | `#3b82f6`       | Primary actions, active highlights, icons       |
-| `--brand-hover`      | `#1e44c8`        | `#2563eb`       | Primary button hover state                      |
-| `--brand-subtle`     | `#eff4ff`        | `#1e293b`       | Badges, selected item backgrounds               |
-| `--danger`           | `#e11d48`        | `#f43f5e`       | Destructive actions, error alerts, expiries     |
-| `--warning`          | `#d97706`        | `#f59e0b`       | Warning alerts, due soon badges                 |
-| `--success`          | `#059669`        | `#10b981`       | Success alerts, positive balance delta          |
+### Light Theme (Warm Alabaster & Ink)
 
-### Elevations & Shadows
-
-- `--shadow-fluent-2`: Subtle card elevation (`0 1px 3px rgba(0, 0, 0, 0.04)`).
-- `--shadow-fluent-4`: Interactive hover card elevation (`0 4px 6px -1px rgba(0, 0, 0, 0.06)`).
-- `--shadow-fluent-8`: Flyouts and command bar dropdowns (`0 10px 15px -3px rgba(0, 0, 0, 0.07)`).
-- `--shadow-fluent-16`: Modals, dialogs, and popovers (`0 20px 25px -5px rgba(0, 0, 0, 0.08)`).
-- `--shadow-fluent-64`: App Lock screen and lightbox overlays.
+- `--background`: `#f6f5f0` | `--surface`: `#ffffff` | `--surface-muted`: `#eeece5`
+- `--foreground` / `--text-primary`: `#12161f` | `--text-secondary`: `#434b59` | `--text-muted`: `#666e7d`
+- `--brand`: `#1f48cb` (Archival Cobalt) | `--brand-hover`: `#1839a8` | `--brand-subtle`: `#eef3ff`
+- `--border`: `#d8d4c8` | `--border-subtle`: `#e7e4db`
 
 ---
 
-## 3. Core Component Standards
+## Typography (`src/app/layout.tsx`)
 
-### CommandBar (`src/components/ui/CommandBar.tsx`)
-
-A standardized horizontal action bar inspired by Microsoft Fluent UI:
-
-- **Button Styling:** All buttons inside command bars use `rounded-none` (flush, square edges) with a clean height of 32px (`h-8`).
-- **Hover Feedback:** Buttons feature prominent hover feedback (`hover:bg-surface-muted hover:text-text-primary active:bg-surface-muted/90`).
-- **Hierarchy:**
-  - One solid `primary` button per bar (white text/icon, `--brand` background).
-  - Standard secondary items for navigation or secondary actions.
-  - Optional `farItems` container for view toggles (grid vs list), filters, or sorting controls.
-
-```tsx
-<CommandBar
-  farItems={
-    <div className="flex items-center gap-1">
-      <button onClick={() => setView("grid")} className="h-7 w-7 rounded-none ...">
-        <LayoutGrid className="h-3.5 w-3.5" />
-      </button>
-    </div>
-  }
->
-  <CommandBarButton primary icon={<Upload />} onClick={openUpload}>
-    Upload
-  </CommandBarButton>
-  <CommandBarButton icon={<Scan />} onClick={openCamera}>
-    Scan
-  </CommandBarButton>
-  <CommandBarDivider />
-  <CommandBarButton
-    icon={<ArrowLeft />}
-    item={{ key: "back", label: "Back", href: "/documents" }}
-  />
-</CommandBar>
-```
+| Role                       | Font Variable  | Face                |
+| :------------------------- | :------------- | :------------------ |
+| UI & Controls              | `--font-sans`  | `Plus Jakarta Sans` |
+| Editorial / Serif Headings | `--font-serif` | `Newsreader`        |
+| Ciphers, Codes, Telemetry  | `--font-mono`  | `JetBrains Mono`    |
 
 ---
 
-### FolderTreeSelect (`src/components/ui/FolderTreeSelect.tsx`)
+## Layout, Navigation & Shell Components
 
-An interactive, accessible hierarchical tree picker component:
-
-- **Trigger Button:** Displays a folder icon, full breadcrumb path of the selected folder (e.g. `Medical / Lab Reports`), and a chevron indicator.
-- **Dropdown Surface:**
-  - Floating popover with `z-[100]`, border, and `shadow-fluent-16`.
-  - Instant quick-search filter at the top (displayed when more than 5 folders exist). Matches are highlighted and parent branches auto-expanded.
-  - Collapsible/expandable nodes with `ChevronRight` / `ChevronDown` icons.
-  - Vertical tree guide lines (`border-l border-border-subtle/70`) denoting nesting depth.
-  - Folder icons: `FolderOpen` for expanded nodes, `Folder` for collapsed nodes.
-  - Subfolder count badge on parent folders.
-  - Checkmark indicator on currently selected folder.
-  - Optional root/all folder option (`allOptionLabel="All folders"` or `rootOptionLabel="Root folder"`).
+- **`Navbar`** (`src/components/shell/Navbar.tsx`): Brand logo & wordmark, global search trigger (`Cmd+K`), App Lock toggle, Notifications bell, Theme switcher, User avatar menu.
+- **`Sidebar`** (`src/components/shell/Sidebar.tsx`): Ordered explicitly as **Your Space** (`Dashboard`, `Documents`, `Wealth`, `Credentials`, `Reminders`, `Notes`) followed by **AI & Sharing** (`AI Chat`, `Email Sync`, `Family`), paired with a consistent left-and-right **AppFooter** / **SiteFooter**.
+- **`PageHeader`** (`src/components/shell/PageHeader.tsx`): Clean title without unnecessary taglines, static/dynamic route breadcrumbs (`Breadcrumbs.tsx`), and optional action controls.
+- **Dashboard Grid** (`DashboardOverviewClient.tsx`): Responsive Bento layout capped at **3 cards per row on desktop** (`grid-cols-1 md:grid-cols-2 lg:grid-cols-3`), displaying uniform-width cards for Documents, Wealth, Credentials (with 2FA authenticator stats & `Manage credentials` link), and Reminders.
 
 ---
 
-### NoteEditor & Preview Canvas (`src/components/notes/`)
+## Core UI Primitives (`src/components/ui/`)
 
-A tri-mode personal notebook editor:
-
-- **Rich Text Mode:** Powered by TipTap (`@tiptap/react`, `@tiptap/starter-kit`, `@tiptap/markdown`, `@tiptap/extension-task-item`, `@tiptap/extension-task-list`).
-- **Markdown Mode:** Direct raw Markdown editing with a monospaced font, automatic indentation handling, and format keyboard shortcuts (`Ctrl+B`, `Ctrl+I`, etc.).
-- **Preview Mode:** Rendered GitHub Flavored Markdown view (`NoteMarkdown`) powered by `react-markdown` and `remark-gfm`.
-  - Supports `data:image/*` and `blob:*` URIs via custom `urlTransform`, ensuring pasted screenshots and uploaded images render without being blocked.
-- **Lists & To-Dos:**
-  - Restored list markers: explicit `list-style-type: disc`, `decimal`, and nested markers.
-  - Inline task items: strict `display: flex !important; flex-direction: row !important; align-items: flex-start !important;` with normalized paragraph margins, ensuring checkboxes never wrap to previous or next lines.
-
----
-
-### Notification Center (`src/components/shell/NotificationsBell.tsx`)
-
-- **Loading State Guard:** Protected with `hasLoaded` state to eliminate flashes of empty space before data resolves.
-- **Skeleton:** Multi-row pulse skeleton with icon placeholders and dual-line text bars using high-contrast tokens (`bg-border-subtle`).
-- **Empty State:** Illustrated empty bell state with helpful context.
+| Component                   | Behavior & Rules                                                                                                                                                                                              |
+| :-------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **`Button` / `IconButton`** | Variants `primary`, `secondary`, `ghost`, `danger`; sizes `sm`, `md`, `lg`. Keep **at most one solid `primary` button** per section/header to preserve clear visual hierarchy.                                |
+| **`Modal`**                 | Portal-rendered native `<dialog>` using `showModal()` top-layer rendering, `transition-behavior: allow-discrete` exit animation detection (`data-closing` fallback), Escape & backdrop light-dismiss support. |
+| **`CommandBar`**            | Rounded toolbar (`CommandBar.tsx`) styling search, sort, filters, view toggles, and contextual actions (such as `Edit`) cohesively without jarring sharp-button mismatches.                                   |
+| **`FolderTreeSelect`**      | Hierarchical collapsible tree picker for folder destinations (`Documents`, `Folders`, `UploadModal`, `CameraScanModal`).                                                                                      |
+| **`StatCard` & `Card`**     | Uniform surface cards with crisp hairline borders, subtle hover elevation on navigable document/folder items, and zero noisy metadata pills.                                                                  |
+| **`Skeleton`**              | Route-level `loading.tsx` skeletons under every `src/app/(app)/**/loading.tsx` matching `PageHeader` breadcrumbs (`Skeleton` strip above header + page content structure).                                    |
+| **`Vault3DShowcase`**       | Interactive 4-scene CSS 3D product animation on the public landing page (`src/components/landing/Vault3DShowcase.tsx` + keyframes in `globals.css`) with `@media (prefers-reduced-motion: reduce)` fallbacks. |
 
 ---
 
-## 4. Spacing, Padding & Layout Cadence
+## Accessibility & Interaction Rules
 
-- **App Shell Page Padding:**
-  - Small screens: `px-3.5 py-4`
-  - Medium screens: `sm:px-5 md:py-5`
-  - Large screens: `lg:px-7`
-- **Vertical Section Spacing:**
-  - `space-y-4 sm:space-y-5` between major page blocks.
-- **Card Internal Padding:**
-  - Standard cards: `p-4 sm:p-5`
-  - Compact stat cards: `p-3.5 sm:p-4`
-  - Toolbars: `p-3`
-
----
-
-## 5. Accessibility & Keyboard Support
-
-- **Interactive Elements:** Explicit `role="button"` or native `<button>`, with `tabIndex={0}` and Enter/Space event handlers.
-- **Popovers & Menus:** ARIA attributes (`aria-haspopup="listbox"`, `aria-expanded`, `aria-controls`), focus trapping, and Escape key listeners.
-- **Forms & Inputs:** Visible labels (`<Label>`), clear focus rings (`focus-visible:ring-2 focus-visible:ring-brand-ring`), and descriptive error alerts.
-- **Contrast:** Minimum 4.5:1 text-to-background contrast ratio for all standard body copy in both light and dark themes.
+- Interactive non-button cards or rows must provide keyboard operability (`tabIndex={0}`, `Enter`/`Space` handlers) or use real `<Link>`/`<button>` elements.
+- Respect `prefers-reduced-motion` across all 3D transforms, progress rings, and modal transitions.
+- Never suppress dark/light contrast pairs: test custom colors against both `#0b0e14` and `#f6f5f0` surfaces.

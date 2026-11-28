@@ -618,8 +618,8 @@ export function AccountDetailClient({
           </div>
 
           {totalTransactions > pageSize && (
-            <div className="flex items-center justify-between border-t border-border-subtle pt-3 px-1 text-xs text-text-muted">
-              <span>
+            <div className="flex items-center justify-between border-t border-border-subtle px-1 pt-3 text-xs text-text-muted">
+              <span className="font-mono text-[11px] tabular-nums">
                 Showing {Math.min((page - 1) * pageSize + 1, totalTransactions)}–
                 {Math.min(page * pageSize, totalTransactions)} of {totalTransactions}
               </span>
@@ -634,7 +634,7 @@ export function AccountDetailClient({
                   <ChevronLeft className="h-4 w-4" />
                   Previous
                 </Button>
-                <span className="text-[11px] font-medium px-2">
+                <span className="px-2 font-mono text-[11px] font-medium tabular-nums">
                   Page {page} of {Math.ceil(totalTransactions / pageSize)}
                 </span>
                 <Button

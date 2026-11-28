@@ -31,6 +31,8 @@ vi.mock("@/lib/ai/job-service", () => ({
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
+    // Rate limiter (security-rate-limit) uses a raw upsert; allow all attempts in tests.
+    $queryRaw: vi.fn().mockResolvedValue([{ attempts: 1, blockedUntil: null }]),
     document: {
       findUnique: vi.fn(),
       update: vi.fn(),

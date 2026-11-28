@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { validateCSRFRequest } from "@/lib/csrf";
 import { CURRENT_PBKDF2_ITERATIONS, MAX_PBKDF2_ITERATIONS } from "@/lib/constants";
 import { z } from "zod";
+import { userRateLimitResponse } from "@/lib/security-rate-limit";
+import { RATE_LIMITS } from "@/lib/rate-limits";
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,6 +13,12 @@ export async function POST(req: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const rateLimited = await userRateLimitResponse({
+      userId: user.id,
+      ...RATE_LIMITS.passwordsRecoverySetup,
+    });
+    if (rateLimited) return rateLimited;
 
     if (!validateCSRFRequest(req)) {
       return NextResponse.json({ error: "Invalid CSRF token" }, { status: 403 });

@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Fingerprint, Lock, ShieldCheck, Key, Eye, EyeOff } from "lucide-react";
+import { Fingerprint, Lock, ShieldCheck, Key, Eye, EyeOff, Delete } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Alert } from "@/components/ui/Alert";
+import { VaultLogo } from "@/components/icons/VaultLogo";
 import { useAppLock } from "./AppLockProvider";
 import { usePasswordVault } from "@/lib/password-context";
 import { deriveKey } from "@/lib/crypto";
@@ -51,8 +52,6 @@ export function AppLockScreen() {
 
   const isFirstSetup = status === "idle";
 
-  // App Lock protects the complete application, including the in-memory
-  // credential decryption key. Locking the app must therefore lock the vault.
   useEffect(() => {
     if (status === "locked" || status === "idle") lockVault();
   }, [status, lockVault]);
@@ -78,8 +77,6 @@ export function AppLockScreen() {
     }
   }, [status, hasPin]);
 
-  // When the vault is unlocked via master password and a PIN exists, wrap the
-  // vault encryption key with the PIN hash so PIN unlock can re-open the vault.
   useEffect(() => {
     if (!vaultUnlocked || !encryptionKey || !hasPin) return;
     const pinHash = getStoredPinHash();
@@ -88,7 +85,6 @@ export function AppLockScreen() {
       try {
         const wrapped = await wrapCryptoKey(pinHash, encryptionKey);
         storeWrappedVaultKey(wrapped);
-        // Sync wrapped key to server so all authorized devices can unwrap credentials with PIN
         await fetch("/api/user/app-lock", {
           method: "POST",
           headers: csrfHeaders({ "Content-Type": "application/json" }),
@@ -189,8 +185,6 @@ export function AppLockScreen() {
             return;
           }
           await setupPin(pin);
-          // If vault is unlocked, wrap its key with the new PIN hash for future
-          // transparent vault unlock via PIN.
           if (vaultUnlocked && encryptionKey) {
             const pinHash = await hashPin(pin);
             const wrapped = await wrapCryptoKey(pinHash, encryptionKey);
@@ -227,7 +221,6 @@ export function AppLockScreen() {
               const key = await unwrapCryptoKey(pinHash, wrapped);
               unlockVault(key, "", "");
             } catch {
-              // Stale or incompatible wrap - remove to stop repeated unwrap failures
               clearWrappedVaultKey();
             }
           }
@@ -269,14 +262,11 @@ export function AppLockScreen() {
     [mode, handleMasterPasswordUnlock, handlePinSubmit],
   );
 
-  // Handle keyboard input on desktop without popping up mobile virtual keyboard
   useEffect(() => {
-    // Only intercept when AppLock is actually active/displayed
     if (status !== "locked" && status !== "idle") return;
     if (mode !== "pin" && mode !== "confirm-pin") return;
 
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
-      // Don't intercept if user is typing in another input, textarea, or contentEditable
       const target = e.target as HTMLElement | null;
       if (
         target instanceof HTMLInputElement ||
@@ -317,33 +307,30 @@ export function AppLockScreen() {
   if (status === "unlocked" || providerLoading) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/95 p-4 backdrop-blur-md">
+    <div className="atelier-grid-bg fixed inset-0 z-[100] flex items-center justify-center bg-background/95 p-4 backdrop-blur-md">
       <div className="w-full max-w-sm">
-        <div className="card overflow-hidden p-0">
-          <div className="relative border-b border-border-subtle bg-surface-muted px-6 pb-6 pt-7">
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-[radial-gradient(circle_at_50%_-30%,var(--brand-wash),transparent_70%)]"
-            />
-            <div className="relative flex flex-col items-center text-center">
-              <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-xl border border-brand/15 bg-brand text-white shadow-fluent-4">
-                <Lock className="h-7 w-7" />
-              </div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-brand">
-                Vaulty
-              </p>
-              <h1 className="mt-1 text-[1.25rem] font-semibold tracking-tight text-text-primary">
-                {isFirstSetup ? "Setup App Lock" : "Vaulty Locked"}
-              </h1>
-              <p className="mt-1 text-[12px] text-text-muted">
-                {isFirstSetup ? "Choose how you want to unlock the app" : "Unlock to continue"}
-              </p>
+        <div className="overflow-hidden rounded-2xl border border-border bg-surface-elevated shadow-fluent-64">
+          <div className="border-b border-border-subtle bg-surface-muted/50 px-6 pb-5 pt-6 text-center">
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl border border-brand/20 bg-brand text-white shadow-fluent-4">
+              <Lock className="h-5 w-5" />
             </div>
+            <div className="inline-flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-brand">
+              <VaultLogo size={14} className="text-brand" />
+              Vaulty Security Gate
+            </div>
+            <h1 className="mt-1.5 text-[1.25rem] font-semibold tracking-tight text-text-primary">
+              {isFirstSetup ? "Setup App Lock" : "Vaulty Locked"}
+            </h1>
+            <p className="mt-0.5 text-[12px] text-text-muted">
+              {isFirstSetup
+                ? "Choose how you want to unlock the app"
+                : "Verify your identity to continue"}
+            </p>
           </div>
 
           <div className="p-5">
             {mode === "select" && (
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 {isWebAuthnAvailable && !hasPasskey && (
                   <Button
                     variant="primary"
@@ -442,6 +429,7 @@ export function AppLockScreen() {
                   <div className="relative">
                     <Input
                       id="masterPassword"
+                      ref={inputRef}
                       name="password"
                       type={showMasterPassword ? "text" : "password"}
                       autoComplete="current-password"
@@ -458,7 +446,8 @@ export function AppLockScreen() {
                     <button
                       type="button"
                       onClick={() => setShowMasterPassword(!showMasterPassword)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
+                      aria-label={showMasterPassword ? "Hide password" : "Show password"}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
                     >
                       {showMasterPassword ? (
                         <EyeOff className="h-4 w-4" />
@@ -518,14 +507,15 @@ export function AppLockScreen() {
                       : "Enter your PIN to unlock"}
                 </p>
 
-                <div className="flex justify-center gap-3">
+                <div className="flex justify-center gap-3.5 py-1">
                   {[0, 1, 2, 3].map((i) => {
                     const activeDots = mode === "confirm-pin" ? confirmPin.length : pin.length;
+                    const filled = i < activeDots;
                     return (
                       <div
                         key={i}
                         className={`h-3.5 w-3.5 rounded-full border-2 transition-all ${
-                          i < activeDots
+                          filled
                             ? "scale-110 border-brand bg-brand"
                             : "border-border bg-surface-muted"
                         }`}
@@ -555,15 +545,9 @@ export function AppLockScreen() {
                         setError("");
                       } else {
                         if (mode === "confirm-pin") {
-                          setConfirmPin((prev) => {
-                            if (prev.length >= 4) return prev;
-                            return prev + key;
-                          });
+                          setConfirmPin((prev) => (prev.length >= 4 ? prev : prev + key));
                         } else {
-                          setPin((prev) => {
-                            if (prev.length >= 4) return prev;
-                            return prev + key;
-                          });
+                          setPin((prev) => (prev.length >= 4 ? prev : prev + key));
                         }
                         setError("");
                       }
@@ -574,13 +558,22 @@ export function AppLockScreen() {
                         key={key}
                         type="button"
                         onClick={handleClick}
-                        className={`h-14 rounded-lg border text-lg font-semibold transition-all active:scale-[0.97] ${
+                        aria-label={
+                          key === "del" ? "Backspace" : key === "clear" ? "Clear PIN" : key
+                        }
+                        className={`flex h-13 items-center justify-center rounded-lg border font-mono text-lg font-semibold tabular-nums transition-colors active:scale-[0.97] ${
                           isAction
-                            ? "border-transparent bg-transparent text-text-muted hover:bg-surface-muted hover:text-text-secondary"
+                            ? "border-transparent bg-transparent text-xs uppercase tracking-wider text-text-muted hover:bg-surface-muted hover:text-text-secondary"
                             : "border-border-subtle bg-surface text-text-primary shadow-fluent-2 hover:border-border hover:bg-surface-muted"
                         }`}
                       >
-                        {key === "del" ? "⌫" : key === "clear" ? "C" : key}
+                        {key === "del" ? (
+                          <Delete className="h-4 w-4" />
+                        ) : key === "clear" ? (
+                          "Clear"
+                        ) : (
+                          key
+                        )}
                       </button>
                     );
                   })}

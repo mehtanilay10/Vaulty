@@ -4,7 +4,7 @@ import { readJsonRecord } from "@/lib/api-validation";
 import { getCurrentUser } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { checkDocumentAccess } from "@/lib/authz";
-import { getProviderForDocument } from "@/lib/storage/factory";
+import { deleteDocumentWithStorage } from "@/lib/document-delete";
 import { validateCSRFRequest } from "@/lib/csrf";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -250,99 +250,16 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       return NextResponse.json({ error: "Document not found." }, { status: 404 });
     }
 
-    if (doc.storageProvider === "GOOGLE_DRIVE") {
-      const fileIdsToDelete = [
-        doc.storageFileId,
-        doc.googleDriveSummaryFileId,
-        doc.googleDriveTextFileId,
-        doc.googleDriveInterpretationFileId,
-      ].filter((f): f is string => Boolean(f));
-
-      if (fileIdsToDelete.length > 0) {
-        try {
-          const { provider } = await getProviderForDocument({
-            id: doc.id,
-            storageProvider: doc.storageProvider,
-            storageFileId: doc.storageFileId || fileIdsToDelete[0],
-            ownerId: user.id,
-            folderId: doc.folderId,
-          });
-
-          // Delete all associated files in Google Drive concurrently
-          const deleteResults = await Promise.allSettled(
-            fileIdsToDelete.map(async (fileId) => {
-              try {
-                await provider.deleteFile(fileId);
-              } catch (fileErr: unknown) {
-                const errObj = fileErr as {
-                  code?: number | string;
-                  status?: number;
-                  message?: string;
-                };
-                const isNotFound =
-                  errObj?.code === 404 ||
-                  errObj?.status === 404 ||
-                  errObj?.message?.toLowerCase().includes("file not found") ||
-                  errObj?.message?.toLowerCase().includes("notfound");
-
-                if (isNotFound) {
-                  console.warn(
-                    `[documents] File ${fileId} was already absent from Google Drive, proceeding with deletion.`,
-                  );
-                  return;
-                }
-
-                if (fileId === doc.storageFileId) {
-                  throw fileErr;
-                }
-                console.warn(`[documents] Failed to delete secondary artifact ${fileId}:`, fileErr);
-              }
-            }),
-          );
-
-          // If deleting the primary file threw a non-404 error, abort so file isn't orphaned
-          const primaryIndex = doc.storageFileId ? fileIdsToDelete.indexOf(doc.storageFileId) : -1;
-          if (primaryIndex !== -1 && deleteResults[primaryIndex]?.status === "rejected") {
-            const reason = (deleteResults[primaryIndex] as PromiseRejectedResult).reason;
-            throw reason;
-          }
-        } catch (driveError) {
-          console.error("Google Drive delete error:", driveError);
-          // Keep the database record so the deletion can be retried instead of
-          // orphaning the file in Google Drive.
-          return NextResponse.json(
-            {
-              error:
-                "The file could not be deleted from Google Drive. The document was not removed; please try again.",
-            },
-            { status: 502 },
-          );
-        }
-      }
-    }
-
-    // Use batch array transaction instead of interactive transaction callback
-    // to avoid P2028 transaction expiration timeouts.
-    await prisma.$transaction([
-      prisma.document.delete({
-        where: { id },
-      }),
-      // The audit log has an onDelete: Cascade relation to Document, so keep
-      // the document id in metadata and leave the relation empty.
-      prisma.auditLog.create({
-        data: {
-          action: "DOCUMENT_DELETE",
-          userId: user.id,
-          documentId: null,
-          folderId: doc.folderId,
-          metadata: JSON.stringify({
-            documentId: doc.id,
-            documentName: doc.name,
-            storageProvider: doc.storageProvider,
-          }),
+    const outcome = await deleteDocumentWithStorage({ userId: user.id, document: doc });
+    if (outcome === "drive_failed") {
+      return NextResponse.json(
+        {
+          error:
+            "The file could not be deleted from Google Drive. The document was not removed; please try again.",
         },
-      }),
-    ]);
+        { status: 502 },
+      );
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

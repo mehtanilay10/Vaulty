@@ -815,11 +815,11 @@ export function SettingsClient({
   ] as const;
 
   return (
-    <>
+    <div className="space-y-6">
       <PageHeader title="Settings" icon={<User className="h-5 w-5" />} />
 
       {/* Tab bar for switching tabs — mobile/tablet only; desktop uses sidebar */}
-      <div className="mb-6 border-b border-border-subtle xl:hidden">
+      <div className="border-b border-border-subtle xl:hidden">
         <Tabs
           value={activeTab}
           onValueChange={(val) =>
@@ -844,10 +844,12 @@ export function SettingsClient({
         </Tabs>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[13rem_minmax(0,1fr)]">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[14rem_minmax(0,1fr)]">
         <aside className="hidden xl:block">
-          <nav className="sticky top-20 space-y-1 rounded-lg border border-border-subtle bg-surface p-2 shadow-fluent-2">
-            <p className="section-eyebrow px-2 pb-1.5 pt-1">Settings</p>
+          <nav className="sticky top-20 space-y-1 rounded-xl border border-border-subtle bg-surface p-2.5 shadow-xs">
+            <p className="px-2.5 pb-1.5 pt-1 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-text-muted">
+              Workspace Settings
+            </p>
             {tabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -857,15 +859,17 @@ export function SettingsClient({
                   type="button"
                   onClick={() => setActiveTab(tab.id)}
                   className={cn(
-                    "flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-[13px] font-medium transition-colors text-left",
+                    "relative flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[13px] font-medium transition-colors",
                     isActive
                       ? "bg-brand-subtle text-brand font-semibold"
                       : "text-text-secondary hover:bg-surface-muted hover:text-text-primary",
                   )}
                 >
+                  {isActive && (
+                    <span className="absolute left-0 top-1.5 bottom-1.5 w-[2.5px] rounded-r bg-brand" />
+                  )}
                   <Icon className={cn("h-4 w-4", isActive ? "text-brand" : "text-text-muted")} />
                   <span>{tab.label}</span>
-                  {isActive && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-brand" />}
                 </button>
               );
             })}
@@ -914,90 +918,125 @@ export function SettingsClient({
                 id="theme"
                 icon={<Sun className="h-4 w-4" />}
                 title="Appearance & Theme"
-                description="Customize your interface brightness and color mode."
+                description="Choose how Vaulty adapts to warm alabaster daylight or obsidian dark atelier mode."
               >
-                <div className="flex flex-col gap-4 rounded-lg border border-border-subtle bg-surface-muted p-4 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <p className="text-[13px] font-semibold text-text-primary">Theme mode</p>
-                    <p className="mt-0.5 text-xs text-text-muted">
-                      Select Light, Dark, or System mode to match your preferred interface style.
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-1.5 rounded-lg border border-border-subtle bg-surface p-1">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setTheme("light");
-                        try {
-                          localStorage.setItem("theme", "light");
-                          document.documentElement.classList.remove("dark");
-                          document
-                            .querySelector('meta[name="color-scheme"]')
-                            ?.setAttribute("content", "light");
-                        } catch {}
-                      }}
-                      className={cn(
-                        "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors",
-                        theme === "light" || (!theme && resolvedTheme === "light")
-                          ? "bg-brand text-white shadow-fluent-2"
-                          : "text-text-secondary hover:bg-surface-muted hover:text-text-primary",
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTheme("light");
+                      try {
+                        localStorage.setItem("theme", "light");
+                        document.documentElement.classList.remove("dark");
+                        document
+                          .querySelector('meta[name="color-scheme"]')
+                          ?.setAttribute("content", "light");
+                      } catch {}
+                    }}
+                    className={cn(
+                      "group flex flex-col gap-3 rounded-xl border p-3.5 text-left transition-all",
+                      theme === "light" || (!theme && resolvedTheme === "light")
+                        ? "border-brand bg-brand-subtle/35 ring-1 ring-brand/30"
+                        : "border-border-subtle bg-surface hover:border-border-strong",
+                    )}
+                  >
+                    <div className="flex h-14 w-full flex-col justify-between rounded-lg border border-[#e3e0d6] bg-[#f6f5f0] p-2">
+                      <div className="flex items-center gap-1.5">
+                        <span className="h-2 w-2 rounded-full bg-[#1e40af]" />
+                        <span className="h-1.5 w-10 rounded bg-[#18181b]/20" />
+                      </div>
+                      <div className="h-5 w-full rounded border border-[#e3e0d6] bg-[#ffffff]" />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="flex items-center gap-1.5 text-xs font-semibold text-text-primary">
+                        <Sun className="h-3.5 w-3.5 text-warning" />
+                        Light
+                      </span>
+                      {(theme === "light" || (!theme && resolvedTheme === "light")) && (
+                        <CheckCircle2 className="h-3.5 w-3.5 text-brand" />
                       )}
-                    >
-                      <Sun className="h-3.5 w-3.5" />
-                      <span>Light</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setTheme("dark");
-                        try {
-                          localStorage.setItem("theme", "dark");
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTheme("dark");
+                      try {
+                        localStorage.setItem("theme", "dark");
+                        document.documentElement.classList.add("dark");
+                        document
+                          .querySelector('meta[name="color-scheme"]')
+                          ?.setAttribute("content", "dark");
+                      } catch {}
+                    }}
+                    className={cn(
+                      "group flex flex-col gap-3 rounded-xl border p-3.5 text-left transition-all",
+                      theme === "dark"
+                        ? "border-brand bg-brand-subtle/35 ring-1 ring-brand/30"
+                        : "border-border-subtle bg-surface hover:border-border-strong",
+                    )}
+                  >
+                    <div className="flex h-14 w-full flex-col justify-between rounded-lg border border-[#242b38] bg-[#0b0e14] p-2">
+                      <div className="flex items-center gap-1.5">
+                        <span className="h-2 w-2 rounded-full bg-[#60a5fa]" />
+                        <span className="h-1.5 w-10 rounded bg-[#f4f4f5]/25" />
+                      </div>
+                      <div className="h-5 w-full rounded border border-[#242b38] bg-[#12161f]" />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="flex items-center gap-1.5 text-xs font-semibold text-text-primary">
+                        <Moon className="h-3.5 w-3.5 text-brand" />
+                        Dark
+                      </span>
+                      {theme === "dark" && <CheckCircle2 className="h-3.5 w-3.5 text-brand" />}
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTheme("system");
+                      try {
+                        localStorage.setItem("theme", "system");
+                        const prefersDark = window.matchMedia(
+                          "(prefers-color-scheme: dark)",
+                        ).matches;
+                        if (prefersDark) {
                           document.documentElement.classList.add("dark");
-                          document
-                            .querySelector('meta[name="color-scheme"]')
-                            ?.setAttribute("content", "dark");
-                        } catch {}
-                      }}
-                      className={cn(
-                        "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors",
-                        theme === "dark"
-                          ? "bg-brand text-white shadow-fluent-2"
-                          : "text-text-secondary hover:bg-surface-muted hover:text-text-primary",
-                      )}
-                    >
-                      <Moon className="h-3.5 w-3.5" />
-                      <span>Dark</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setTheme("system");
-                        try {
-                          localStorage.removeItem("theme");
-                          const prefersDark = window.matchMedia(
-                            "(prefers-color-scheme: dark)",
-                          ).matches;
-                          if (prefersDark) {
-                            document.documentElement.classList.add("dark");
-                          } else {
-                            document.documentElement.classList.remove("dark");
-                          }
-                          document
-                            .querySelector('meta[name="color-scheme"]')
-                            ?.setAttribute("content", "light dark");
-                        } catch {}
-                      }}
-                      className={cn(
-                        "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors",
-                        theme === "system"
-                          ? "bg-brand text-white shadow-fluent-2"
-                          : "text-text-secondary hover:bg-surface-muted hover:text-text-primary",
-                      )}
-                    >
-                      <Monitor className="h-3.5 w-3.5" />
-                      <span>System</span>
-                    </button>
-                  </div>
+                        } else {
+                          document.documentElement.classList.remove("dark");
+                        }
+                        document
+                          .querySelector('meta[name="color-scheme"]')
+                          ?.setAttribute("content", "light dark");
+                      } catch {}
+                    }}
+                    className={cn(
+                      "group flex flex-col gap-3 rounded-xl border p-3.5 text-left transition-all",
+                      theme === "system"
+                        ? "border-brand bg-brand-subtle/35 ring-1 ring-brand/30"
+                        : "border-border-subtle bg-surface hover:border-border-strong",
+                    )}
+                  >
+                    <div className="grid h-14 w-full grid-cols-2 overflow-hidden rounded-lg border border-border-subtle">
+                      <div className="flex flex-col justify-between bg-[#f6f5f0] p-1.5">
+                        <span className="h-1.5 w-5 rounded bg-[#1e40af]" />
+                        <span className="h-4 w-full rounded bg-white" />
+                      </div>
+                      <div className="flex flex-col justify-between bg-[#0b0e14] p-1.5">
+                        <span className="h-1.5 w-5 rounded bg-[#60a5fa]" />
+                        <span className="h-4 w-full rounded bg-[#12161f]" />
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="flex items-center gap-1.5 text-xs font-semibold text-text-primary">
+                        <Monitor className="h-3.5 w-3.5 text-text-secondary" />
+                        System
+                      </span>
+                      {theme === "system" && <CheckCircle2 className="h-3.5 w-3.5 text-brand" />}
+                    </div>
+                  </button>
                 </div>
               </SettingsSection>
 
@@ -2114,6 +2153,6 @@ export function SettingsClient({
           </Button>
         </form>
       </Blade>
-    </>
+    </div>
   );
 }

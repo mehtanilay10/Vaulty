@@ -276,7 +276,7 @@ export function ReminderCalendarClient({ events, embedded = false }: ReminderCal
       {/* Monthly Grid */}
       <Card className="overflow-hidden p-0 border border-border-subtle shadow-sm">
         {/* Day Header */}
-        <div className="grid grid-cols-7 border-b border-border-subtle bg-surface-muted text-center text-[11px] font-semibold text-text-muted">
+        <div className="grid grid-cols-7 border-b border-border-subtle bg-surface-muted/60 text-center font-mono text-[10.5px] font-semibold uppercase tracking-wider text-text-muted">
           {DAY_NAMES.map((name) => (
             <div key={name} className="py-2.5">
               {name}
@@ -295,18 +295,18 @@ export function ReminderCalendarClient({ events, embedded = false }: ReminderCal
                 key={day.dateString}
                 onClick={() => setSelectedDate(day.dateString)}
                 className={cn(
-                  "min-h-[90px] sm:min-h-[110px] p-1.5 transition-colors cursor-pointer flex flex-col justify-between",
+                  "flex min-h-[92px] cursor-pointer flex-col justify-between p-1.5 transition-colors sm:min-h-[112px]",
                   !day.isCurrentMonth && "bg-surface-muted/40 opacity-40",
-                  isSelected && "bg-brand/5 ring-1 ring-inset ring-brand",
+                  isSelected && "bg-brand-subtle/40 ring-1 ring-inset ring-brand",
                   day.isCurrentMonth && !isSelected && "hover:bg-surface-muted/60",
                 )}
               >
                 <div className="flex items-center justify-between">
                   <span
                     className={cn(
-                      "flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium",
+                      "flex h-6 w-6 items-center justify-center rounded-full font-mono text-xs tabular-nums font-medium",
                       day.isToday
-                        ? "bg-brand text-white font-bold"
+                        ? "bg-brand font-bold text-white"
                         : isSelected
                           ? "font-bold text-brand"
                           : "text-text-primary",
@@ -315,7 +315,7 @@ export function ReminderCalendarClient({ events, embedded = false }: ReminderCal
                     {day.dayNumber}
                   </span>
                   {dayEvents.length > 0 && (
-                    <span className="text-[10px] font-semibold text-text-muted">
+                    <span className="font-mono text-[10px] font-semibold tabular-nums text-text-muted">
                       {dayEvents.length}
                     </span>
                   )}
@@ -332,13 +332,11 @@ export function ReminderCalendarClient({ events, embedded = false }: ReminderCal
                         key={evt.id}
                         title={evt.title}
                         className={cn(
-                          "truncate rounded px-1.5 py-0.5 text-[10px] font-medium border leading-tight flex items-center gap-1",
-                          isReminder &&
-                            "bg-amber-500/10 text-amber-800 dark:text-amber-300 border-amber-500/20",
-                          isDoc &&
-                            "bg-blue-500/10 text-blue-800 dark:text-blue-300 border-blue-500/20",
+                          "flex items-center gap-1 truncate rounded border px-1.5 py-0.5 text-[10px] font-medium leading-tight",
+                          isReminder && "border-warning/25 bg-warning-subtle/60 text-warning",
+                          isDoc && "border-brand/25 bg-brand-subtle/70 text-brand",
                           evt.type === "CREDIT_CARD_DUE" &&
-                            "bg-rose-500/10 text-rose-800 dark:text-rose-300 border-rose-500/20",
+                            "border-danger/25 bg-danger-subtle/60 text-danger",
                         )}
                       >
                         <span className="shrink-0">
@@ -355,7 +353,7 @@ export function ReminderCalendarClient({ events, embedded = false }: ReminderCal
                     );
                   })}
                   {dayEvents.length > 2 && (
-                    <div className="text-[10px] text-text-muted font-medium px-1">
+                    <div className="px-1 font-mono text-[10px] font-medium text-text-muted">
                       +{dayEvents.length - 2} more
                     </div>
                   )}

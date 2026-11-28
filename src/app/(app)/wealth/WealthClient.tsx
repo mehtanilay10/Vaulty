@@ -87,28 +87,28 @@ export function WealthClient({ summary, breakdown, accounts }: WealthClientProps
   const handleSaved = () => router.refresh();
 
   return (
-    <>
+    <div className="space-y-6">
       <div className="space-y-3">
         <PageHeader title="Wealth Management" icon={<Wallet className="h-5 w-5" />} />
 
         <CommandBar
           farItems={
             visibleTotals.length > 1 ? (
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 rounded-md border border-border-subtle bg-surface-muted/60 p-0.5">
                 {visibleTotals.map((tot) => (
                   <button
                     key={tot.currency}
                     type="button"
                     onClick={() => setSelectedCurrency(tot.currency)}
                     className={cn(
-                      "px-2 py-1 rounded text-xs transition-colors",
+                      "rounded px-2 py-0.5 font-mono text-[11px] tabular-nums transition-colors",
                       selectedCurrency === tot.currency
-                        ? "bg-brand text-white font-semibold"
-                        : "text-text-muted hover:bg-surface-muted hover:text-text-primary",
+                        ? "bg-brand text-white font-semibold shadow-2xs"
+                        : "text-text-muted hover:text-text-primary",
                     )}
                   >
                     {tot.currency}
-                    <span className="ml-1 opacity-70 text-[10px]">({tot.accountCount})</span>
+                    <span className="ml-1 opacity-75 text-[10px]">({tot.accountCount})</span>
                   </button>
                 ))}
               </div>
@@ -203,6 +203,6 @@ export function WealthClient({ summary, breakdown, accounts }: WealthClientProps
           <StatementImportClient accounts={accounts} />
         </Modal>
       )}
-    </>
+    </div>
   );
 }

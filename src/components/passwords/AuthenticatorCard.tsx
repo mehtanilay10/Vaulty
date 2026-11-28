@@ -218,29 +218,29 @@ export function AuthenticatorCard({
       </div>
 
       {/* Middle row: Large 6-digit TOTP code and countdown timer ring */}
-      <div className="mt-4 flex items-center justify-between gap-4 rounded-xl border border-border-subtle/80 bg-surface-muted/40 p-3 sm:px-4 sm:py-3.5">
+      <div className="mt-4 flex items-center justify-between gap-4 rounded-xl border border-border-subtle bg-surface-muted/50 p-3.5">
         <div className="flex flex-col">
-          <span className="text-[11px] font-medium uppercase tracking-wider text-text-muted">
-            One-time password
+          <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-text-muted">
+            One-time code
           </span>
           <button
             type="button"
             onClick={handleCopyCode}
-            className="group/code flex items-center gap-3 text-left focus:outline-none"
+            className="group/code mt-0.5 flex items-center gap-3 text-left focus:outline-none"
             title="Click to copy code"
           >
             <span
-              className={`font-mono text-2xl sm:text-3xl font-bold tracking-widest tabular-nums select-all transition-colors ${
+              className={`font-mono text-2xl font-bold tracking-[0.14em] tabular-nums select-all transition-colors sm:text-[1.75rem] ${
                 isExpiringSoon ? "text-danger" : "text-text-primary"
               }`}
             >
               {formattedCode}
             </span>
             <span
-              className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold transition-all ${
+              className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold transition-all ${
                 copied
-                  ? "bg-success/15 text-success"
-                  : "bg-surface text-text-muted group-hover/code:text-brand border border-border-subtle shadow-xs"
+                  ? "bg-success-subtle text-success"
+                  : "border border-border-subtle bg-surface text-text-muted shadow-2xs group-hover/code:border-brand/30 group-hover/code:text-brand"
               }`}
             >
               {copied ? (

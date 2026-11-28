@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import { userRateLimitResponse } from "@/lib/security-rate-limit";
+import { RATE_LIMITS } from "@/lib/rate-limits";
 
 const MODE = "insensitive" as const;
 
@@ -11,6 +13,12 @@ export async function GET(req: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const rateLimited = await userRateLimitResponse({
+      userId: user.id,
+      ...RATE_LIMITS.search,
+    });
+    if (rateLimited) return rateLimited;
 
     const { searchParams } = new URL(req.url);
     const parsed = z

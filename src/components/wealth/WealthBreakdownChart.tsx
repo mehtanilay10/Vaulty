@@ -2,33 +2,33 @@ import { Card } from "@/components/ui/Card";
 import { formatCurrency } from "@/lib/wealth";
 
 const ASSET_COLORS = [
+  "#1e40af",
+  "#0f766e",
   "#2563eb",
-  "#10b981",
-  "#06b6d4",
-  "#8b5cf6",
-  "#84cc16",
-  "#14b8a6",
-  "#0ea5e9",
-  "#22c55e",
-  "#a855f7",
-  "#eab308",
-  "#f97316",
+  "#059669",
+  "#0284c7",
+  "#4f46e5",
+  "#65a30d",
+  "#d97706",
+  "#0d9488",
+  "#475569",
+  "#0369a1",
   "#64748b",
 ];
 
 const LIABILITY_COLORS = [
-  "#e11d48",
-  "#f97316",
-  "#dc2626",
-  "#f43f5e",
-  "#fb923c",
   "#be123c",
+  "#dc2626",
   "#ea580c",
-  "#ef4444",
-  "#f59e0b",
+  "#e11d48",
+  "#d97706",
+  "#9f1239",
+  "#f43f5e",
   "#b91c1c",
-  "#fca5a5",
+  "#f97316",
   "#78716c",
+  "#fb7185",
+  "#a8a29e",
 ];
 
 interface WealthBreakdownItem {
@@ -152,28 +152,40 @@ export function WealthBreakdownChart({
             </svg>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             {chartItems.map((item, index) => {
               const percentage = (Number(item.amount) / total) * 100;
+              const swatchColor = colors[index % colors.length];
 
               return (
-                <div key={item.type} className="flex items-center justify-between gap-3">
-                  <div className="flex min-w-0 items-center gap-2.5">
-                    <span
-                      className="h-2.5 w-2.5 shrink-0 rounded-full"
+                <div key={item.type} className="space-y-1">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <span
+                        className="h-2.5 w-2.5 shrink-0 rounded-sm"
+                        style={{ backgroundColor: swatchColor }}
+                      />
+                      <span className="truncate text-[13px] font-medium text-text-primary">
+                        {humanizeType(item.type)}
+                      </span>
+                    </div>
+                    <div className="flex shrink-0 items-baseline gap-2.5 text-right font-mono tabular-nums">
+                      <span className="text-[13px] font-semibold text-text-primary">
+                        {formatCurrency(item.amount, currency)}
+                      </span>
+                      <span className="w-11 text-[11px] text-text-muted">
+                        {percentage.toFixed(1)}%
+                      </span>
+                    </div>
+                  </div>
+                  <div className="h-1 w-full overflow-hidden rounded-full bg-surface-muted">
+                    <div
+                      className="h-full rounded-full transition-all duration-300"
                       style={{
-                        backgroundColor: colors[index % colors.length],
+                        width: `${Math.max(percentage, 2)}%`,
+                        backgroundColor: swatchColor,
                       }}
                     />
-                    <span className="truncate text-sm font-medium text-text-primary">
-                      {humanizeType(item.type)}
-                    </span>
-                  </div>
-                  <div className="shrink-0 text-right">
-                    <p className="text-sm font-semibold text-text-primary">
-                      {formatCurrency(item.amount, currency)}
-                    </p>
-                    <p className="text-[11px] text-text-muted">{percentage.toFixed(1)}%</p>
                   </div>
                 </div>
               );

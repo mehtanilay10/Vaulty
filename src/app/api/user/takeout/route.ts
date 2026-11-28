@@ -3,6 +3,8 @@ import { getCurrentUser } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getProviderForDocument } from "@/lib/storage/factory";
 import { zipSync, strToU8 } from "fflate";
+import { userRateLimitResponse } from "@/lib/security-rate-limit";
+import { RATE_LIMITS } from "@/lib/rate-limits";
 
 export const maxDuration = 60;
 
@@ -50,6 +52,12 @@ export async function GET() {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const rateLimited = await userRateLimitResponse({
+      userId: user.id,
+      ...RATE_LIMITS.userTakeout,
+    });
+    if (rateLimited) return rateLimited;
 
     // 1. Fetch user profile
     const userRecord = await prisma.user.findUnique({

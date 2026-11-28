@@ -128,35 +128,42 @@ export function NotificationsClient({
 
       {notifications.length === 0 && <Alert variant="default">No notifications yet.</Alert>}
 
-      <div className="space-y-2">
+      <div className="overflow-hidden rounded-xl border border-border-subtle bg-surface shadow-xs divide-y divide-border-subtle">
         {notifications.map((notification) => {
           const Icon = (TYPE_ICONS[notification.type] ?? Bell) as React.ElementType;
           const actionUrl = getSafeNotificationUrl(notification.actionUrl);
-          const cardClasses = `border border-border-subtle rounded-xl p-3 flex items-start gap-3 transition-colors ${
-            !notification.read ? "bg-brand-subtle/10 border-brand/20" : "bg-surface-muted"
-          } ${actionUrl ? "cursor-pointer hover:border-brand/40 hover:bg-surface" : ""}`;
+          const cardClasses = `flex items-start gap-3.5 px-4 py-3.5 transition-colors ${
+            !notification.read ? "bg-brand-subtle/35" : "bg-surface"
+          } ${actionUrl ? "cursor-pointer hover:bg-surface-muted/70" : ""}`;
 
           const content = (
             <>
               <div
-                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${
-                  !notification.read ? "bg-brand/10 text-brand" : "bg-surface text-text-secondary"
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border ${
+                  !notification.read
+                    ? "border-brand/25 bg-brand-subtle text-brand"
+                    : "border-border-subtle bg-surface-muted text-text-secondary"
                 }`}
               >
                 <Icon className="h-4 w-4" />
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <p className="text-xs font-semibold text-text-primary">{notification.title}</p>
+                  <p className="text-[13px] font-semibold text-text-primary">
+                    {notification.title}
+                  </p>
                   {!notification.read && (
-                    <span className="h-1.5 w-1.5 rounded-full bg-brand shrink-0" />
+                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-brand" />
                   )}
                 </div>
                 <p className="mt-0.5 text-xs leading-relaxed text-text-muted">
                   {notification.message}
                 </p>
               </div>
-              <div suppressHydrationWarning className="text-[11px] text-text-muted shrink-0">
+              <div
+                suppressHydrationWarning
+                className="shrink-0 font-mono text-[11px] tabular-nums text-text-muted"
+              >
                 {formatNotificationDate(notification.createdAt)}
               </div>
             </>

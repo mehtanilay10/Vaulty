@@ -96,7 +96,7 @@ export function DocumentsOverviewClient({
   };
 
   return (
-    <>
+    <div className="space-y-6">
       <div className="space-y-3">
         <PageHeader title="Documents" icon={<FileText className="h-5 w-5" />} />
 
@@ -132,21 +132,23 @@ export function DocumentsOverviewClient({
       </div>
 
       {!isConnected && !driveLoading && (
-        <div className="flex items-center gap-3 rounded-lg border border-warning/30 bg-warning-subtle/20 px-4 py-3 text-text-primary">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-warning/15 text-warning">
+        <div className="flex flex-col gap-3 rounded-xl border border-warning/35 bg-warning-subtle/30 px-4 py-3.5 sm:flex-row sm:items-center">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-warning/25 bg-surface text-warning">
             <Cloud className="h-4 w-4" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-semibold text-text-primary">Google Drive is not connected</p>
-            <p className="text-xs text-text-muted mt-0.5">
-              Connect your Google Drive in Settings to enable document uploads, cloud storage sync,
-              and AI extraction.
+            <p className="text-[13px] font-semibold text-text-primary">
+              Google Drive is not connected
+            </p>
+            <p className="mt-0.5 text-xs text-text-muted">
+              Connect your Google Drive in Settings to enable encrypted document storage, sync, and
+              AI extraction.
             </p>
           </div>
-          <Link href="/settings">
-            <Button size="sm" variant="secondary" className="shrink-0 gap-1.5">
-              <Cloud className="h-4 w-4" />
-              Connect
+          <Link href="/settings" className="shrink-0">
+            <Button size="sm" variant="secondary" className="gap-1.5">
+              <Cloud className="h-3.5 w-3.5" />
+              Connect Drive
             </Button>
           </Link>
         </div>
@@ -157,7 +159,6 @@ export function DocumentsOverviewClient({
           label="Documents secured"
           value={stats.totalDocuments}
           icon={<FileText className="h-4 w-4" />}
-          hint="Private"
           href="/documents/library"
         />
         <StatCard
@@ -172,7 +173,6 @@ export function DocumentsOverviewClient({
           value={stats.aiSummaries}
           icon={<Sparkles className="h-4 w-4" />}
           tone="success"
-          hint="Gemini"
           href="/documents/library"
         />
       </div>
@@ -182,12 +182,12 @@ export function DocumentsOverviewClient({
           <SectionHeader
             icon={<AlertTriangle className="h-4 w-4 text-warning" />}
             title="Expiring documents"
-            description="Renew these documents before they expire."
+            description="Renew these documents before their deadline."
             count={expiringDocuments.length}
             action={<Badge variant="warning">Needs attention</Badge>}
           />
 
-          <Card className="overflow-hidden p-0">
+          <div className="overflow-hidden rounded-xl border border-border-subtle bg-surface shadow-xs">
             <div className="divide-y divide-border-subtle">
               {expiringDocuments.map((doc) => {
                 const urgency = getUrgency(doc.expiryDate);
@@ -195,16 +195,16 @@ export function DocumentsOverviewClient({
                   <Link
                     key={doc.id}
                     href={`/documents/${doc.id}`}
-                    className="group flex items-center gap-3 px-4 py-3 transition-colors hover:bg-surface-muted/70"
+                    className="group flex items-center gap-3.5 px-4 py-3 transition-colors hover:bg-surface-muted/70"
                   >
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-warning/20 bg-warning-subtle text-warning">
-                      <AlertTriangle className="h-4 w-4" />
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-warning/25 bg-warning-subtle/60 text-warning">
+                      <AlertTriangle className="h-3.5 w-3.5" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-[13px] font-semibold text-text-primary">
+                      <p className="truncate text-[13px] font-semibold text-text-primary group-hover:text-brand">
                         {doc.name}
                       </p>
-                      <p className="truncate text-[11px] text-text-muted">
+                      <p className="truncate font-mono text-[11px] tabular-nums text-text-muted">
                         {doc.folder?.name || "Unfiled"}
                         {doc.expiryDate
                           ? ` · Expires ${(() => {
@@ -224,7 +224,7 @@ export function DocumentsOverviewClient({
                 );
               })}
             </div>
-          </Card>
+          </div>
         </section>
       )}
 
@@ -232,14 +232,14 @@ export function DocumentsOverviewClient({
         <SectionHeader
           icon={<Clock className="h-4 w-4" />}
           title="Recent documents"
-          description="The latest files added to your vault."
+          description="The latest records indexed into your vault."
           count={stats.totalDocuments}
           action={
             <Link
               href="/documents/library"
               className="inline-flex items-center gap-1 text-xs font-semibold text-brand hover:underline"
             >
-              View all
+              Browse library
               <ChevronRight className="h-3.5 w-3.5" />
             </Link>
           }
@@ -250,7 +250,7 @@ export function DocumentsOverviewClient({
             <EmptyState
               icon={<FileText className="h-6 w-6" />}
               title="No documents uploaded yet"
-              description="Upload your medical reports, passports, or certificates to get started."
+              description="Upload medical reports, passports, tax returns, or certificates to build your archive."
               action={
                 <Button onClick={openUpload} disabled={!isConnected}>
                   <Upload className="h-4 w-4" />
@@ -260,23 +260,23 @@ export function DocumentsOverviewClient({
             />
           </Card>
         ) : (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2 xl:grid-cols-4">
             {recentDocuments.map((doc) => (
               <Link
                 key={doc.id}
                 href={`/documents/${doc.id}`}
-                className="card card-hover flex flex-col justify-between p-4"
+                className="group flex flex-col justify-between rounded-xl border border-border-subtle bg-surface p-4 shadow-xs transition-all hover:border-border-strong hover:bg-surface-elevated hover:shadow-sm"
               >
                 <div>
-                  <div className="mb-3 flex items-start justify-between gap-2">
+                  <div className="mb-3.5 flex items-start justify-between gap-2">
                     {doc.thumbnailUrl ? (
                       <img
                         src={doc.thumbnailUrl}
                         alt=""
-                        className="h-10 w-10 rounded-md border border-border-subtle object-cover"
+                        className="h-11 w-11 rounded-lg border border-border-subtle object-cover shadow-xs"
                       />
                     ) : (
-                      <div className="flex h-10 w-10 items-center justify-center rounded-md border border-brand/15 bg-brand-subtle text-brand">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-lg border border-border-subtle bg-surface-muted text-brand transition-colors group-hover:border-brand/30 group-hover:bg-brand-subtle">
                         <FileText className="h-5 w-5" />
                       </div>
                     )}
@@ -286,13 +286,15 @@ export function DocumentsOverviewClient({
                     />
                   </div>
 
-                  <h3 className="mb-1 truncate text-[13px] font-semibold text-text-primary">
+                  <p className="mb-0.5 truncate font-mono text-[10px] uppercase tracking-wider text-text-muted">
+                    {doc.folder?.name || "Unfiled"}
+                  </p>
+                  <h3 className="truncate text-[13.5px] font-semibold tracking-tight text-text-primary transition-colors group-hover:text-brand">
                     {doc.name}
                   </h3>
-                  <p className="truncate text-[11px] text-text-muted">{doc.folder?.name}</p>
                 </div>
 
-                <div className="mt-4 flex items-center justify-between border-t border-border-subtle pt-2.5 text-[11px] text-text-muted">
+                <div className="mt-4 flex items-center justify-between border-t border-border-subtle pt-2.5 font-mono text-[11px] tabular-nums text-text-muted">
                   <span>{new Date(doc.createdAt).toLocaleDateString()}</span>
                   <span>{Math.round(doc.sizeBytes / 1024)} KB</span>
                 </div>
@@ -334,22 +336,22 @@ export function DocumentsOverviewClient({
               />
             </Card>
           ) : (
-            <Card padding="compact">
-              <div className="space-y-0.5">
+            <div className="overflow-hidden rounded-xl border border-border-subtle bg-surface shadow-xs">
+              <div className="divide-y divide-border-subtle">
                 {myFolders.slice(0, 6).map((folder) => (
                   <Link
                     key={folder.id}
                     href={`/folders/${folder.id}`}
-                    className="group flex items-center gap-3 rounded-md px-2.5 py-2.5 transition-colors hover:bg-surface-muted"
+                    className="group flex items-center gap-3.5 px-4 py-3 transition-colors hover:bg-surface-muted/70"
                   >
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-brand/15 bg-brand-subtle text-brand">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border-subtle bg-surface-muted text-brand transition-colors group-hover:border-brand/25 group-hover:bg-brand-subtle">
                       <Folder className="h-4 w-4" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h3 className="truncate text-[13px] font-semibold text-text-primary">
+                      <h3 className="truncate text-[13px] font-semibold text-text-primary group-hover:text-brand">
                         {folder.name}
                       </h3>
-                      <p className="text-[11px] text-text-muted">
+                      <p className="font-mono text-[11px] tabular-nums text-text-muted">
                         {folder._count?.documents || 0} files · {folder._count?.children || 0}{" "}
                         subfolders
                       </p>
@@ -358,7 +360,7 @@ export function DocumentsOverviewClient({
                   </Link>
                 ))}
               </div>
-            </Card>
+            </div>
           )}
         </section>
 
@@ -379,28 +381,31 @@ export function DocumentsOverviewClient({
           />
 
           {sharedFolders.length === 0 ? (
-            <Card className="flex min-h-[9rem] items-center justify-center p-5">
+            <Card className="flex min-h-[10rem] items-center justify-center p-5">
               <div className="text-center">
-                <div className="mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-surface-muted text-text-muted">
+                <div className="mx-auto mb-2.5 flex h-10 w-10 items-center justify-center rounded-full border border-border-subtle bg-surface-muted text-text-muted">
                   <ShieldCheck className="h-4 w-4" />
                 </div>
-                <p className="text-xs text-text-muted">No folders have been shared with you yet.</p>
+                <p className="text-xs font-medium text-text-secondary">No shared folders</p>
+                <p className="mt-0.5 text-[11px] text-text-muted">
+                  Collections shared by family members will appear here.
+                </p>
               </div>
             </Card>
           ) : (
-            <Card padding="compact">
-              <div className="space-y-0.5">
+            <div className="overflow-hidden rounded-xl border border-border-subtle bg-surface shadow-xs">
+              <div className="divide-y divide-border-subtle">
                 {sharedFolders.slice(0, 6).map((folder) => (
                   <Link
                     key={folder.id}
                     href={`/folders/${folder.id}`}
-                    className="group flex items-center gap-3 rounded-md px-2.5 py-2.5 transition-colors hover:bg-surface-muted"
+                    className="group flex items-center gap-3.5 px-4 py-3 transition-colors hover:bg-surface-muted/70"
                   >
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-success/20 bg-success-subtle text-success">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-success/20 bg-success-subtle text-success">
                       <Folder className="h-4 w-4" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h3 className="truncate text-[13px] font-semibold text-text-primary">
+                      <h3 className="truncate text-[13px] font-semibold text-text-primary group-hover:text-brand">
                         {folder.name}
                       </h3>
                       <p className="truncate text-[11px] text-text-muted">
@@ -411,7 +416,7 @@ export function DocumentsOverviewClient({
                   </Link>
                 ))}
               </div>
-            </Card>
+            </div>
           )}
         </section>
       </div>
@@ -423,6 +428,6 @@ export function DocumentsOverviewClient({
         onClose={() => setIsCreateFolderOpen(false)}
         onFolderCreated={refreshData}
       />
-    </>
+    </div>
   );
 }

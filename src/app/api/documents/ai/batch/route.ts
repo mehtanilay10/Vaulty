@@ -7,6 +7,8 @@ import { timeoutStaleAiProcessing } from "@/lib/ai-timeout";
 import { AiJobStatus, AiStatus } from "@prisma/client";
 import { z } from "zod";
 import { validateCSRFRequest } from "@/lib/csrf";
+import { userRateLimitResponse } from "@/lib/security-rate-limit";
+import { RATE_LIMITS } from "@/lib/rate-limits";
 
 export async function POST(req: NextRequest) {
   try {
@@ -18,6 +20,12 @@ export async function POST(req: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const rateLimited = await userRateLimitResponse({
+      userId: user.id,
+      ...RATE_LIMITS.documentsAiBatch,
+    });
+    if (rateLimited) return rateLimited;
 
     await timeoutStaleAiProcessing(user.id);
 

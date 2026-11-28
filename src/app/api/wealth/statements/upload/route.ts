@@ -4,6 +4,8 @@ import { validateCSRFRequest } from "@/lib/csrf";
 import { processDocumentWithGemini } from "@/lib/gemini";
 import { generatePdfPasswordCandidates, getPdfPasswordConfig } from "@/lib/pdf-passwords";
 import { extractPdfText } from "@/lib/email-statement-attachments";
+import { userRateLimitResponse } from "@/lib/security-rate-limit";
+import { RATE_LIMITS } from "@/lib/rate-limits";
 
 const ALLOWED_MIME_TYPES = [
   "text/plain",
@@ -115,6 +117,12 @@ export async function POST(req: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const rateLimited = await userRateLimitResponse({
+      userId: user.id,
+      ...RATE_LIMITS.statementsUpload,
+    });
+    if (rateLimited) return rateLimited;
 
     if (!validateCSRFRequest(req)) {
       return NextResponse.json({ error: "Invalid CSRF token." }, { status: 403 });

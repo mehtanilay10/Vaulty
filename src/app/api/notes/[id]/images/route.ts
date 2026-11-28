@@ -3,6 +3,8 @@ import { Prisma } from "@prisma/client";
 import { getCurrentUser } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { validateCSRFRequest } from "@/lib/csrf";
+import { userRateLimitResponse } from "@/lib/security-rate-limit";
+import { RATE_LIMITS } from "@/lib/rate-limits";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -32,6 +34,12 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const rateLimited = await userRateLimitResponse({
+      userId: user.id,
+      ...RATE_LIMITS.notesImages,
+    });
+    if (rateLimited) return rateLimited;
 
     if (!validateCSRFRequest(req)) {
       return NextResponse.json({ error: "Invalid CSRF token." }, { status: 403 });

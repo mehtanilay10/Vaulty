@@ -2,17 +2,14 @@
 
 import Link from "next/link";
 import { PageHeader } from "@/components/shell/PageHeader";
-import { CommandBar, CommandBarButton } from "@/components/ui/CommandBar";
+import { CommandBar, CommandBarButton, CommandBarDivider } from "@/components/ui/CommandBar";
 import { Badge } from "@/components/ui/Badge";
-import { Card } from "@/components/ui/Card";
-import { SectionHeader } from "@/components/ui/SectionHeader";
 import { useUpload } from "@/app/contexts/UploadContext";
 import { useGoogleDriveStatus } from "@/hooks/useGoogleDriveStatus";
 import { cn } from "@/lib/utils";
 import { formatCurrency, isLiabilityType } from "@/lib/wealth";
 import type { User } from "@/types";
 import {
-  AlertTriangle,
   BellRing,
   ArrowRight,
   CheckCircle2,
@@ -20,17 +17,14 @@ import {
   ChevronRight,
   CreditCard,
   FileText,
-  Folder,
-  Globe,
   Lock,
   MessageSquare,
   ShieldCheck,
-  Sparkles,
   Star,
-  TrendingUp,
   Upload,
   Users,
   Wallet,
+  Camera,
 } from "lucide-react";
 
 interface WealthPreviewAccount {
@@ -86,6 +80,7 @@ export interface DashboardOverviewProps {
     hasVault: boolean;
     appCount: number;
     bankCount: number;
+    authenticatorCount?: number;
     favoriteCount: number;
     sharedCount: number;
   };
@@ -108,155 +103,6 @@ export interface DashboardOverviewProps {
     reminders: WealthReminder[];
   };
   initialDriveConnected?: boolean;
-}
-
-function MiniStat({
-  label,
-  value,
-  tone = "default",
-}: {
-  label: string;
-  value: React.ReactNode;
-  tone?: "default" | "brand" | "success" | "danger" | "violet" | "emerald" | "amber";
-}) {
-  const toneClass = {
-    default: "text-text-primary",
-    brand: "text-brand",
-    success: "text-success",
-    danger: "text-danger",
-    violet: "text-purple-600 dark:text-purple-400",
-    emerald: "text-emerald-600 dark:text-emerald-400",
-    amber: "text-amber-600 dark:text-amber-400",
-  }[tone];
-
-  return (
-    <div className="min-w-0 rounded-lg border border-border-subtle bg-surface-muted/60 px-2.5 py-2">
-      <p
-        className={cn("truncate text-[13px] font-semibold leading-5 tabular-nums", toneClass)}
-        title={typeof value === "string" ? value : undefined}
-      >
-        {value}
-      </p>
-      <p className="truncate text-[11px] font-medium text-text-muted" title={label}>
-        {label}
-      </p>
-    </div>
-  );
-}
-
-const domainTones = {
-  brand: {
-    tile: "border-brand/20 bg-brand-subtle text-brand",
-    linkHover: "hover:border-brand/30 hover:text-brand",
-  },
-  violet: {
-    tile: "border-purple-500/20 bg-purple-500/10 text-purple-600 dark:text-purple-400",
-    linkHover: "hover:border-purple-500/30 hover:text-purple-600 dark:hover:text-purple-400",
-  },
-  emerald: {
-    tile: "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-    linkHover: "hover:border-emerald-500/30 hover:text-emerald-600 dark:hover:text-emerald-400",
-  },
-  amber: {
-    tile: "border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400",
-    linkHover: "hover:border-amber-500/30 hover:text-amber-600 dark:hover:text-amber-400",
-  },
-  rose: {
-    tile: "border-rose-500/20 bg-rose-500/10 text-rose-600 dark:text-rose-400",
-    linkHover: "hover:border-rose-500/30 hover:text-rose-600 dark:hover:text-rose-400",
-  },
-  sky: {
-    tile: "border-sky-500/20 bg-sky-500/10 text-sky-600 dark:text-sky-400",
-    linkHover: "hover:border-sky-500/30 hover:text-sky-600 dark:hover:text-sky-400",
-  },
-} as const;
-
-function DomainCard({
-  icon,
-  title,
-  description,
-  href,
-  linkLabel,
-  tone = "brand",
-  children,
-  footer,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  href: string;
-  linkLabel: string;
-  tone?: keyof typeof domainTones;
-  children: React.ReactNode;
-  footer?: React.ReactNode;
-}) {
-  const style = domainTones[tone];
-
-  return (
-    <section className="card flex flex-col overflow-hidden p-0">
-      <div className="flex items-start justify-between gap-3 border-b border-border-subtle bg-surface-muted/40 px-5 py-4">
-        <div className="flex min-w-0 items-center gap-3">
-          <span
-            className={cn(
-              "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border",
-              style.tile,
-            )}
-          >
-            {icon}
-          </span>
-          <div className="min-w-0">
-            <h2 className="truncate text-[15px] font-semibold text-text-primary tracking-tight">
-              {title}
-            </h2>
-            <p className="truncate text-[11px] text-text-muted">{description}</p>
-          </div>
-        </div>
-        <Link
-          href={href}
-          className="inline-flex shrink-0 items-center gap-1 text-[11px] font-semibold text-brand hover:underline"
-        >
-          View
-          <ChevronRight className="h-3.5 w-3.5" />
-        </Link>
-      </div>
-
-      <div className="flex flex-1 flex-col p-5">
-        <div className="flex-1">{children}</div>
-        <Link
-          href={href}
-          className={cn(
-            "mt-4 inline-flex items-center justify-between gap-2 rounded-lg border border-border-subtle bg-surface-muted/60 px-3 py-2 text-[12px] font-semibold text-text-secondary transition-colors",
-            style.linkHover,
-          )}
-        >
-          {footer ?? linkLabel}
-          <ArrowRight className="h-3.5 w-3.5" />
-        </Link>
-      </div>
-    </section>
-  );
-}
-
-function EmptyHint({
-  icon,
-  title,
-  description,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="flex h-full flex-col items-center justify-center rounded-md border border-border-subtle bg-surface-muted/40 px-4 py-6 text-center">
-      <span className="mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-surface-muted text-text-muted">
-        {icon}
-      </span>
-      <p className="text-[12px] font-semibold text-text-primary">{title}</p>
-      <p className="mt-0.5 max-w-[16rem] text-[11px] leading-relaxed text-text-muted">
-        {description}
-      </p>
-    </div>
-  );
 }
 
 function getUrgency(expiryDate: string | null) {
@@ -291,16 +137,116 @@ export function DashboardOverviewClient({
   wealth,
   initialDriveConnected = false,
 }: DashboardOverviewProps) {
-  const { openUpload } = useUpload();
+  const { openUpload, openCamera } = useUpload();
   const { isConnected: liveIsConnected } = useGoogleDriveStatus();
   const isConnected = liveIsConnected || initialDriveConnected;
 
   const credentialCount = credentials.appCount + credentials.bankCount;
-  const hasAttention =
-    documents.expiring.length > 0 || wealth.reminders.length > 0 || customReminders.length > 0;
+  const authenticatorCount = credentials.authenticatorCount ?? 0;
+  const attentionCount =
+    customReminders.length + documents.expiring.length + wealth.reminders.length;
+
+  const combinedAlerts = [
+    ...documents.expiring.map((doc) => ({
+      id: `doc-${doc.id}`,
+      title: doc.name,
+      sub: `${doc.folder?.name || "Unfiled"}${doc.expiryDate ? ` · Expires ${new Date(doc.expiryDate).toLocaleDateString()}` : ""}`,
+      href: `/documents/${doc.id}`,
+      badge: getUrgency(doc.expiryDate),
+      sortTime: doc.expiryDate ? new Date(doc.expiryDate).getTime() : Number.MAX_SAFE_INTEGER,
+    })),
+    ...customReminders.map((reminder) => {
+      const days = Math.ceil(
+        (new Date(reminder.dueAt).setHours(0, 0, 0, 0) - new Date().setHours(0, 0, 0, 0)) /
+          86400000,
+      );
+      return {
+        id: `rem-${reminder.id}`,
+        title: reminder.title,
+        sub: new Date(reminder.dueAt).toLocaleDateString(),
+        href: "/reminders",
+        badge: {
+          label: days < 0 ? `${Math.abs(days)}d overdue` : days === 0 ? "Today" : `${days}d left`,
+          variant: (days < 0 ? "danger" : days <= 3 ? "warning" : "default") as
+            "danger" | "warning" | "default",
+        },
+        sortTime: new Date(reminder.dueAt).getTime(),
+      };
+    }),
+    ...wealth.reminders.map((reminder) => ({
+      id: `wealth-${reminder.accountId}-${reminder.reminderType}`,
+      title: reminder.accountName,
+      sub: getReminderLabel(reminder),
+      href: `/wealth/accounts/${reminder.accountId}`,
+      badge: {
+        label: reminder.reminderType === "PAYMENT_DUE" ? "Payment" : "Expiry",
+        variant: "warning" as const,
+      },
+      sortTime:
+        typeof reminder.dueDate === "string"
+          ? new Date(reminder.dueDate).getTime()
+          : Number.MAX_SAFE_INTEGER - 1,
+    })),
+  ].sort((a, b) => a.sortTime - b.sortTime);
 
   const rawFirstName = user?.name?.split(" ")[0] || user?.email?.split("@")[0] || "User";
   const capitalizedFirstName = rawFirstName.charAt(0).toUpperCase() + rawFirstName.slice(1);
+
+  const setupTasks = [
+    {
+      label: "Connect Google Drive",
+      done: isConnected,
+      href: "/settings",
+      detail: "Choose where documents are stored",
+    },
+    {
+      label: "Upload a document",
+      done: documents.total > 0,
+      href: "/documents",
+      detail: "Add a policy, report or certificate",
+    },
+    {
+      label: "Set up credentials",
+      done: credentials.hasVault,
+      href: "/credentials",
+      detail: "Create your encrypted password vault",
+    },
+    {
+      label: "Add a wealth account",
+      done: wealth.summary.accountCount > 0,
+      href: "/wealth/accounts",
+      detail: "Start tracking your finances",
+    },
+  ];
+  const completedSetupCount = setupTasks.filter((t) => t.done).length;
+  const needsSetup = completedSetupCount < setupTasks.length;
+
+  const nonUsdTotals = wealth.summary.currencyTotals.filter((total) => total.currency !== "USD");
+  const singleCurrencyTotal = nonUsdTotals.length === 1 ? nonUsdTotals[0] : null;
+  const primaryNetWorth = singleCurrencyTotal
+    ? singleCurrencyTotal.netWorth
+    : wealth.summary.currency === "USD"
+      ? 0
+      : wealth.summary.netWorth;
+  const primaryAssets = singleCurrencyTotal
+    ? singleCurrencyTotal.totalAssets
+    : wealth.summary.currency === "USD"
+      ? 0
+      : wealth.summary.totalAssets;
+  const primaryLiabilities = singleCurrencyTotal
+    ? singleCurrencyTotal.totalLiabilities
+    : wealth.summary.currency === "USD"
+      ? 0
+      : wealth.summary.totalLiabilities;
+  const primaryCurrency = singleCurrencyTotal
+    ? singleCurrencyTotal.currency
+    : wealth.summary.currency === "USD"
+      ? "INR"
+      : wealth.summary.currency || "INR";
+
+  const totalGross = Math.max(0, primaryAssets) + Math.max(0, primaryLiabilities);
+  const assetRatio =
+    totalGross > 0 ? Math.round((Math.max(0, primaryAssets) / totalGross) * 100) : 100;
 
   return (
     <>
@@ -317,77 +263,76 @@ export function DashboardOverviewClient({
             Upload document
           </CommandBarButton>
           <CommandBarButton
+            icon={<Camera className="h-3.5 w-3.5" />}
+            onClick={() => openCamera()}
+            disabled={!isConnected}
+          >
+            Scan
+          </CommandBarButton>
+          <CommandBarDivider />
+          <CommandBarButton
             icon={<MessageSquare className="h-3.5 w-3.5" />}
             item={{ key: "chat", label: "Ask AI", href: "/chat" }}
+          />
+          <CommandBarButton
+            icon={<BellRing className="h-3.5 w-3.5" />}
+            item={{ key: "reminders", label: "Reminders", href: "/reminders" }}
           />
         </CommandBar>
       </div>
 
-      {(!credentials.hasVault ||
-        !isConnected ||
-        documents.total === 0 ||
-        wealth.summary.accountCount === 0) && (
-        <section className="card p-5">
-          <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-brand">
-                Getting started
-              </p>
-              <h2 className="mt-1 text-base font-semibold text-text-primary">
-                Set up your personal vault
-              </h2>
-              <p className="mt-1 text-sm text-text-muted">
-                Complete these steps to get the most out of Vaulty.
-              </p>
+      {needsSetup && (
+        <section className="card overflow-hidden p-0">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border-subtle bg-surface-muted/40 px-5 py-3.5">
+            <div className="flex items-center gap-3">
+              <span className="font-mono text-xs font-bold text-brand">
+                {completedSetupCount}/{setupTasks.length}
+              </span>
+              <div>
+                <h2 className="text-sm font-semibold text-text-primary">
+                  Set up your personal vault
+                </h2>
+                <p className="text-xs text-text-muted">
+                  Complete these steps to unlock full workspace capabilities.
+                </p>
+              </div>
             </div>
-            <Badge variant="info">Setup checklist</Badge>
+            <div className="flex items-center gap-2">
+              <div className="h-1.5 w-28 overflow-hidden rounded-full bg-surface-muted">
+                <div
+                  className="h-full bg-brand transition-all duration-300"
+                  style={{ width: `${(completedSetupCount / setupTasks.length) * 100}%` }}
+                />
+              </div>
+              <Badge variant="info">Checklist</Badge>
+            </div>
           </div>
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
-            {[
-              {
-                label: "Connect Google Drive",
-                done: isConnected,
-                href: "/settings",
-                detail: "Choose where documents are stored",
-              },
-              {
-                label: "Upload a document",
-                done: documents.total > 0,
-                href: "/documents",
-                detail: "Add a policy, report or certificate",
-              },
-              {
-                label: "Set up credentials",
-                done: credentials.hasVault,
-                href: "/credentials",
-                detail: "Create your encrypted password vault",
-              },
-              {
-                label: "Add a wealth account",
-                done: wealth.summary.accountCount > 0,
-                href: "/wealth/accounts",
-                detail: "Start tracking your finances",
-              },
-            ].map((task) => (
+          <div className="grid grid-cols-1 divide-y divide-border-subtle sm:grid-cols-2 sm:divide-y-0 sm:divide-x xl:grid-cols-4">
+            {setupTasks.map((task) => (
               <Link
                 key={task.label}
                 href={task.href}
-                className="flex items-start gap-3 rounded-xl bg-surface-muted/70 p-3 transition-colors hover:bg-surface-muted"
+                className="flex items-start gap-3 p-4 transition-colors hover:bg-surface-muted/45"
               >
                 <span
-                  className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${task.done ? "bg-success-subtle text-success" : "bg-surface text-text-muted"}`}
+                  className={cn(
+                    "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border",
+                    task.done
+                      ? "border-success/30 bg-success-subtle text-success"
+                      : "border-border bg-surface-muted text-text-muted",
+                  )}
                 >
                   {task.done ? (
-                    <CheckCircle2 className="h-4 w-4" />
+                    <CheckCircle2 className="h-3.5 w-3.5" />
                   ) : (
-                    <span className="text-xs">•</span>
+                    <span className="h-1.5 w-1.5 rounded-full bg-text-muted/60" />
                   )}
                 </span>
                 <span className="min-w-0">
-                  <span className="block text-sm font-semibold text-text-primary">
+                  <span className="block text-[13px] font-semibold text-text-primary">
                     {task.label}
                   </span>
-                  <span className="mt-0.5 block text-xs text-text-muted">
+                  <span className="mt-0.5 block text-[11.5px] text-text-muted">
                     {task.done ? "Completed" : task.detail}
                   </span>
                 </span>
@@ -397,518 +342,432 @@ export function DashboardOverviewClient({
         </section>
       )}
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <DomainCard
-          tone="brand"
-          icon={<FileText className="h-5 w-5" />}
-          title="Documents"
-          description="Private files and AI summaries"
-          href="/documents"
-          linkLabel="Open document vault"
-        >
-          <div className="grid grid-cols-3 gap-2">
-            <MiniStat label="Documents" value={documents.total} tone="brand" />
-            <MiniStat label="Folders" value={documents.folders} />
-            <MiniStat label="AI ready" value={documents.aiSummaries} tone="success" />
+      {/* Responsive Module Cards — Max 3 per row on desktop, 2 on tablet, 1 on mobile */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {/* 1. Documents */}
+        <section className="card flex flex-col overflow-hidden p-0">
+          <div className="flex items-center justify-between border-b border-border-subtle px-5 py-3.5">
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-7 w-7 items-center justify-center rounded-md bg-brand-subtle text-brand">
+                <FileText className="h-4 w-4" />
+              </span>
+              <div>
+                <h2 className="text-[14px] font-semibold text-text-primary">Documents</h2>
+                <p className="text-[11px] text-text-muted">Drive archive &amp; AI</p>
+              </div>
+            </div>
+            <Link
+              href="/documents"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-brand hover:underline"
+            >
+              Open <ChevronRight className="h-3.5 w-3.5" />
+            </Link>
           </div>
 
-          <div className="mt-4 space-y-1.5">
-            {documents.recent.length === 0 ? (
-              <EmptyHint
-                icon={<FileText className="h-4 w-4" />}
-                title="No documents yet"
-                description="Upload your first document to start building your private vault."
-              />
-            ) : (
-              documents.recent.slice(0, 3).map((doc) => (
-                <Link
-                  key={doc.id}
-                  href={`/documents/${doc.id}`}
-                  className="group flex items-center gap-2.5 rounded-lg px-2 py-1.5 transition-colors hover:bg-surface-muted"
-                >
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-brand/15 bg-brand-subtle text-brand">
-                    <FileText className="h-3.5 w-3.5" />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-[12px] font-semibold text-text-primary">
-                      {doc.name}
-                    </p>
-                    <p className="truncate text-[10px] text-text-muted">
-                      {doc.folder?.name || "Unfiled"} ·{" "}
-                      {new Date(doc.createdAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <ChevronRight className="h-3.5 w-3.5 shrink-0 text-text-muted transition-transform group-hover:translate-x-0.5" />
-                </Link>
-              ))
-            )}
-          </div>
-        </DomainCard>
+          <div className="flex flex-1 flex-col p-5">
+            <div className="grid grid-cols-3 divide-x divide-border-subtle rounded-lg border border-border-subtle bg-surface-muted/45 text-center">
+              <div className="px-2 py-2.5">
+                <p className="font-mono text-base font-semibold tabular-nums text-brand">
+                  {documents.total}
+                </p>
+                <p className="text-[10.5px] font-medium text-text-muted">Documents</p>
+              </div>
+              <div className="px-2 py-2.5">
+                <p className="font-mono text-base font-semibold tabular-nums text-text-primary">
+                  {documents.folders}
+                </p>
+                <p className="text-[10.5px] font-medium text-text-muted">Folders</p>
+              </div>
+              <div className="px-2 py-2.5">
+                <p className="font-mono text-base font-semibold tabular-nums text-success">
+                  {documents.aiSummaries}
+                </p>
+                <p className="text-[10.5px] font-medium text-text-muted">AI ready</p>
+              </div>
+            </div>
 
-        <DomainCard
-          tone="violet"
-          icon={<Lock className="h-5 w-5" />}
-          title="Credentials"
-          description="Encrypted app and bank logins"
-          href="/credentials"
-          linkLabel={credentials.hasVault ? "Open credential vault" : "Set up credential vault"}
-        >
-          <div className="grid grid-cols-3 gap-2">
-            <MiniStat label="Apps" value={credentials.appCount} tone="violet" />
-            <MiniStat label="Banks" value={credentials.bankCount} />
-            <MiniStat label="Favorites" value={credentials.favoriteCount} tone="amber" />
-          </div>
-
-          <div className="mt-4 space-y-1.5">
-            {!credentials.hasVault ? (
-              <EmptyHint
-                icon={<Lock className="h-4 w-4" />}
-                title="No credential vault"
-                description="Create an encrypted vault for your app and bank logins."
-              />
-            ) : (
-              <>
-                <div className="flex items-center gap-2.5 rounded-lg border border-purple-500/20 bg-purple-500/10 px-2.5 py-2">
-                  <ShieldCheck className="h-4 w-4 shrink-0 text-purple-600 dark:text-purple-400" />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[12px] font-semibold text-text-primary">
-                      {credentialCount} credentials secured
-                    </p>
-                    <p className="truncate text-[10px] text-text-muted">Encrypted on your device</p>
-                  </div>
-                  <Badge variant="violet">Protected</Badge>
+            <div className="mt-4 flex-1 space-y-1">
+              <p className="section-eyebrow px-1 pb-1">Recent uploads</p>
+              {documents.recent.length === 0 ? (
+                <div className="rounded-lg border border-dashed border-border-subtle bg-surface-muted/30 px-4 py-6 text-center text-xs text-text-muted">
+                  Upload your first document to build your archive.
                 </div>
-                <div className="flex items-center gap-2.5 rounded-lg px-2.5 py-2">
-                  <Star className="h-4 w-4 shrink-0 text-amber-500" />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[12px] font-semibold text-text-primary">
-                      {credentials.favoriteCount} favorites
-                    </p>
-                    <p className="truncate text-[10px] text-text-muted">Quick access logins</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2.5 rounded-lg px-2.5 py-2">
-                  <Users className="h-4 w-4 shrink-0 text-text-muted" />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[12px] font-semibold text-text-primary">
-                      {credentials.sharedCount} shared with you
-                    </p>
-                    <p className="truncate text-[10px] text-text-muted">Family vault access</p>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-        </DomainCard>
-
-        <DomainCard
-          tone="emerald"
-          icon={<Wallet className="h-5 w-5" />}
-          title="Wealth"
-          description="Accounts, balances, and net worth"
-          href="/wealth"
-          linkLabel="Open wealth dashboard"
-        >
-          {(() => {
-            const nonUsdTotals = wealth.summary.currencyTotals.filter(
-              (total) => total.currency !== "USD",
-            );
-            const single = nonUsdTotals.length === 1 ? nonUsdTotals[0] : null;
-            const netWorth = single
-              ? single.netWorth
-              : wealth.summary.currency === "USD"
-                ? 0
-                : wealth.summary.netWorth;
-            const totalAssets = single
-              ? single.totalAssets
-              : wealth.summary.currency === "USD"
-                ? 0
-                : wealth.summary.totalAssets;
-            const totalLiabilities = single
-              ? single.totalLiabilities
-              : wealth.summary.currency === "USD"
-                ? 0
-                : wealth.summary.totalLiabilities;
-            const currency = single
-              ? single.currency
-              : wealth.summary.currency === "USD"
-                ? "INR"
-                : wealth.summary.currency || "INR";
-
-            if (nonUsdTotals.length > 1) {
-              return (
-                <div className="space-y-2">
-                  {nonUsdTotals.map((total) => (
-                    <div
-                      key={total.currency}
-                      className="rounded-md border border-border-subtle bg-surface-muted/60 px-3 py-2.5"
-                    >
-                      <p className="text-[10px] font-medium uppercase tracking-wide text-text-muted">
-                        Net worth · {total.currency}
-                      </p>
-                      <p className="truncate text-[18px] font-semibold leading-7 tabular-nums text-brand">
-                        {formatCurrency(total.netWorth, total.currency)}
-                      </p>
-                      <div className="mt-1 grid grid-cols-2 gap-2">
-                        <MiniStat
-                          label="Assets"
-                          value={formatCurrency(total.totalAssets, total.currency)}
-                          tone="success"
-                        />
-                        <MiniStat
-                          label="Liabilities"
-                          value={formatCurrency(total.totalLiabilities, total.currency)}
-                          tone="danger"
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              );
-            }
-
-            return (
-              <>
-                <div className="rounded-md border border-border-subtle bg-surface-muted/60 px-3 py-2.5">
-                  <p className="text-[11px] font-medium uppercase tracking-wide text-text-muted">
-                    Net worth
-                  </p>
-                  <p className="truncate text-[20px] font-semibold leading-7 tabular-nums text-brand">
-                    {formatCurrency(netWorth, currency)}
-                  </p>
-                </div>
-                <div className="mt-2 grid grid-cols-2 gap-2">
-                  <MiniStat
-                    label="Assets"
-                    value={formatCurrency(totalAssets, currency)}
-                    tone="success"
-                  />
-                  <MiniStat
-                    label="Liabilities"
-                    value={formatCurrency(totalLiabilities, currency)}
-                    tone="danger"
-                  />
-                </div>
-              </>
-            );
-          })()}
-
-          <div className="mt-4 space-y-1.5">
-            {wealth.accounts.length === 0 ? (
-              <EmptyHint
-                icon={<Wallet className="h-4 w-4" />}
-                title="No accounts tracked"
-                description="Add your savings, investments, cards, or loans to see your net worth."
-              />
-            ) : (
-              wealth.accounts.slice(0, 3).map((account) => {
-                const liability = isLiabilityType(account.type);
-                return (
+              ) : (
+                documents.recent.slice(0, 3).map((doc) => (
                   <Link
-                    key={account.id}
-                    href={`/wealth/accounts/${account.id}`}
-                    className="group flex items-center gap-2.5 rounded-md px-2 py-1.5 transition-colors hover:bg-surface-muted"
+                    key={doc.id}
+                    href={`/documents/${doc.id}`}
+                    className="group flex items-center gap-2.5 rounded-lg px-2 py-2 transition-colors hover:bg-surface-muted"
                   >
-                    <span
-                      className={cn(
-                        "flex h-7 w-7 shrink-0 items-center justify-center rounded-md border",
-                        liability
-                          ? "border-danger/20 bg-danger-subtle text-danger"
-                          : "border-brand/15 bg-brand-subtle text-brand",
-                      )}
-                    >
-                      {liability ? (
-                        <CreditCard className="h-3.5 w-3.5" />
-                      ) : (
-                        <Wallet className="h-3.5 w-3.5" />
-                      )}
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-brand/20 bg-brand-subtle text-brand">
+                      <FileText className="h-3.5 w-3.5" />
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-[12px] font-semibold text-text-primary">
-                        {account.name}
+                      <p className="truncate text-[12.5px] font-semibold text-text-primary">
+                        {doc.name}
                       </p>
-                      <p className="truncate text-[10px] capitalize text-text-muted">
-                        {account.type.replace(/_/g, " ").toLowerCase()}
+                      <p className="truncate text-[10.5px] text-text-muted">
+                        {doc.folder?.name || "Unfiled"} ·{" "}
+                        {new Date(doc.createdAt).toLocaleDateString()}
                       </p>
                     </div>
-                    <span
-                      className={cn(
-                        "shrink-0 text-[11px] font-semibold",
-                        liability ? "text-danger" : "text-text-primary",
-                      )}
-                    >
-                      {formatCurrency(account.currentBalance, account.currency)}
-                    </span>
+                    <ChevronRight className="h-3.5 w-3.5 shrink-0 text-text-muted transition-transform group-hover:translate-x-0.5" />
                   </Link>
-                );
-              })
-            )}
-          </div>
-        </DomainCard>
-      </div>
-
-      <section className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <div className="flex items-center gap-3 rounded-xl border border-border-subtle bg-surface-muted/50 p-4">
-          <span
-            className={`flex h-9 w-9 items-center justify-center rounded-lg ${isConnected ? "bg-success-subtle text-success" : "bg-warning-subtle text-warning"}`}
-          >
-            <ShieldCheck className="h-4 w-4" />
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-text-primary">Storage & synchronization</p>
-            <p className="text-xs text-text-muted">
-              {isConnected
-                ? "Google Drive is connected for document storage."
-                : "Connect Google Drive to enable document storage and sync."}
-            </p>
-          </div>
-          <Badge variant={isConnected ? "success" : "warning"}>
-            {isConnected ? "Connected" : "Setup needed"}
-          </Badge>
-        </div>
-        <div className="flex items-center gap-3 rounded-xl border border-border-subtle bg-surface-muted/50 p-4">
-          <span
-            className={`flex h-9 w-9 items-center justify-center rounded-lg ${credentials.hasVault ? "bg-success-subtle text-success" : "bg-warning-subtle text-warning"}`}
-          >
-            <Lock className="h-4 w-4" />
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-text-primary">Credential security</p>
-            <p className="text-xs text-text-muted">
-              {credentials.hasVault
-                ? "Your credential vault is configured with client-side encryption."
-                : "Set up your encrypted credentials vault."}
-            </p>
-          </div>
-          <Badge variant={credentials.hasVault ? "success" : "warning"}>
-            {credentials.hasVault ? "Configured" : "Not set up"}
-          </Badge>
-        </div>
-      </section>
-
-      {!hasAttention && (
-        <section className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border-subtle bg-surface-muted/40 px-4 py-3">
-          <div className="flex items-center gap-2">
-            <BellRing className="h-4 w-4 text-text-muted" />
-            <div>
-              <p className="text-sm font-semibold text-text-primary">
-                Stay ahead of important dates
-              </p>
-              <p className="text-xs text-text-muted">
-                Create reminders for renewals, payments and personal milestones.
-              </p>
+                ))
+              )}
             </div>
+
+            <Link
+              href="/documents/library"
+              className="mt-4 inline-flex items-center justify-between rounded-lg border border-border-subtle bg-surface-muted/50 px-3 py-2 text-xs font-semibold text-text-secondary transition-colors hover:border-border hover:text-text-primary"
+            >
+              <span>Browse full library</span>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
           </div>
-          <Link href="/reminders" className="text-xs font-semibold text-brand hover:underline">
-            Set a reminder <ArrowRight className="inline h-3 w-3" />
-          </Link>
         </section>
-      )}
 
-      {hasAttention && (
-        <section className="space-y-3">
-          <SectionHeader
-            icon={<AlertTriangle className="h-4 w-4 text-warning" />}
-            title="Needs attention"
-            description="Documents and financial items that are due soon."
-            count={documents.expiring.length + wealth.reminders.length + customReminders.length}
-          />
+        {/* 2. Wealth */}
+        <section className="card flex flex-col overflow-hidden p-0">
+          <div className="flex items-center justify-between border-b border-border-subtle px-5 py-3.5">
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-7 w-7 items-center justify-center rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                <Wallet className="h-4 w-4" />
+              </span>
+              <div>
+                <h2 className="text-[14px] font-semibold text-text-primary">Wealth</h2>
+                <p className="text-[11px] text-text-muted">
+                  {wealth.summary.accountCount} tracked account
+                  {wealth.summary.accountCount === 1 ? "" : "s"}
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/wealth"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-brand hover:underline"
+            >
+              Open <ChevronRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
 
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-            {customReminders.length > 0 && (
-              <Card className="overflow-hidden p-0">
-                <div className="flex items-center justify-between border-b border-border-subtle px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    <BellRing className="h-4 w-4 text-text-muted" />
-                    <h3 className="text-[13px] font-semibold text-text-primary">Your reminders</h3>
-                  </div>
-                  <Link
-                    href="/reminders"
-                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-brand hover:underline"
+          <div className="flex flex-1 flex-col p-5">
+            {nonUsdTotals.length > 1 ? (
+              <div className="space-y-2.5">
+                {nonUsdTotals.map((total) => (
+                  <div
+                    key={total.currency}
+                    className="rounded-lg border border-border-subtle bg-surface-muted/50 px-3 py-2"
                   >
-                    Manage
-                    <ChevronRight className="h-3.5 w-3.5" />
-                  </Link>
-                </div>
-                <div className="divide-y divide-border-subtle">
-                  {customReminders.map((reminder) => {
-                    const days = Math.ceil(
-                      (new Date(reminder.dueAt).setHours(0, 0, 0, 0) -
-                        new Date().setHours(0, 0, 0, 0)) /
-                        86400000,
-                    );
-                    return (
-                      <Link
-                        key={reminder.id}
-                        href="/reminders"
-                        className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-surface-muted/70"
-                      >
-                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-brand/15 bg-brand-subtle text-brand">
-                          <CalendarClock className="h-4 w-4" />
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span className="block truncate text-[12px] font-semibold text-text-primary">
-                            {reminder.title}
-                          </span>
-                          <span className="block text-[10px] text-text-muted">
-                            {new Date(reminder.dueAt).toLocaleDateString()}
-                          </span>
-                        </span>
-                        <Badge variant={days < 0 ? "danger" : days <= 3 ? "warning" : "default"}>
-                          {days < 0
-                            ? `${Math.abs(days)}d overdue`
-                            : days === 0
-                              ? "Today"
-                              : `${days}d left`}
-                        </Badge>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </Card>
-            )}
-            {documents.expiring.length > 0 && (
-              <Card className="overflow-hidden p-0">
-                <div className="flex items-center justify-between border-b border-border-subtle px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-text-muted" />
-                    <h3 className="text-[13px] font-semibold text-text-primary">
-                      Expiring documents
-                    </h3>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10.5px] font-semibold uppercase tracking-wider text-text-muted">
+                        Net worth · {total.currency}
+                      </span>
+                      <span className="font-mono text-sm font-semibold tabular-nums text-text-primary">
+                        {formatCurrency(total.netWorth, total.currency)}
+                      </span>
+                    </div>
+                    <div className="mt-1 flex items-center justify-between text-[10.5px] text-text-muted">
+                      <span className="text-success tabular-nums">
+                        +{formatCurrency(total.totalAssets, total.currency)}
+                      </span>
+                      <span className="text-danger tabular-nums">
+                        -{formatCurrency(total.totalLiabilities, total.currency)}
+                      </span>
+                    </div>
                   </div>
-                  <Link
-                    href="/documents"
-                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-brand hover:underline"
-                  >
-                    View
-                    <ChevronRight className="h-3.5 w-3.5" />
-                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div>
+                <p className="section-eyebrow">Net Worth ({primaryCurrency})</p>
+                <p className="mt-1 font-mono text-[1.5rem] font-semibold leading-8 tracking-tight tabular-nums text-text-primary">
+                  {formatCurrency(primaryNetWorth, primaryCurrency)}
+                </p>
+
+                {totalGross > 0 && (
+                  <div className="mt-2.5">
+                    <div className="flex h-1.5 overflow-hidden rounded-full bg-surface-muted">
+                      <div
+                        className="bg-emerald-600 dark:bg-emerald-400"
+                        style={{ width: `${assetRatio}%` }}
+                      />
+                      <div className="bg-rose-500" style={{ width: `${100 - assetRatio}%` }} />
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-2.5 grid grid-cols-2 gap-2">
+                  <div className="rounded-lg border border-border-subtle bg-surface-muted/45 px-2.5 py-2">
+                    <p className="text-[10px] font-medium text-text-muted">Assets</p>
+                    <p className="mt-0.5 truncate font-mono text-[12px] font-semibold tabular-nums text-success">
+                      {formatCurrency(primaryAssets, primaryCurrency)}
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-border-subtle bg-surface-muted/45 px-2.5 py-2">
+                    <p className="text-[10px] font-medium text-text-muted">Liabilities</p>
+                    <p className="mt-0.5 truncate font-mono text-[12px] font-semibold tabular-nums text-danger">
+                      {formatCurrency(primaryLiabilities, primaryCurrency)}
+                    </p>
+                  </div>
                 </div>
-                <div className="divide-y divide-border-subtle">
-                  {documents.expiring.map((doc) => {
-                    const urgency = getUrgency(doc.expiryDate);
-                    return (
-                      <Link
-                        key={doc.id}
-                        href={`/documents/${doc.id}`}
-                        className="group flex items-center gap-3 px-4 py-3 transition-colors hover:bg-surface-muted/70"
-                      >
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-warning/20 bg-warning-subtle text-warning">
-                          <CalendarClock className="h-4 w-4" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-[12px] font-semibold text-text-primary">
-                            {doc.name}
-                          </p>
-                          <p className="truncate text-[10px] text-text-muted">
-                            {doc.folder?.name}
-                            {doc.expiryDate
-                              ? ` · Expires ${new Date(doc.expiryDate).toLocaleDateString()}`
-                              : ""}
-                          </p>
-                        </div>
-                        <Badge variant={urgency.variant}>{urgency.label}</Badge>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </Card>
+              </div>
             )}
 
-            {wealth.reminders.length > 0 && (
-              <Card className="overflow-hidden p-0">
-                <div className="flex items-center justify-between border-b border-border-subtle px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    <Wallet className="h-4 w-4 text-text-muted" />
-                    <h3 className="text-[13px] font-semibold text-text-primary">
-                      Wealth reminders
-                    </h3>
-                  </div>
-                  <Link
-                    href="/wealth"
-                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-brand hover:underline"
-                  >
-                    View
-                    <ChevronRight className="h-3.5 w-3.5" />
-                  </Link>
+            <div className="mt-4 flex-1 space-y-1 border-t border-border-subtle pt-3">
+              {wealth.accounts.length === 0 ? (
+                <div className="py-4 text-center text-xs text-text-muted">
+                  Add accounts to track your portfolio.
                 </div>
-                <div className="divide-y divide-border-subtle">
-                  {wealth.reminders.map((reminder) => (
+              ) : (
+                wealth.accounts.slice(0, 2).map((account) => {
+                  const liability = isLiabilityType(account.type);
+                  return (
                     <Link
-                      key={`${reminder.accountId}-${reminder.reminderType}`}
-                      href={`/wealth/accounts/${reminder.accountId}`}
-                      className="group flex items-center gap-3 px-4 py-3 transition-colors hover:bg-surface-muted/70"
+                      key={account.id}
+                      href={`/wealth/accounts/${account.id}`}
+                      className="group flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-surface-muted"
                     >
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-info/20 bg-info-subtle text-info">
-                        {reminder.type === "CREDIT_CARD" ? (
-                          <CreditCard className="h-4 w-4" />
-                        ) : (
-                          <Wallet className="h-4 w-4" />
+                      <div className="flex min-w-0 items-center gap-2">
+                        <span
+                          className={cn(
+                            "flex h-7 w-7 shrink-0 items-center justify-center rounded-md border",
+                            liability
+                              ? "border-danger/20 bg-danger-subtle text-danger"
+                              : "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+                          )}
+                        >
+                          {liability ? (
+                            <CreditCard className="h-3.5 w-3.5" />
+                          ) : (
+                            <Wallet className="h-3.5 w-3.5" />
+                          )}
+                        </span>
+                        <div className="min-w-0">
+                          <p className="truncate text-[12px] font-semibold text-text-primary">
+                            {account.name}
+                          </p>
+                          <p className="truncate text-[10px] capitalize text-text-muted">
+                            {account.type.replace(/_/g, " ").toLowerCase()}
+                          </p>
+                        </div>
+                      </div>
+                      <span
+                        className={cn(
+                          "shrink-0 font-mono text-[11.5px] font-semibold tabular-nums",
+                          liability ? "text-danger" : "text-text-primary",
                         )}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-[12px] font-semibold text-text-primary">
-                          {reminder.accountName}
-                        </p>
-                        <p className="truncate text-[11px] text-text-muted">
-                          {getReminderLabel(reminder)}
-                        </p>
-                      </div>
-                      <Badge variant={reminder.reminderType === "PAYMENT_DUE" ? "warning" : "info"}>
-                        {reminder.reminderType === "PAYMENT_DUE" ? "Payment due" : "Expiring"}
-                      </Badge>
+                      >
+                        {formatCurrency(account.currentBalance, account.currency)}
+                      </span>
                     </Link>
-                  ))}
-                </div>
-              </Card>
-            )}
+                  );
+                })
+              )}
+            </div>
+
+            <Link
+              href="/wealth/accounts"
+              className="mt-4 inline-flex items-center justify-between rounded-lg border border-border-subtle bg-surface-muted/50 px-3 py-2 text-xs font-semibold text-text-secondary transition-colors hover:border-border hover:text-text-primary"
+            >
+              <span>Manage accounts</span>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
           </div>
         </section>
-      )}
 
-      <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {[
-          {
-            href: "/documents/library",
-            icon: Folder,
-            label: "Browse all documents",
-            hint: `${documents.total} files in your vault`,
-          },
-          {
-            href: "/credentials",
-            icon: Globe,
-            label: "Manage credentials",
-            hint: `${credentialCount} logins stored`,
-          },
-          {
-            href: "/wealth/accounts",
-            icon: TrendingUp,
-            label: "Review accounts",
-            hint: `${wealth.summary.accountCount} active accounts`,
-          },
-          {
-            href: "/chat",
-            icon: Sparkles,
-            label: "Ask your vault",
-            hint: "AI answers grounded in your documents",
-          },
-        ].map(({ href, icon: Icon, label, hint }) => (
-          <Link
-            key={href}
-            href={href}
-            className="card card-hover group flex items-center gap-3 p-4"
-          >
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-brand/15 bg-brand-subtle text-brand">
-              <Icon className="h-4 w-4" />
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-[12px] font-semibold text-text-primary">{label}</p>
-              <p className="truncate text-[11px] text-text-muted">{hint}</p>
+        {/* 3. Credentials */}
+        <section className="card flex flex-col overflow-hidden p-0">
+          <div className="flex items-center justify-between border-b border-border-subtle px-5 py-3.5">
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-7 w-7 items-center justify-center rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400">
+                <Lock className="h-4 w-4" />
+              </span>
+              <div>
+                <h2 className="text-[14px] font-semibold text-text-primary">Credentials</h2>
+                <p className="text-[11px] text-text-muted">
+                  {credentials.hasVault ? `${credentialCount} secured items` : "Encrypted vault"}
+                </p>
+              </div>
             </div>
-            <ArrowRight className="h-4 w-4 shrink-0 text-text-muted transition-transform group-hover:translate-x-0.5" />
-          </Link>
-        ))}
-      </section>
+            <Link
+              href="/credentials"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-brand hover:underline"
+            >
+              Open <ChevronRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+
+          <div className="flex flex-1 flex-col p-5">
+            {!credentials.hasVault ? (
+              <div className="flex flex-1 flex-col items-center justify-center rounded-lg border border-dashed border-border bg-surface-muted/35 p-4 text-center">
+                <Lock className="mb-2 h-6 w-6 text-purple-600 dark:text-purple-400" />
+                <p className="text-xs font-semibold text-text-primary">No credential vault</p>
+                <p className="mt-1 text-[11px] leading-relaxed text-text-muted">
+                  Create an encrypted vault for app logins, bank PINs, and 2FA codes.
+                </p>
+              </div>
+            ) : (
+              <div className="flex-1 space-y-4">
+                <div className="grid grid-cols-3 divide-x divide-border-subtle rounded-lg border border-border-subtle bg-surface-muted/45 text-center">
+                  <Link
+                    href="/credentials/account"
+                    className="px-2 py-2.5 transition-colors hover:bg-surface-muted"
+                  >
+                    <p className="font-mono text-base font-semibold tabular-nums text-text-primary">
+                      {credentials.appCount}
+                    </p>
+                    <p className="text-[10.5px] font-medium text-text-muted">App Pass</p>
+                  </Link>
+                  <Link
+                    href="/credentials/bank"
+                    className="px-2 py-2.5 transition-colors hover:bg-surface-muted"
+                  >
+                    <p className="font-mono text-base font-semibold tabular-nums text-text-primary">
+                      {credentials.bankCount}
+                    </p>
+                    <p className="text-[10.5px] font-medium text-text-muted">Bank Pass</p>
+                  </Link>
+                  <Link
+                    href="/credentials?tab=AUTH"
+                    className="px-2 py-2.5 transition-colors hover:bg-surface-muted"
+                  >
+                    <p className="font-mono text-base font-semibold tabular-nums text-brand">
+                      {authenticatorCount}
+                    </p>
+                    <p className="text-[10.5px] font-medium text-text-muted">2FA</p>
+                  </Link>
+                </div>
+
+                <dl className="divide-y divide-border-subtle rounded-lg border border-border-subtle text-xs">
+                  <div className="flex items-center justify-between px-3 py-2.5">
+                    <dt className="flex items-center gap-1.5 text-text-muted">
+                      <ShieldCheck className="h-3.5 w-3.5 text-success" />
+                      Cipher
+                    </dt>
+                    <dd className="font-mono text-[11px] font-semibold text-text-primary">
+                      AES-256-GCM
+                    </dd>
+                  </div>
+                  <div className="flex items-center justify-between px-3 py-2.5">
+                    <dt className="flex items-center gap-1.5 text-text-muted">
+                      <Star className="h-3.5 w-3.5 text-amber-500" /> Favorites
+                    </dt>
+                    <dd className="font-mono font-semibold tabular-nums text-text-primary">
+                      {credentials.favoriteCount}
+                    </dd>
+                  </div>
+                  <div className="flex items-center justify-between px-3 py-2.5">
+                    <dt className="flex items-center gap-1.5 text-text-muted">
+                      <Users className="h-3.5 w-3.5 text-text-muted" /> Shared with you
+                    </dt>
+                    <dd className="font-mono font-semibold tabular-nums text-text-primary">
+                      {credentials.sharedCount}
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+            )}
+
+            <Link
+              href="/credentials"
+              className="mt-4 inline-flex items-center justify-between rounded-lg border border-border-subtle bg-surface-muted/50 px-3 py-2 text-xs font-semibold text-text-secondary transition-colors hover:border-border hover:text-text-primary"
+            >
+              <span>Manage credentials</span>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+        </section>
+
+        {/* 4. Reminders */}
+        <section className="card flex flex-col overflow-hidden p-0">
+          <div className="flex items-center justify-between border-b border-border-subtle px-5 py-3.5">
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-7 w-7 items-center justify-center rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                <BellRing className="h-4 w-4" />
+              </span>
+              <div>
+                <h2 className="text-[14px] font-semibold text-text-primary">Reminders</h2>
+                <p className="text-[11px] text-text-muted">
+                  {attentionCount === 0
+                    ? "All clear"
+                    : `${attentionCount} upcoming item${attentionCount === 1 ? "" : "s"}`}
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/reminders"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-brand hover:underline"
+            >
+              Open <ChevronRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+
+          <div className="flex flex-1 flex-col p-5">
+            <div className="grid grid-cols-3 divide-x divide-border-subtle rounded-lg border border-border-subtle bg-surface-muted/45 text-center">
+              <div className="px-2 py-2.5">
+                <p className="font-mono text-base font-semibold tabular-nums text-text-primary">
+                  {customReminders.length}
+                </p>
+                <p className="text-[10.5px] font-medium text-text-muted">Tasks</p>
+              </div>
+              <div className="px-2 py-2.5">
+                <p className="font-mono text-base font-semibold tabular-nums text-warning">
+                  {documents.expiring.length}
+                </p>
+                <p className="text-[10.5px] font-medium text-text-muted">Expiring</p>
+              </div>
+              <div className="px-2 py-2.5">
+                <p className="font-mono text-base font-semibold tabular-nums text-danger">
+                  {wealth.reminders.length}
+                </p>
+                <p className="text-[10.5px] font-medium text-text-muted">Dues</p>
+              </div>
+            </div>
+
+            <div className="mt-4 flex-1 space-y-1">
+              <p className="section-eyebrow px-1 pb-1">Upcoming schedule</p>
+              {combinedAlerts.length === 0 ? (
+                <div className="rounded-lg border border-dashed border-border-subtle bg-surface-muted/30 px-4 py-6 text-center text-xs text-text-muted">
+                  No urgent renewals, dues, or reminders.
+                </div>
+              ) : (
+                combinedAlerts.slice(0, 3).map((item) => (
+                  <Link
+                    key={item.id}
+                    href={item.href}
+                    className="group flex items-center justify-between gap-2.5 rounded-lg px-2 py-2 transition-colors hover:bg-surface-muted"
+                  >
+                    <div className="flex min-w-0 items-center gap-2.5">
+                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-warning/25 bg-warning-subtle text-warning">
+                        <CalendarClock className="h-3.5 w-3.5" />
+                      </span>
+                      <div className="min-w-0">
+                        <p className="truncate text-[12.5px] font-semibold text-text-primary">
+                          {item.title}
+                        </p>
+                        <p className="truncate font-mono text-[10.5px] tabular-nums text-text-muted">
+                          {item.sub}
+                        </p>
+                      </div>
+                    </div>
+                    <Badge variant={item.badge.variant} className="shrink-0">
+                      {item.badge.label}
+                    </Badge>
+                  </Link>
+                ))
+              )}
+            </div>
+
+            <Link
+              href="/reminders"
+              className="mt-4 inline-flex items-center justify-between rounded-lg border border-border-subtle bg-surface-muted/50 px-3 py-2 text-xs font-semibold text-text-secondary transition-colors hover:border-border hover:text-text-primary"
+            >
+              <span>Manage reminders</span>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+        </section>
+      </div>
     </>
   );
 }

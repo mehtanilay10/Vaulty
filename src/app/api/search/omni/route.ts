@@ -3,8 +3,36 @@ import { getCurrentUser } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { WealthAccountType, ReminderCategory } from "@prisma/client";
 import { z } from "zod";
+import { userRateLimitResponse } from "@/lib/security-rate-limit";
+import { RATE_LIMITS } from "@/lib/rate-limits";
 
 const MODE = "insensitive" as const;
+
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Relevance score for a candidate title against the query.
+ * Higher is better; all candidates already passed a `contains` filter, so
+ * this only re-orders by match quality (exact > prefix > word-start > substring).
+ */
+function scoreMatch(title: string, query: string): number {
+  const t = title.toLowerCase();
+  const q = query.toLowerCase();
+  if (t === q) return 100;
+  if (t.startsWith(q)) return 60;
+  if (new RegExp(`\\b${escapeRegExp(q)}`).test(t)) return 40;
+  return 20;
+}
+
+/** Sort by relevance then keep original (recency) order for ties. */
+function rankByRelevance<T>(items: T[], query: string, getTitle: (item: T) => string): T[] {
+  return items
+    .map((item, index) => ({ item, index, score: scoreMatch(getTitle(item), query) }))
+    .sort((a, b) => b.score - a.score || a.index - b.index)
+    .map(({ item }) => item);
+}
 
 export async function GET(req: NextRequest) {
   try {
@@ -12,6 +40,12 @@ export async function GET(req: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const rateLimited = await userRateLimitResponse({
+      userId: user.id,
+      ...RATE_LIMITS.searchOmni,
+    });
+    if (rateLimited) return rateLimited;
 
     const { searchParams } = new URL(req.url);
     const parsed = z
@@ -109,7 +143,7 @@ export async function GET(req: NextRequest) {
             folder: { select: { id: true, name: true } },
             updatedAt: true,
           },
-          take: limit,
+          take: limit * 4,
           orderBy: { updatedAt: "desc" },
         }),
 
@@ -129,7 +163,7 @@ export async function GET(req: NextRequest) {
             name: true,
             _count: { select: { documents: true } },
           },
-          take: limit,
+          take: limit * 4,
           orderBy: { name: "asc" },
         }),
 
@@ -152,7 +186,7 @@ export async function GET(req: NextRequest) {
             currentBalance: true,
             status: true,
           },
-          take: limit,
+          take: limit * 4,
           orderBy: { updatedAt: "desc" },
         }),
 
@@ -175,7 +209,7 @@ export async function GET(req: NextRequest) {
             iconColor: true,
             isFavorite: true,
           },
-          take: limit,
+          take: limit * 4,
           orderBy: { updatedAt: "desc" },
         }),
 
@@ -196,7 +230,7 @@ export async function GET(req: NextRequest) {
             iconColor: true,
             isFavorite: true,
           },
-          take: limit,
+          take: limit * 4,
           orderBy: { updatedAt: "desc" },
         }),
 
@@ -217,38 +251,50 @@ export async function GET(req: NextRequest) {
             recurrence: true,
             isCompleted: true,
           },
-          take: limit,
+          take: limit * 4,
           orderBy: { dueAt: "asc" },
         }),
       ]);
 
-    // Format results uniformly
-    const formattedDocs = documents.map((doc) => ({
-      id: doc.id,
-      title: doc.name,
-      subtitle: doc.folder?.name ? `In ${doc.folder.name}` : "Unfiled document",
-      url: `/documents/${doc.id}`,
-      type: "document" as const,
-      meta: doc.mimeType?.includes("pdf") ? "PDF" : "Image",
-    }));
+    // Format results uniformly, then re-rank by match quality and slice to limit
+    const formattedDocs = rankByRelevance(
+      documents.map((doc) => ({
+        id: doc.id,
+        title: doc.name,
+        subtitle: doc.folder?.name ? `In ${doc.folder.name}` : "Unfiled document",
+        url: `/documents/${doc.id}`,
+        type: "document" as const,
+        meta: doc.mimeType?.includes("pdf") ? "PDF" : "Image",
+      })),
+      queryStr,
+      (d) => d.title,
+    ).slice(0, limit);
 
-    const formattedFolders = folders.map((folder) => ({
-      id: folder.id,
-      title: folder.name,
-      subtitle: `${folder._count.documents} document${folder._count.documents === 1 ? "" : "s"}`,
-      url: `/folders/${folder.id}`,
-      type: "folder" as const,
-      meta: "Folder",
-    }));
+    const formattedFolders = rankByRelevance(
+      folders.map((folder) => ({
+        id: folder.id,
+        title: folder.name,
+        subtitle: `${folder._count.documents} document${folder._count.documents === 1 ? "" : "s"}`,
+        url: `/folders/${folder.id}`,
+        type: "folder" as const,
+        meta: "Folder",
+      })),
+      queryStr,
+      (f) => f.title,
+    ).slice(0, limit);
 
-    const formattedWealth = wealthAccounts.map((acc) => ({
-      id: acc.id,
-      title: acc.name,
-      subtitle: `${acc.type.replace(/_/g, " ")} • ${acc.currency} ${Number(acc.currentBalance).toLocaleString()}`,
-      url: `/wealth/accounts/${acc.id}`,
-      type: "wealth" as const,
-      meta: acc.status,
-    }));
+    const formattedWealth = rankByRelevance(
+      wealthAccounts.map((acc) => ({
+        id: acc.id,
+        title: acc.name,
+        subtitle: `${acc.type.replace(/_/g, " ")} • ${acc.currency} ${Number(acc.currentBalance).toLocaleString()}`,
+        url: `/wealth/accounts/${acc.id}`,
+        type: "wealth" as const,
+        meta: acc.status,
+      })),
+      queryStr,
+      (w) => w.title,
+    ).slice(0, limit);
 
     const formattedCredentials = [
       ...appCredentials.map((c) => ({
@@ -271,23 +317,57 @@ export async function GET(req: NextRequest) {
         icon: c.icon,
         iconColor: c.iconColor,
       })),
-    ].slice(0, limit);
+    ];
+    const rankedCredentials = rankByRelevance(formattedCredentials, queryStr, (c) => c.title).slice(
+      0,
+      limit,
+    );
 
-    const formattedReminders = reminders.map((r) => ({
-      id: r.id,
-      title: r.title,
-      subtitle: `Due ${new Date(r.dueAt).toLocaleDateString()} • ${r.category}`,
-      url: `/reminders`,
-      type: "reminder" as const,
-      meta: r.isCompleted ? "Completed" : "Active",
-    }));
+    const formattedReminders = rankByRelevance(
+      reminders.map((r) => ({
+        id: r.id,
+        title: r.title,
+        subtitle: `Due ${new Date(r.dueAt).toLocaleDateString()} • ${r.category}`,
+        url: `/reminders`,
+        type: "reminder" as const,
+        meta: r.isCompleted ? "Completed" : "Active",
+      })),
+      queryStr,
+      (r) => r.title,
+    ).slice(0, limit);
 
     const totalCount =
       formattedDocs.length +
       formattedFolders.length +
       formattedWealth.length +
-      formattedCredentials.length +
+      rankedCredentials.length +
       formattedReminders.length;
+
+    // When nothing matches, offer recent items so the palette isn't a dead end.
+    let suggestions: typeof formattedDocs = [];
+    if (totalCount === 0) {
+      const recentDocs = await prisma.document.findMany({
+        where: {
+          ownerId: user.id,
+        },
+        select: {
+          id: true,
+          name: true,
+          mimeType: true,
+          folder: { select: { id: true, name: true } },
+        },
+        orderBy: { updatedAt: "desc" },
+        take: 5,
+      });
+      suggestions = recentDocs.map((doc) => ({
+        id: doc.id,
+        title: doc.name,
+        subtitle: doc.folder?.name ? `In ${doc.folder.name}` : "Unfiled document",
+        url: `/documents/${doc.id}`,
+        type: "document" as const,
+        meta: doc.mimeType?.includes("pdf") ? "PDF" : "Image",
+      }));
+    }
 
     return NextResponse.json({
       query: q,
@@ -295,9 +375,10 @@ export async function GET(req: NextRequest) {
         documents: formattedDocs,
         folders: formattedFolders,
         wealth: formattedWealth,
-        credentials: formattedCredentials,
+        credentials: rankedCredentials,
         reminders: formattedReminders,
       },
+      suggestions,
       totalCount,
     });
   } catch (error) {

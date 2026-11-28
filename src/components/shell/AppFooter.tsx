@@ -7,12 +7,12 @@ export function AppFooter({ className }: { className?: string }) {
   return (
     <footer
       className={cn(
-        "border-t border-border-subtle bg-surface/40 py-3.5 text-xs text-text-muted select-none",
+        "border-t border-border-subtle bg-surface/50 py-3.5 text-xs text-text-muted select-none",
         className,
       )}
       aria-label="App footer"
     >
-      <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 sm:flex-row sm:px-6">
+      <div className="mx-auto flex max-w-[1480px] flex-col items-center justify-between gap-2 px-4 sm:flex-row sm:px-6 lg:px-7">
         <p className="text-xs text-text-muted text-left">
           © {currentYear} Vaulty. All rights reserved.
         </p>

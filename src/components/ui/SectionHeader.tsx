@@ -18,18 +18,25 @@ export function SectionHeader({
   className,
 }: SectionHeaderProps) {
   return (
-    <div className={cn("flex flex-wrap items-center justify-between gap-3", className)}>
+    <div
+      className={cn(
+        "flex flex-wrap items-end justify-between gap-3 border-b border-border-subtle pb-2.5",
+        className,
+      )}
+    >
       <div className="flex min-w-0 items-center gap-2.5">
         {icon && (
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-brand-subtle text-brand">
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-border-subtle bg-surface text-text-secondary">
             {icon}
           </span>
         )}
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <h2 className="truncate text-[15px] font-semibold text-text-primary">{title}</h2>
+            <h2 className="truncate text-[14.5px] font-semibold tracking-tight text-text-primary">
+              {title}
+            </h2>
             {typeof count === "number" && (
-              <span className="rounded-full bg-surface-muted px-2 py-0.5 text-[10px] font-semibold text-text-muted ring-1 ring-border-subtle">
+              <span className="rounded bg-surface-muted px-1.5 py-0.5 font-mono text-[10px] font-semibold text-text-secondary border border-border-subtle tabular-nums">
                 {count}
               </span>
             )}

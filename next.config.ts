@@ -1,5 +1,23 @@
 import type { NextConfig } from "next";
 
+const isDev = process.env.NODE_ENV === "development";
+
+const cspHeader = [
+  "default-src 'self'",
+  `script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://va.vercel-scripts.com${isDev ? " 'unsafe-eval'" : ""}`,
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' blob: data: https://lh3.googleusercontent.com https://*.googleusercontent.com https://drive.google.com",
+  "font-src 'self' data:",
+  "connect-src 'self' https://cdnjs.cloudflare.com https://va.vercel-scripts.com https://vitals.vercel-insights.com",
+  "worker-src 'self' blob: https://cdnjs.cloudflare.com",
+  "media-src 'self' blob:",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self' https://accounts.google.com https://login.microsoftonline.com",
+  "frame-ancestors 'none'",
+  ...(!isDev ? ["upgrade-insecure-requests"] : []),
+].join("; ");
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   serverExternalPackages: [
@@ -54,7 +72,11 @@ const nextConfig: NextConfig = {
           },
           {
             key: "Permissions-Policy",
-            value: "camera=(), microphone=(), geolocation=()",
+            value: "camera=(self), microphone=(), geolocation=()",
+          },
+          {
+            key: "Content-Security-Policy",
+            value: cspHeader,
           },
         ],
       },

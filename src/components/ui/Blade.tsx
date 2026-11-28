@@ -60,10 +60,6 @@ export function Blade({
     if (!open) return;
 
     const previousActiveElement = document.activeElement as HTMLElement | null;
-    const previousOverflow = document.body.style.overflow;
-    const previousTouchAction = document.body.style.touchAction;
-    document.body.style.overflow = "hidden";
-    document.body.style.touchAction = "none";
 
     const getFocusableElements = () =>
       Array.from(
@@ -114,8 +110,6 @@ export function Blade({
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
       window.clearTimeout(focusTimer);
-      document.body.style.overflow = previousOverflow;
-      document.body.style.touchAction = previousTouchAction;
       previousActiveElement?.focus();
     };
   }, [open]);
@@ -137,14 +131,14 @@ export function Blade({
         aria-labelledby={titleId}
         tabIndex={-1}
         className={cn(
-          "blade-panel relative flex h-screen h-[100dvh] max-h-screen w-full flex-col overflow-hidden border-l border-border-subtle bg-surface-elevated shadow-fluent-64 outline-none sm:rounded-none",
+          "blade-panel relative flex h-screen h-[100dvh] max-h-screen w-full flex-col overflow-hidden overscroll-contain border-l border-border bg-surface-elevated shadow-fluent-64 outline-none sm:rounded-none",
           sizeClasses[size],
         )}
       >
         <div className="flex shrink-0 items-start justify-between gap-4 border-b border-border-subtle px-5 py-4 sm:px-6">
           <div className="flex min-w-0 items-start gap-3">
             {icon && (
-              <div className="mt-0.5 hidden h-8 w-8 items-center justify-center rounded-md border border-brand/15 bg-brand-subtle text-brand sm:flex">
+              <div className="mt-0.5 hidden h-8 w-8 items-center justify-center rounded-md border border-border-subtle bg-surface-muted text-brand sm:flex">
                 {icon}
               </div>
             )}
@@ -156,7 +150,7 @@ export function Blade({
                 {title}
               </h2>
               {description && (
-                <p className="mt-1 text-xs text-text-muted sm:text-[13px]">{description}</p>
+                <p className="mt-0.5 text-xs text-text-muted sm:text-[13px]">{description}</p>
               )}
             </div>
           </div>
@@ -166,7 +160,7 @@ export function Blade({
               type="button"
               onClick={onClose}
               aria-label="Close panel"
-              className="rounded p-2 text-text-muted transition-colors hover:bg-surface-muted hover:text-text-primary"
+              className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-surface-muted hover:text-text-primary"
             >
               <X className="h-4 w-4" />
             </button>

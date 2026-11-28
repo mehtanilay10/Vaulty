@@ -3,63 +3,48 @@ import { Skeleton } from "@/components/ui/Skeleton";
 export default function DocumentDetailLoading() {
   return (
     <div className="space-y-6">
-      {/* Document Header & Actions */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-1.5">
-          <Skeleton className="h-3 w-10" />
-          <span className="text-text-muted">/</span>
-          <Skeleton className="h-3 w-16" />
-          <span className="text-text-muted">/</span>
-          <Skeleton className="h-3 w-28" />
-          <span className="text-text-muted">/</span>
-          <Skeleton className="h-3 w-36" />
-        </div>
-        <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-          <div className="flex items-center gap-3 min-w-0">
-            <Skeleton className="h-9 w-9 rounded-md" />
-            <Skeleton className="h-6 w-52 sm:w-80" />
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex flex-wrap items-center gap-2">
-            <Skeleton className="h-9 w-24 rounded-xl" />
-            <Skeleton className="h-9 w-20 rounded-xl" />
-            <Skeleton className="h-9 w-24 rounded-xl" />
-            <Skeleton className="h-9 w-9 rounded-xl" />
-          </div>
-        </div>
-      </div>
-
-      {/* Tab bar skeleton */}
-      <div className="flex items-center gap-2 border-b border-border-subtle pb-2">
-        <Skeleton className="h-8 w-32 rounded-lg" />
-        <Skeleton className="h-8 w-28 rounded-lg" />
-        <Skeleton className="h-8 w-28 rounded-lg" />
-      </div>
-
-      {/* Main Document Viewer Canvas */}
-      <div className="rounded-2xl border border-border-subtle bg-surface-muted/60 p-4 space-y-4">
-        {/* PDF / Viewer Toolbar */}
-        <div className="flex items-center justify-between border-b border-border-subtle pb-3">
-          <div className="flex items-center gap-2">
-            <Skeleton className="h-8 w-8 rounded-lg" />
-            <Skeleton className="h-8 w-20 rounded-lg" />
-            <Skeleton className="h-8 w-8 rounded-lg" />
-          </div>
-          <div className="flex items-center gap-2">
-            <Skeleton className="h-8 w-8 rounded-lg" />
-            <Skeleton className="h-8 w-8 rounded-lg" />
-            <Skeleton className="h-8 w-8 rounded-lg" />
-          </div>
-        </div>
-
-        {/* Large Document Preview Canvas */}
-        <div className="flex items-center justify-center h-[70vh] min-h-[550px] w-full rounded-xl bg-surface/50 border border-border-subtle/50">
-          <div className="flex flex-col items-center gap-3">
-            <Skeleton className="h-12 w-12 rounded-2xl" />
-            <Skeleton className="h-4 w-40" />
+      <div className="space-y-3">
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-1.5">
+            <Skeleton className="h-3 w-16" />
+            <span className="text-text-muted/50 text-xs">/</span>
+            <Skeleton className="h-3 w-20" />
+            <span className="text-text-muted/50 text-xs">/</span>
             <Skeleton className="h-3 w-28" />
           </div>
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-9 w-9 rounded-lg" />
+            <Skeleton className="h-7 w-72 max-w-full" />
+          </div>
+        </div>
+        <Skeleton className="h-[46px] w-full rounded-xl" />
+      </div>
+
+      {/* AI Analysis panel */}
+      <div className="card flex flex-col justify-between gap-3 px-5 py-4 sm:flex-row sm:items-center">
+        <div className="flex items-start gap-3">
+          <Skeleton className="h-9 w-9 shrink-0 rounded-lg" />
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-5 w-20 rounded-full" />
+            </div>
+            <Skeleton className="h-3 w-80 max-w-full" />
+          </div>
+        </div>
+        <Skeleton className="h-8 w-36 rounded-lg" />
+      </div>
+
+      {/* Viewer & AI Tabs */}
+      <div className="card overflow-hidden p-0">
+        <div className="flex gap-4 border-b border-border-subtle px-5 py-3">
+          <Skeleton className="h-6 w-20 rounded" />
+          <Skeleton className="h-6 w-20 rounded" />
+          <Skeleton className="h-6 w-28 rounded" />
+          <Skeleton className="h-6 w-16 rounded" />
+        </div>
+        <div className="p-4 sm:p-5">
+          <Skeleton className="h-[68vh] min-h-[520px] w-full rounded-xl" />
         </div>
       </div>
     </div>

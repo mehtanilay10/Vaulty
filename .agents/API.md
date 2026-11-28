@@ -1,152 +1,163 @@
-# API Reference
+# Vaulty — REST API Reference
 
-> Route inventory verified against checked-in `src/app/api/**/route.ts` files on 2026-11-25. This is a route and method index; read the implementation files for validation schemas, authorization checks, status codes, and DTO details. Auth.js exports its handlers as `GET` and `POST`.
+All API handlers live under `src/app/api/`. Unless otherwise noted:
 
-## Operations & Admin
+- Authenticated endpoints require a valid Auth.js session with matching `sessionVersion` (`src/proxy.ts`).
+- Cookie-authenticated mutations (`POST`, `PUT`, `PATCH`, `DELETE`) require double-submit HMAC CSRF header + cookie validation (`src/lib/csrf.ts`, helper `csrfFetch` in `src/lib/csrf-client.ts`).
+- Heavy/sensitive endpoints apply distributed PostgreSQL rate limiting (`src/lib/rate-limits.ts`).
 
-- `POST|GET /api/admin/ai-worker`: trigger immediate AI queue worker processing.
-- `POST /api/admin/cleanup-ai`: clean up stale AI jobs stuck in processing.
-- `GET|POST /api/cron/ai-worker`: cron trigger for AI document processing queue. Authenticated via `Authorization: Bearer <CRON_SECRET>`.
-- `GET /api/cron/reminders`: scheduled reminder, document expiry, and credit card due-date processor. Authenticated via `Authorization: Bearer <CRON_SECRET>`.
-- `GET|POST /api/cron/email-sync`: scheduled email multi-module sync across connected Gmail/Outlook accounts with auto-import and review queue segregation (transactions, important documents, reminders). Authenticated via `Authorization: Bearer <CRON_SECRET>`.
+---
 
-## Authentication
+## Auth, Cron, Admin & Webhooks
 
-- `GET|POST /api/auth/[...nextauth]`: Auth.js handlers for Google OAuth and email magic link authentication.
-- `GET /api/dev-login`: development-only quick login bypass for local testing. Strictly restricted to `NODE_ENV === "development"`, returns 404 in all other environments, and dynamically reads `DEV_LOGIN_EMAIL` from `.env.local`. Rate-limited via `SecurityRateLimit`.
+| Endpoint                       | Methods       | Auth & Purpose                                                                                |
+| :----------------------------- | :------------ | :-------------------------------------------------------------------------------------------- |
+| `/api/auth/[...nextauth]`      | `GET`, `POST` | Auth.js v5 OAuth (Google) & Email Magic Link handlers                                         |
+| `/api/dev-login`               | `GET`         | Local `NODE_ENV=development` bypass for `DEV_LOGIN_EMAIL`                                     |
+| `/api/cron/ai-worker`          | `GET`, `POST` | `CRON_SECRET` Bearer-authenticated Gemini AI batch processor                                  |
+| `/api/cron/email-sync`         | `GET`, `POST` | `CRON_SECRET` Bearer-authenticated Gmail/Outlook sync sweep                                   |
+| `/api/cron/reminders`          | `GET`         | `CRON_SECRET` Bearer-authenticated daily reminder dispatcher (`vercel.json`)                  |
+| `/api/admin/ai-worker`         | `GET`, `POST` | `ADMIN_EMAILS`-restricted AI queue inspection & trigger                                       |
+| `/api/admin/cleanup-ai`        | `POST`        | `ADMIN_EMAILS`-restricted stalled AI job recovery/cleanup                                     |
+| `/api/webhooks/resend/inbound` | `POST`        | Resend webhook signature (`RESEND_INBOUND_WEBHOOK_SECRET`) inbound attachment/email ingestion |
 
-## AI Chat
+---
 
-- `GET /api/chat/[sessionId]/messages`: list chronological messages for an active chat session.
-- `POST /api/chat`: conversational assistant grounded in the user's authorized document content via Gemini.
+## Documents, Folders, Search, Chat & Public Shares
 
-## Documents & AI
+| Endpoint                          | Methods                  | Purpose & Protection                                                                           |
+| :-------------------------------- | :----------------------- | :--------------------------------------------------------------------------------------------- |
+| `/api/documents`                  | `GET`                    | List owned/accessible documents with filter & search                                           |
+| `/api/documents/upload`           | `POST`                   | Upload file to Google Drive + create `Document` & AI job (rate limit: `documentsUpload`)       |
+| `/api/documents/bulk`             | `POST`                   | Bulk document actions (rate limit: `documentsBulk`)                                            |
+| `/api/documents/expiring`         | `GET`                    | Upcoming expiring documents feed                                                               |
+| `/api/documents/ai/batch`         | `POST`                   | Queue batch AI processing (rate limit: `documentsAiBatch`)                                     |
+| `/api/documents/[id]`             | `GET`, `PATCH`, `DELETE` | Fetch metadata, rename/move/update tags/properties, or delete document                         |
+| `/api/documents/[id]/file`        | `GET`                    | Stream or download Drive-backed document bytes (checks ownership, share grants, family access) |
+| `/api/documents/[id]/ai`          | `POST`                   | Trigger document summarization or contextual Q&A (rate limit: `documentsAi`)                   |
+| `/api/documents/[id]/append-page` | `POST`                   | Append camera-scanned image/PDF page onto an existing PDF (rate limit: `documentsAppendPage`)  |
+| `/api/documents/[id]/dates`       | `PUT`                    | Update extracted or manual important/expiry dates on a document                                |
+| `/api/documents/[id]/share`       | `GET`, `POST`, `DELETE`  | List, create, or revoke `ShareLink` grants (rate limit: `documentsShare`)                      |
+| `/api/folders`                    | `GET`, `POST`            | List folder hierarchy or create a folder                                                       |
+| `/api/folders/[id]`               | `GET`, `PATCH`, `DELETE` | Read folder tree slice, rename/move, or delete folder                                          |
+| `/api/folders/[id]/shares`        | `POST`, `DELETE`         | Grant or revoke `FolderShare` access by user                                                   |
+| `/api/share/[token]`              | `GET`, `POST`            | Public tokenized share metadata & optional passcode verification                               |
+| `/api/share/[token]/file`         | `GET`                    | Public tokenized file streaming for valid shares                                               |
+| `/api/search`                     | `GET`                    | Full search across library (rate limit: `search`)                                              |
+| `/api/search/omni`                | `GET`                    | Fast Command Palette `Cmd+K` search (rate limit: `searchOmni`)                                 |
+| `/api/chat`                       | `POST`                   | Send AI Chat turn across document vault                                                        |
+| `/api/chat/[sessionId]/messages`  | `GET`                    | Fetch persistent messages for a `ChatSession`                                                  |
 
-- `GET /api/documents`: paginated document listing; supports `scope=owned` (default) or `scope=all`, filtering by query `q`, `fileType`, `aiStatus`, `folderId`, and sorting (`recent`, `oldest`, `opened`, `name`).
-- `POST /api/documents/upload`: multipart upload for PDF, JPEG, PNG, and WebP files up to `MAX_UPLOAD_SIZE` (default 50 MiB). Sanitizes errors to prevent storage leakage.
-- `GET|PATCH|DELETE /api/documents/[id]`: get metadata, update document properties (name, folder, tags, expiry date), or delete document (concurrently deletes Google Drive artifacts with 404 resilience and executes atomic batch SQL transaction).
-- `GET /api/documents/[id]/file`: stream original binary from Google Drive; returns 404 `DRIVE_FILE_NOT_FOUND` when missing.
-- `GET|PUT /api/documents/[id]/dates`: get or update extracted expiry and important dates; recalculates associated reminders.
-- `POST /api/documents/[id]/ai`: trigger Gemini extraction and summary for an individual document.
-- `POST /api/documents/[id]/append-page`: multipart upload appending one or more scanned pages or PDF pages to an existing document on Google Drive; converts single images to multi-page PDFs, updates file content, and re-triggers AI extraction when enabled.
-- `POST /api/documents/ai/batch`: queue multiple documents for AI processing.
-- `GET /api/documents/expiring`: fetch documents expiring within a given window.
-- `GET|POST|DELETE /api/documents/[id]/share`: manage public share links with optional password, expiry, and view limits. Unbiased token generation using `randomInt`.
+---
 
-## Family
+## Credentials Vault, 2FA TOTP & App Lock
 
-- `GET /api/family`: list family members, invitations, and active module permissions. Rate-limited via `SecurityRateLimit`.
-- `POST /api/family/invitations`: create an email-bound invitation with granular module flags (`shareDocuments`, `shareWealth`, `shareCredentials`, `shareReminders`, `shareNotes`).
-- `POST /api/family/invitations/accept`: accept an invitation for the authenticated user matching the invited email.
-- `POST /api/family/invitations/reject`: reject an invitation.
-- `POST /api/family/invitations/[id]/resend`: resend pending invitation email.
-- `PATCH|DELETE /api/family/invitations/[id]`: update permissions or revoke a pending invitation.
-- `PATCH|DELETE /api/family/members/[id]`: update member module flags or remove membership.
-- `GET /api/family/documents`: list documents shared with the user through family memberships.
-- `GET /api/family/wealth`: list wealth accounts and transactions shared through family memberships.
-- `GET /api/family/credentials`: list credentials shared through family memberships.
-- `GET /api/family/notes`: list note pages shared through family memberships.
-- `GET|POST /api/family/credentials/key`: retrieve or store the user's family credential keypair.
-- `POST|DELETE /api/family/credentials/key/[membershipId]`: share or revoke wrapped credential keys for a specific family member.
-  _(Note: Family reminders are queried directly in `/reminders/page.tsx` via `FamilyMembership.shareReminders` without exposing an unauthenticated API endpoint)._
+| Endpoint                                | Methods                 | Purpose & Protection                                                                                                                |
+| :-------------------------------------- | :---------------------- | :---------------------------------------------------------------------------------------------------------------------------------- |
+| `/api/passwords/setup`                  | `POST`                  | Initialize `PasswordVault`, salt, iterations & master password verifier (rate limit: `passwordsSetup`)                              |
+| `/api/passwords/unlock`                 | `POST`                  | Verify master password, enforce vault lockouts (`MAX_FAILED_ATTEMPTS = 5`), return wrapped metadata (rate limit: `passwordsUnlock`) |
+| `/api/passwords/change-master-password` | `POST`                  | Rotate KEK and re-wrapped key/verifier payloads (rate limit: `passwordsChangeMaster`)                                               |
+| `/api/passwords/reset/request`          | `POST`                  | Request master password reset flow                                                                                                  |
+| `/api/passwords/reset/confirm`          | `POST`                  | Confirm master password reset (rate limit: `passwordsResetConfirm`)                                                                 |
+| `/api/passwords/recovery/setup`         | `POST`                  | Store offline recovery KEK bundle & questions (rate limit: `passwordsRecoverySetup`)                                                |
+| `/api/passwords/recovery/verify`        | `GET`, `POST`           | Retrieve recovery challenge or verify offline recovery proof (public-gated for recovery)                                            |
+| `/api/passwords/recovery/rekey`         | `POST`                  | Commit re-keyed ciphertexts after offline recovery                                                                                  |
+| `/api/passwords/app`                    | `GET`, `POST`           | List or create encrypted `AppCredential` records (supports optional `totpSecret`)                                                   |
+| `/api/passwords/app/[id]`               | `PUT`, `DELETE`         | Update or delete an `AppCredential`                                                                                                 |
+| `/api/passwords/bank`                   | `GET`, `POST`           | List or create encrypted `BankCredential` records                                                                                   |
+| `/api/passwords/bank/[id]`              | `PUT`, `DELETE`         | Update or delete a `BankCredential`                                                                                                 |
+| `/api/passwords/audit`                  | `POST`                  | Record/query `PasswordAuditLog` vault access events                                                                                 |
+| `/api/passwords/vaults/shared`          | `GET`                   | List vaults shared with the authenticated user (`VaultShare`)                                                                       |
+| `/api/passwords/vaults/[id]/share`      | `GET`, `POST`, `DELETE` | Manage direct `VaultShare` permissions                                                                                              |
+| `/api/user/app-lock`                    | `GET`, `POST`, `DELETE` | Check/enroll/clear synced App Lock PIN hash and wrapped vault key                                                                   |
 
-## Folders
+---
 
-- `GET|POST /api/folders`: list top-level folders or create a new folder.
-- `GET|PATCH|DELETE /api/folders/[id]`: get folder contents, rename/move folder (with character sanitization), or delete folder.
-- `POST|DELETE /api/folders/[id]/shares`: create or revoke a direct read-only folder share.
+## Wealth & Statement Imports
 
-## Integrations
+| Endpoint                                                 | Methods                  | Purpose & Protection                                                                            |
+| :------------------------------------------------------- | :----------------------- | :---------------------------------------------------------------------------------------------- |
+| `/api/wealth/summary`                                    | `GET`                    | Multi-currency net worth, assets, liabilities & breakdown aggregation                           |
+| `/api/wealth/accounts`                                   | `GET`, `POST`            | List wealth accounts or create a new `WealthAccount`                                            |
+| `/api/wealth/accounts/[id]`                              | `GET`, `PATCH`, `DELETE` | Inspect, update, or delete an account                                                           |
+| `/api/wealth/accounts/[id]/merge`                        | `POST`                   | Merge one wealth account and its transactions into a target account                             |
+| `/api/wealth/accounts/bulk-delete`                       | `POST`                   | Bulk delete multiple selected wealth accounts                                                   |
+| `/api/wealth/accounts/[id]/transactions`                 | `GET`, `POST`            | List or create transactions under an account                                                    |
+| `/api/wealth/accounts/[id]/transactions/[transactionId]` | `GET`, `PATCH`, `DELETE` | Inspect, edit, or delete a single `WealthTransaction`                                           |
+| `/api/wealth/statements/upload`                          | `POST`                   | Upload statement file (rate limit: `statementsUpload`)                                          |
+| `/api/wealth/statements/parse`                           | `POST`                   | Parse statement rows via deterministic rules or Gemini fallback (rate limit: `statementsParse`) |
+| `/api/wealth/statements/import`                          | `POST`                   | Commit parsed statement transactions into an account (rate limit: `statementsImport`)           |
 
-- `GET /api/integrations/google-drive/connect`: initiate Google Drive OAuth flow.
-- `GET /api/integrations/google-drive/callback`: handle Google Drive OAuth callback.
-- `DELETE /api/integrations/google-drive/disconnect`: disconnect Google Drive.
-- `GET /api/integrations/google-drive/status`: check Google Drive connection and sync health.
-- `POST /api/integrations/google-drive/sync`: trigger manual Drive synchronization.
-- `POST|GET /api/integrations/google-drive/webhook`: Drive change notifications receiver.
-- `GET /api/integrations/gmail/connect`: initiate Gmail `gmail.readonly` OAuth flow.
-- `GET /api/integrations/gmail/callback`: handle Gmail OAuth callback.
-- `POST /api/integrations/gmail/disconnect`: disconnect Gmail connection.
-- `GET /api/integrations/gmail/status`: check Gmail connection status.
-- `POST /api/integrations/gmail/sync`: trigger manual Gmail transaction sync page fetch.
-- `GET|PATCH /api/integrations/gmail/imports`: list or update review status of imported email transaction candidates.
-- `POST /api/integrations/gmail/imports/commit`: commit approved candidates into matching Wealth accounts.
-- `GET /api/integrations/outlook/connect`: initiate Microsoft Entra Outlook OAuth flow.
-- `GET /api/integrations/outlook/callback`: handle Outlook OAuth callback.
-- `POST /api/integrations/outlook/disconnect`: disconnect Outlook connection.
-- `GET /api/integrations/outlook/status`: check Outlook connection status.
-- `POST /api/integrations/outlook/sync`: trigger manual Outlook transaction sync.
-- `GET|PATCH /api/integrations/email/documents`: list or update discovered important document candidates from emails.
-- `POST /api/integrations/email/documents/import`: import selected or all pending email documents into Document Vault.
-- `POST /api/integrations/email/documents/dismiss`: dismiss selected or all pending email documents.
-- `GET|PATCH /api/integrations/email/reminders`: list or update discovered due date and expiry reminders from emails.
-- `POST /api/integrations/email/reminders/import`: add selected or all pending email reminders into Reminders calendar.
-- `POST /api/integrations/email/reminders/dismiss`: dismiss selected or all pending email reminders.
+---
 
-## Webhooks
+## Notes, Reminders, Notifications & Settings
 
-- `POST /api/webhooks/resend/inbound`: receive inbound forwarded emails via Svix-signed webhooks; cracks protected statement PDFs and stages documents, transactions, and reminders.
+| Endpoint                      | Methods                          | Purpose & Protection                                                            |
+| :---------------------------- | :------------------------------- | :------------------------------------------------------------------------------ |
+| `/api/notes`                  | `GET`, `POST`                    | List notes (`NotePage`) or create note/checklist/image note                     |
+| `/api/notes/[id]`             | `GET`, `PATCH`, `DELETE`         | Read, update content/todos/pin/archive/color, or delete a note                  |
+| `/api/notes/[id]/images`      | `POST`, `DELETE`                 | Upload or remove inline image attachments on a note (rate limit: `notesImages`) |
+| `/api/reminders`              | `GET`, `POST`, `PATCH`, `DELETE` | Full CRUD, completion toggles, and recurrence rules for `Reminder`              |
+| `/api/notifications`          | `GET`, `PATCH`                   | Fetch user notifications feed and mark read                                     |
+| `/api/push/subscription`      | `GET`, `POST`, `DELETE`          | Register, inspect, or remove browser Web Push `PushSubscription`                |
+| `/api/settings/inbound-email` | `GET`, `PATCH`                   | Read or rotate user's personal Resend inbound forwarding address/token          |
+| `/api/settings/pdf-passwords` | `GET`, `PUT`                     | Read or store encrypted reusable `PdfPasswordSettings` templates                |
+| `/api/user/settings`          | `PATCH`                          | Update user profile & preference settings                                       |
+| `/api/user/stats`             | `GET`                            | Workspace counts and overview statistics                                        |
+| `/api/user/audit-logs`        | `GET`                            | Fetch user `AuditLog` entries                                                   |
+| `/api/user/takeout`           | `GET`                            | Generate bounded ZIP export of user data (rate limit: `userTakeout`)            |
+| `/api/user/sessions/revoke`   | `POST`                           | Increment `User.sessionVersion` to log out active sessions globally             |
+| `/api/user/drive-docs`        | `DELETE`                         | Remove synced Drive document index records                                      |
+| `/api/user/account`           | `DELETE`                         | Permanently delete user account & cascading records                             |
+| `/api/users/search`           | `GET`                            | Look up Vaulty users for sharing & family invitations                           |
 
-## Notifications & Push
+---
 
-- `GET|PATCH /api/notifications`: list notifications or mark notifications as read.
-- `GET|POST|DELETE /api/push/subscription`: check VAPID status, register a browser push subscription endpoint, or remove subscription.
+## Integrations (Google Drive, Gmail, Outlook, Email Staging)
 
-## Credential Vault
+| Endpoint                                    | Methods        | Purpose                                                          |
+| :------------------------------------------ | :------------- | :--------------------------------------------------------------- |
+| `/api/integrations/google-drive/connect`    | `GET`          | Initiate Google Drive OAuth flow                                 |
+| `/api/integrations/google-drive/callback`   | `GET`          | Handle Drive OAuth callback                                      |
+| `/api/integrations/google-drive/status`     | `GET`          | Read `StorageConnection` status                                  |
+| `/api/integrations/google-drive/sync`       | `POST`         | Trigger manual Drive delta sync                                  |
+| `/api/integrations/google-drive/disconnect` | `DELETE`       | Disconnect Drive integration                                     |
+| `/api/integrations/google-drive/webhook`    | `GET`, `POST`  | Receive Drive push notifications (`GOOGLE_DRIVE_WEBHOOK_SECRET`) |
+| `/api/integrations/gmail/connect`           | `GET`          | Initiate Gmail OAuth flow                                        |
+| `/api/integrations/gmail/callback`          | `GET`          | Handle Gmail OAuth callback                                      |
+| `/api/integrations/gmail/status`            | `GET`          | Read `GmailConnection` status                                    |
+| `/api/integrations/gmail/sync`              | `POST`         | Scan recent Gmail messages into email staging queues             |
+| `/api/integrations/gmail/disconnect`        | `POST`         | Disconnect Gmail account                                         |
+| `/api/integrations/gmail/imports`           | `GET`, `PATCH` | List/edit staged `EmailTransactionImport` rows                   |
+| `/api/integrations/gmail/imports/commit`    | `POST`         | Commit approved email transactions into `WealthTransaction`      |
+| `/api/integrations/outlook/connect`         | `GET`          | Initiate Microsoft Outlook OAuth flow                            |
+| `/api/integrations/outlook/callback`        | `GET`          | Handle Outlook OAuth callback                                    |
+| `/api/integrations/outlook/status`          | `GET`          | Read `OutlookConnection` status                                  |
+| `/api/integrations/outlook/sync`            | `POST`         | Scan recent Outlook messages into email staging queues           |
+| `/api/integrations/outlook/disconnect`      | `POST`         | Disconnect Outlook account                                       |
+| `/api/integrations/email/documents`         | `GET`, `PATCH` | List/update staged `EmailDocumentImport` attachments             |
+| `/api/integrations/email/documents/import`  | `POST`         | Import staged email attachment into Google Drive + `Document`    |
+| `/api/integrations/email/documents/dismiss` | `POST`         | Dismiss staged email document                                    |
+| `/api/integrations/email/reminders`         | `GET`, `PATCH` | List/update staged `EmailReminderImport` bills/due dates         |
+| `/api/integrations/email/reminders/import`  | `POST`         | Promote staged email alert into a `Reminder`                     |
+| `/api/integrations/email/reminders/dismiss` | `POST`         | Dismiss staged email reminder                                    |
 
-- `POST /api/passwords/setup`: initialize master password and encryption parameters for a new vault.
-- `POST /api/passwords/unlock`: verify master password and retrieve encryption salt/iterations. Enforces 5-attempt brute-force lockout (`lockedUntil`, 15 min lock).
-- `POST /api/passwords/change-master-password`: change master password and commit re-encrypted credential payloads. Enforces the same 5-attempt brute-force lockout and logs `MASTER_PASSWORD_CHANGE_FAILED`.
-- `GET|POST /api/passwords/app`: list or create client-side encrypted app credentials and 2FA TOTP secrets (`totpSecret`). Validates input schema via Zod with string/ciphertext length caps (100,000 chars).
-- `PUT|DELETE /api/passwords/app/[id]`: update or delete an app credential.
-- `GET|POST /api/passwords/bank`: list or create client-side encrypted bank credentials. Validates input schema via Zod with string/ciphertext length caps.
-- `PUT|DELETE /api/passwords/bank/[id]`: update or delete a bank credential.
-- `POST /api/passwords/audit`: log credential access, copy, or reveal events.
-- `POST /api/passwords/recovery/setup`: configure offline recovery key and security questions.
-- `GET|POST /api/passwords/recovery/verify`: verify security questions for recovery. Token-gated by emailed reset token (exempt from standard session middleware).
-- `POST /api/passwords/recovery/rekey`: zero-knowledge browser re-encryption of all credentials using recovery key. Token-gated by emailed reset token.
-- `POST /api/passwords/reset/request`: initiate master password reset request and dispatch reset email.
-- `POST /api/passwords/reset/confirm`: confirm master password reset (blocks if vault has credentials and recovery is unconfigured).
+---
 
-## Notes
+## Family Sharing
 
-- `GET|POST /api/notes`: list user's note pages (sorted by pinned desc, updated desc; supports `q` query search) or create a new note page.
-- `GET|PATCH|DELETE /api/notes/[id]`: retrieve note page (enforcing user ownership or family notes access), update note (title, content, todos, images, color, isPinned, isArchived), or delete note page.
-- `POST|DELETE /api/notes/[id]/images`: upload image attachment (multipart file or base64 data URL) or remove attachment by `imageId`.
-
-## Reminders
-
-- `GET|POST|PATCH|DELETE /api/reminders`: list active/completed reminders, create new custom reminders, toggle completion, or delete reminders.
-
-## Search
-
-- `GET /api/search`: full-page document search; scopes to authorized records in a single database query, scores relevance in memory, and returns results in sub-100ms.
-- `GET /api/search/omni`: universal ⌘K Omnibox search across documents, folders, wealth accounts, non-secret credential names, and reminders.
-
-## Public Sharing
-
-- `GET|POST /api/share/[token]`: verify public share link access (validating optional scrypt password with 128MB memory cap, expiry, and max view limits).
-- `GET /api/share/[token]/file`: stream shared document binary. View counts decrement only after storage file stream successfully commences.
-
-## User & Settings
-
-- `DELETE /api/user/account`: transactional full account deletion across 20+ tables (all user records, Drive folder, verification tokens, rate limit entries, and OAuth credentials).
-- `GET|POST|DELETE /api/user/app-lock`: manage cross-device App Lock PIN hash and wrapped convenience key synchronization.
-- `GET /api/user/audit-logs`: fetch security and access audit logs.
-- `DELETE /api/user/drive-docs`: purge Drive document files while retaining database structure.
-- `POST /api/user/sessions/revoke`: increment `sessionVersion` to invalidate all active JWT sessions.
-- `PATCH /api/user/settings`: update user preferences (theme, notification channels).
-- `GET /api/user/stats`: fetch aggregated vault statistics.
-- `GET /api/user/takeout`: stream complete account export as a ZIP archive. Enforces memory bounds (max 50 files, 50 MiB/file, 200 MiB total budget).
-- `GET /api/users/search`: search users for sharing invitations. Rate-limited via `SecurityRateLimit`.
-
-## Wealth & Statements
-
-- `GET|POST /api/wealth/accounts`: list wealth accounts or create a new account.
-- `GET|PATCH|DELETE /api/wealth/accounts/[id]`: retrieve account details, update account, or delete account.
-- `POST /api/wealth/accounts/[id]/merge`: merge account into another account of identical currency.
-- `GET|POST /api/wealth/accounts/[id]/transactions`: list or record transactions for a specific account.
-- `GET|PATCH|DELETE /api/wealth/accounts/[id]/transactions/[transactionId]`: get, update, or delete a transaction with automatic balance ledger recalculation.
-- `GET /api/wealth/transactions`: global transaction ledger across all accounts.
-- `POST /api/wealth/statements/parse`: parse statement files (CSV, XLSX, PDF) using template expansion or pdfjs-dist.
-- `POST /api/wealth/statements/import`: import approved statement transaction rows into a target wealth account.
+| Endpoint                                     | Methods           | Purpose                                                                    |
+| :------------------------------------------- | :---------------- | :------------------------------------------------------------------------- |
+| `/api/family`                                | `GET`             | Fetch owned memberships, joined memberships & pending invitations          |
+| `/api/family/invitations`                    | `POST`            | Create expiring `FamilyInvitation` with module toggles                     |
+| `/api/family/invitations/[id]`               | `PATCH`, `DELETE` | Update invitation permissions or revoke                                    |
+| `/api/family/invitations/[id]/resend`        | `POST`            | Resend invitation email                                                    |
+| `/api/family/invitations/accept`             | `POST`            | Accept invitation token -> create `FamilyMembership`                       |
+| `/api/family/invitations/reject`             | `POST`            | Reject invitation token                                                    |
+| `/api/family/members/[id]`                   | `PATCH`, `DELETE` | Update module access flags or remove member                                |
+| `/api/family/documents`                      | `GET`             | Read family-shared documents when `shareDocuments` is active               |
+| `/api/family/wealth`                         | `GET`             | Read family-shared wealth accounts when `shareWealth` is active            |
+| `/api/family/credentials`                    | `GET`             | Read family-shared encrypted credentials when `shareCredentials` is active |
+| `/api/family/credentials/key`                | `GET`, `POST`     | Retrieve/set owner's vault family public/private key material              |
+| `/api/family/credentials/key/[membershipId]` | `POST`, `DELETE`  | Store or revoke wrapped `FamilyCredentialKey` for a member                 |
+| `/api/family/notes`                          | `GET`             | Read family-shared notes when `shareNotes` is active                       |

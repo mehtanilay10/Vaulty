@@ -26,19 +26,19 @@ interface CommandBarProps {
 }
 
 const itemBase =
-  "inline-flex h-8 items-center gap-1.5 rounded-none px-2.5 text-xs font-medium whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-ring disabled:pointer-events-none disabled:opacity-50";
+  "inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-xs font-medium whitespace-nowrap transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-ring disabled:pointer-events-none disabled:opacity-50";
 
 function itemTone(opts: { primary: boolean; danger: boolean; active: boolean }) {
   if (opts.primary) {
-    return "bg-brand text-white hover:bg-brand-hover active:bg-brand-hover/90 shadow-xs";
+    return "bg-brand text-white hover:bg-brand-hover active:scale-[0.98] shadow-xs";
   }
   if (opts.danger) {
-    return "text-danger hover:bg-danger/10 hover:text-danger active:bg-danger/15";
+    return "text-danger hover:bg-danger-subtle hover:text-danger active:bg-danger-subtle/90";
   }
   if (opts.active) {
-    return "bg-surface-muted text-brand font-semibold hover:bg-surface-muted/90";
+    return "bg-brand-subtle text-brand font-semibold hover:bg-brand-subtle/90";
   }
-  return "text-text-secondary hover:bg-surface-muted hover:text-text-primary active:bg-surface-muted/90";
+  return "text-text-secondary hover:bg-surface-muted/85 hover:text-text-primary active:bg-surface-muted";
 }
 
 export function CommandBar({
@@ -51,24 +51,22 @@ export function CommandBar({
   return (
     <div
       className={cn(
-        "fluent-command-bar flex items-center justify-between gap-2 rounded-lg border border-border-subtle bg-surface px-2.5 py-1.5 transition-colors",
-        compact ? "min-h-[38px] py-1" : "min-h-[44px]",
+        "fluent-command-bar flex items-center justify-between gap-2 rounded-xl border border-border-subtle bg-surface/95 px-2 py-1.5 shadow-fluent-2 backdrop-blur-sm transition-colors",
+        compact ? "min-h-[40px] py-1" : "min-h-[46px]",
         className,
       )}
       role="toolbar"
       aria-orientation="horizontal"
     >
-      {/* Primary / Left Command Items */}
-      <div className="flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto scrollbar-none py-0.5">
+      <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto scrollbar-hide">
         {items?.map((item) => (
           <CommandBarButton key={item.key} item={item} />
         ))}
         {children}
       </div>
 
-      {/* Far / Right Items (Views, Filter, Search, Sort) */}
       {farItems && (
-        <div className="flex shrink-0 items-center gap-0.5 border-l border-border-subtle pl-2">
+        <div className="flex shrink-0 items-center gap-1.5 border-l border-border-subtle pl-2.5">
           {Array.isArray(farItems)
             ? farItems.map((item) => (
                 <CommandBarButton
@@ -151,6 +149,9 @@ export function CommandBarButton({
 
 export function CommandBarDivider({ className }: { className?: string }) {
   return (
-    <div className={cn("mx-1 h-4 w-px shrink-0 bg-border-subtle", className)} aria-hidden="true" />
+    <div
+      className={cn("mx-1.5 h-4 w-px shrink-0 bg-border-subtle", className)}
+      aria-hidden="true"
+    />
   );
 }

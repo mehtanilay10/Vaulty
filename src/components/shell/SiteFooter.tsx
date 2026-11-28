@@ -16,10 +16,10 @@ export function SiteFooter() {
 
   return (
     <footer
-      className="site-footer border-t border-border-subtle bg-surface/40 py-3.5 text-xs text-text-muted select-none"
+      className="site-footer border-t border-border-subtle bg-surface/60 py-3.5 text-xs text-text-muted select-none"
       aria-label="Site footer"
     >
-      <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 sm:flex-row sm:px-6">
+      <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-4 sm:flex-row sm:px-6">
         <p className="text-xs text-text-muted text-left">© {year} Vaulty. All rights reserved.</p>
         <p className="text-xs text-text-muted text-right">
           Made with{" "}

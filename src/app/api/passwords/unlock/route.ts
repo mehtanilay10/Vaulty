@@ -9,6 +9,8 @@ import {
   MAX_FAILED_ATTEMPTS,
   LOCK_DURATION_MINUTES,
 } from "@/lib/constants";
+import { userRateLimitResponse } from "@/lib/security-rate-limit";
+import { RATE_LIMITS } from "@/lib/rate-limits";
 
 export async function POST(req: NextRequest) {
   try {
@@ -20,6 +22,13 @@ export async function POST(req: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    // Defense-in-depth on top of the vault lockout: cap PBKDF2 verify attempts.
+    const rateLimited = await userRateLimitResponse({
+      userId: session.user.id,
+      ...RATE_LIMITS.passwordsUnlock,
+    });
+    if (rateLimited) return rateLimited;
 
     const body = await readJsonRecord(req);
     if (!body) return NextResponse.json({ error: "Invalid JSON request body." }, { status: 400 });

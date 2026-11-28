@@ -17,14 +17,24 @@ export function Dropdown({ trigger, children, align = "right" }: DropdownProps) 
   const close = () => setOpen(false);
 
   useEffect(() => {
+    if (!open) return;
     const handleClickOutside = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) {
         setOpen(false);
       }
     };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setOpen(false);
+      }
+    };
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open]);
 
   const handleChildClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
@@ -43,7 +53,7 @@ export function Dropdown({ trigger, children, align = "right" }: DropdownProps) 
           role="menu"
           onClick={handleChildClick}
           className={cn(
-            "animate-fade-up absolute top-full z-50 mt-2 min-w-[13rem] overflow-hidden rounded-lg border border-border-subtle bg-surface-elevated p-1 shadow-fluent-16",
+            "animate-fade-up absolute top-full z-50 mt-2 min-w-[13.5rem] overflow-hidden rounded-xl border border-border bg-surface-elevated p-1.5 shadow-fluent-16",
             align === "right" ? "right-0" : "left-0",
           )}
         >
@@ -66,7 +76,7 @@ export function DropdownItem({
   destructive?: boolean;
 }) {
   const className = cn(
-    "flex w-full items-center gap-2 rounded px-2.5 py-2 text-left text-[13px] transition-colors cursor-pointer",
+    "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] transition-colors cursor-pointer",
     destructive
       ? "text-danger hover:bg-danger-subtle"
       : "text-text-secondary hover:bg-surface-muted hover:text-text-primary",

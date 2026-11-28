@@ -374,8 +374,8 @@ export default function ResetPasswordPage() {
 
   if (!validToken) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
-        <div className="max-w-md w-full">
+      <div className="atelier-grid-bg flex min-h-screen flex-col items-center justify-center bg-background p-4">
+        <div className="w-full max-w-md rounded-2xl border border-border-subtle bg-surface p-6 shadow-sm">
           <Alert variant="danger">
             <p className="text-sm">
               Invalid or missing reset token. Please request a new master password reset link.
@@ -390,14 +390,14 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
-      <div className="max-w-lg w-full">
+    <div className="atelier-grid-bg flex min-h-screen flex-col items-center justify-center bg-background p-4">
+      <div className="w-full max-w-lg">
         {success ? (
-          <div className="text-center py-8 bg-surface rounded-xl border border-border-subtle p-6 shadow-fluent-2">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-success-subtle text-success">
+          <div className="rounded-2xl border border-border-subtle bg-surface p-6 text-center shadow-sm sm:p-8">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-success/25 bg-success-subtle text-success">
               <CheckCircle2 className="h-8 w-8" />
             </div>
-            <h2 className="text-xl font-semibold text-text-primary">
+            <h2 className="text-xl font-semibold tracking-tight text-text-primary">
               Master Password Reset Successfully
             </h2>
             <p className="mt-2 text-sm text-text-muted">
@@ -412,15 +412,15 @@ export default function ResetPasswordPage() {
             </div>
           </div>
         ) : loadingStatus ? (
-          <div className="flex flex-col items-center justify-center py-12 bg-surface rounded-xl border border-border-subtle p-6">
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-border-subtle bg-surface p-8 py-12 shadow-sm">
             <Loader2 className="h-8 w-8 animate-spin text-brand" />
             <p className="mt-3 text-sm text-text-muted">Checking vault encryption status...</p>
           </div>
         ) : isPopulated && !hasRecovery ? (
-          <div className="bg-surface rounded-xl border border-border-subtle p-6 shadow-fluent-2 space-y-4">
+          <div className="space-y-4 rounded-2xl border border-border-subtle bg-surface p-6 shadow-sm sm:p-7">
             <div className="flex items-center gap-3 text-danger">
               <AlertTriangle className="h-6 w-6 shrink-0" />
-              <h2 className="text-lg font-semibold text-text-primary">
+              <h2 className="text-lg font-semibold tracking-tight text-text-primary">
                 Encrypted Data Protection Lock
               </h2>
             </div>
@@ -440,22 +440,22 @@ export default function ResetPasswordPage() {
               If you remember your master password, sign in and use Settings → Master password to
               change your password safely.
             </p>
-            <div className="pt-2 flex justify-end">
+            <div className="flex justify-end pt-2">
               <Button onClick={() => router.push("/auth/signin")}>Back to sign in</Button>
             </div>
           </div>
         ) : isPopulated && hasRecovery ? (
           // Populated Vault Recovery Re-key Form
-          <div className="bg-surface rounded-xl border border-border-subtle p-6 shadow-fluent-2 space-y-5">
+          <div className="space-y-5 rounded-2xl border border-border-subtle bg-surface p-6 shadow-sm sm:p-7">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-subtle text-brand">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-brand/20 bg-brand-subtle text-brand">
                 <ShieldCheck className="h-5 w-5" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-text-primary">
+                <h2 className="text-lg font-semibold tracking-tight text-text-primary">
                   Recover & Re-key Credential Vault
                 </h2>
-                <p className="text-xs text-text-muted">
+                <p className="font-mono text-[11px] tabular-nums text-text-muted">
                   {recoveryStatus?.credentialCount} encrypted items will be safely re-encrypted
                 </p>
               </div>
@@ -601,14 +601,16 @@ export default function ResetPasswordPage() {
           </div>
         ) : (
           // Empty Vault Standard Reset Form
-          <div className="bg-surface rounded-xl border border-border-subtle p-6 shadow-fluent-2 space-y-4">
+          <div className="space-y-4 rounded-2xl border border-border-subtle bg-surface p-6 shadow-sm sm:p-7">
             <form onSubmit={handleStandardSubmit} className="space-y-4">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-subtle text-brand">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-brand/20 bg-brand-subtle text-brand">
                   <Lock className="h-5 w-5" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold text-text-primary">Reset Master Password</h2>
+                  <h2 className="text-lg font-semibold tracking-tight text-text-primary">
+                    Reset Master Password
+                  </h2>
                   <p className="text-xs text-text-muted">Enter your new master password.</p>
                 </div>
               </div>

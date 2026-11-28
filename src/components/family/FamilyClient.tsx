@@ -819,34 +819,34 @@ export function FamilyClient({ overview }: { overview: FamilyOverview }) {
                 return (
                   <Card
                     key={membership.id}
-                    className="rounded-2xl p-5 transition-colors hover:border-border"
+                    className="p-5 transition-colors hover:border-border-strong"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex min-w-0 items-start gap-3">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-purple-500/20 bg-purple-500/10 text-[12px] font-semibold text-purple-600 dark:text-purple-400">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-brand/20 bg-brand-subtle text-[12px] font-semibold text-brand">
                           {initials(ownerName) || <Users className="h-4 w-4" />}
                         </div>
                         <div className="min-w-0">
-                          <p className="truncate text-[13px] font-semibold text-text-primary">
+                          <p className="truncate text-[13.5px] font-semibold text-text-primary">
                             {ownerName}
                           </p>
-                          <p className="truncate text-[11px] text-text-muted">
+                          <p className="truncate font-mono text-[11px] text-text-muted">
                             {membership.owner?.email || "No email"}
                           </p>
                         </div>
                       </div>
-                      <Badge variant="violet">Read-only</Badge>
+                      <Badge variant="info">Read-only</Badge>
                     </div>
 
                     <div className="mt-4">
                       <p className="section-eyebrow">Open shared space</p>
-                      <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-4">
+                      <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3">
                         {membership.shareDocuments && (
                           <Link
                             href={`/family/${membership.ownerId}/documents`}
-                            className="group flex items-center gap-2 rounded-xl border border-border-subtle bg-surface px-3 py-2.5 text-[12px] font-medium text-text-secondary transition-all hover:border-blue-500/40 hover:bg-blue-500/5 hover:text-blue-600 dark:hover:text-blue-400"
+                            className="group flex items-center gap-2 rounded-xl border border-border-subtle bg-surface px-3 py-2.5 text-[12px] font-medium text-text-secondary transition-all hover:border-brand/40 hover:bg-brand-subtle/40 hover:text-brand"
                           >
-                            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-brand-subtle text-brand">
                               <FileText className="h-3.5 w-3.5 shrink-0" />
                             </span>
                             <span className="truncate">Documents</span>
@@ -856,9 +856,9 @@ export function FamilyClient({ overview }: { overview: FamilyOverview }) {
                         {membership.shareWealth && (
                           <Link
                             href={`/family/${membership.ownerId}/wealth`}
-                            className="group flex items-center gap-2 rounded-xl border border-border-subtle bg-surface px-3 py-2.5 text-[12px] font-medium text-text-secondary transition-all hover:border-emerald-500/40 hover:bg-emerald-500/5 hover:text-emerald-600 dark:hover:text-emerald-400"
+                            className="group flex items-center gap-2 rounded-xl border border-border-subtle bg-surface px-3 py-2.5 text-[12px] font-medium text-text-secondary transition-all hover:border-success/40 hover:bg-success-subtle/40 hover:text-success"
                           >
-                            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-success-subtle text-success">
                               <Wallet className="h-3.5 w-3.5 shrink-0" />
                             </span>
                             <span className="truncate">Wealth</span>
@@ -868,9 +868,9 @@ export function FamilyClient({ overview }: { overview: FamilyOverview }) {
                         {membership.shareCredentials && (
                           <Link
                             href={`/family/${membership.ownerId}/credentials`}
-                            className="group flex items-center gap-2 rounded-xl border border-border-subtle bg-surface px-3 py-2.5 text-[12px] font-medium text-text-secondary transition-all hover:border-purple-500/40 hover:bg-purple-500/5 hover:text-purple-600 dark:hover:text-purple-400"
+                            className="group flex items-center gap-2 rounded-xl border border-border-subtle bg-surface px-3 py-2.5 text-[12px] font-medium text-text-secondary transition-all hover:border-brand/40 hover:bg-brand-subtle/40 hover:text-brand"
                           >
-                            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400">
+                            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-brand-subtle text-brand">
                               <KeyRound className="h-3.5 w-3.5 shrink-0" />
                             </span>
                             <span className="truncate">Credentials</span>
@@ -880,9 +880,9 @@ export function FamilyClient({ overview }: { overview: FamilyOverview }) {
                         {membership.shareReminders && (
                           <Link
                             href={`/family/${membership.ownerId}/reminders`}
-                            className="group flex items-center gap-2 rounded-xl border border-border-subtle bg-surface px-3 py-2.5 text-[12px] font-medium text-text-secondary transition-all hover:border-amber-500/40 hover:bg-amber-500/5 hover:text-amber-600 dark:hover:text-amber-400"
+                            className="group flex items-center gap-2 rounded-xl border border-border-subtle bg-surface px-3 py-2.5 text-[12px] font-medium text-text-secondary transition-all hover:border-warning/40 hover:bg-warning-subtle/40 hover:text-warning"
                           >
-                            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-warning-subtle text-warning">
                               <Bell className="h-3.5 w-3.5 shrink-0" />
                             </span>
                             <span className="truncate">Reminders</span>
@@ -892,9 +892,9 @@ export function FamilyClient({ overview }: { overview: FamilyOverview }) {
                         {membership.shareNotes && (
                           <Link
                             href={`/family/${membership.ownerId}/notes`}
-                            className="group flex items-center gap-2 rounded-xl border border-border-subtle bg-surface px-3 py-2.5 text-[12px] font-medium text-text-secondary transition-all hover:border-teal-500/40 hover:bg-teal-500/5 hover:text-teal-600 dark:hover:text-teal-400"
+                            className="group flex items-center gap-2 rounded-xl border border-border-subtle bg-surface px-3 py-2.5 text-[12px] font-medium text-text-secondary transition-all hover:border-info/40 hover:bg-info-subtle/40 hover:text-info"
                           >
-                            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-teal-500/10 text-teal-600 dark:text-teal-400">
+                            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-info-subtle text-info">
                               <StickyNote className="h-3.5 w-3.5 shrink-0" />
                             </span>
                             <span className="truncate">Notes</span>

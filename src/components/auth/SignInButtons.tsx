@@ -4,8 +4,9 @@ import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { Label } from "@/components/ui/Label";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
-import { Mail } from "lucide-react";
+import { Mail, ShieldCheck } from "lucide-react";
 
 export function SignInButtons({
   callbackUrl = "/dashboard",
@@ -57,21 +58,22 @@ export function SignInButtons({
 
   if (emailSent) {
     return (
-      <div className="flex flex-col items-center gap-4 w-full max-w-sm">
-        <div className="p-3 rounded-lg bg-success-subtle text-success">
-          <Mail className="w-6 h-6" />
+      <div className="flex flex-col items-start gap-3 w-full rounded-xl border border-border-subtle bg-surface-muted/50 p-5">
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-success-subtle text-success">
+          <Mail className="w-5 h-5" />
         </div>
-        <h2 className="text-lg font-semibold text-text-primary">Check your email</h2>
-        <p className="text-sm text-text-secondary text-center">
-          We sent a sign-in link to <span className="font-semibold">{email}</span>. The link expires
-          in 15 minutes.
+        <h2 className="text-base font-semibold text-text-primary">Check your email</h2>
+        <p className="text-[13px] leading-relaxed text-text-secondary">
+          We sent a sign-in link to <span className="font-semibold text-text-primary">{email}</span>
+          . The link expires in 15 minutes.
         </p>
         <button
+          type="button"
           onClick={() => {
             setEmailSent(false);
             setEmail("");
           }}
-          className="text-sm text-brand hover:underline font-medium"
+          className="text-xs font-semibold text-brand hover:underline"
         >
           Send to a different email
         </button>
@@ -80,13 +82,13 @@ export function SignInButtons({
   }
 
   return (
-    <div className="flex flex-col items-center gap-3 w-full max-w-sm">
+    <div className="flex flex-col gap-4 w-full">
       {showDevLogin && (
         <a
           href="/api/dev-login"
-          className="flex h-10 w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-brand bg-brand/5 px-4 text-sm font-semibold text-brand transition-colors hover:bg-brand/15 shadow-sm"
+          className="flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-dashed border-brand bg-brand-subtle/60 px-4 text-[13px] font-semibold text-brand transition-colors hover:bg-brand-subtle"
         >
-          <span>⚡ Dev Quick Sign In</span>
+          <span>Dev Quick Sign In</span>
         </a>
       )}
 
@@ -96,7 +98,7 @@ export function SignInButtons({
         className="h-10 w-full px-4"
         variant="secondary"
       >
-        <svg className="w-5 h-5" viewBox="0 0 24 24">
+        <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
           <path
             fill="#4285F4"
             d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -114,25 +116,35 @@ export function SignInButtons({
             d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
           />
         </svg>
-        <span>{loading ? "Setting up Google & Drive..." : "Continue with Google"}</span>
+        <span>{loading ? "Connecting Google & Drive..." : "Continue with Google"}</span>
       </Button>
 
-      <div className="flex items-center gap-2 w-full">
+      <div className="flex items-center gap-3 w-full">
         <div className="h-px bg-border-subtle flex-1" />
-        <span className="text-xs text-text-muted uppercase tracking-wider">or</span>
+        <span className="font-mono text-[10px] text-text-muted uppercase tracking-widest">or</span>
         <div className="h-px bg-border-subtle flex-1" />
       </div>
 
-      <form onSubmit={handleEmailSignIn} className="w-full space-y-2.5">
-        <Input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="Enter your email address"
-          required
-          disabled={loading || emailLoading}
-          className="w-full"
-        />
+      <form onSubmit={handleEmailSignIn} className="w-full space-y-3">
+        <div>
+          <Label
+            htmlFor="signin-email"
+            className="mb-1.5 block text-xs font-medium text-text-secondary"
+          >
+            Email address
+          </Label>
+          <Input
+            id="signin-email"
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="name@example.com"
+            required
+            disabled={loading || emailLoading}
+            className="h-10 w-full"
+          />
+        </div>
         <Button
           type="submit"
           disabled={loading || emailLoading || !email}
@@ -152,23 +164,11 @@ export function SignInButtons({
         </Button>
       </form>
 
-      {error && <p className="text-xs text-danger text-center">{error}</p>}
+      {error && <p className="text-xs font-medium text-danger">{error}</p>}
 
-      <div className="flex items-center gap-1.5 text-xs text-text-muted">
-        <svg
-          className="w-4 h-4 text-success"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={2}
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-          />
-        </svg>
-        <span>Passwordless authentication via email</span>
+      <div className="flex items-center gap-2 text-[11.5px] text-text-muted">
+        <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-success" />
+        <span>Passwordless authentication via verified magic link</span>
       </div>
     </div>
   );

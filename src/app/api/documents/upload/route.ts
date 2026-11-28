@@ -10,6 +10,8 @@ import type { StorageProviderType } from "@/lib/storage/provider";
 import { createAuditLog, extractIpAddress, extractUserAgent } from "@/lib/audit-log";
 import { validateCSRFRequest } from "@/lib/csrf";
 import { getFolderHierarchyPath } from "@/lib/folder-path";
+import { userRateLimitResponse } from "@/lib/security-rate-limit";
+import { RATE_LIMITS } from "@/lib/rate-limits";
 
 const MAX_FOLDER_DEPTH = 20;
 // Multipart framing adds a small amount of overhead on top of the file bytes.
@@ -21,6 +23,12 @@ export async function POST(req: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const rateLimited = await userRateLimitResponse({
+      userId: user.id,
+      ...RATE_LIMITS.documentsUpload,
+    });
+    if (rateLimited) return rateLimited;
 
     if (!validateCSRFRequest(req)) {
       return NextResponse.json({ error: "Invalid CSRF token." }, { status: 403 });

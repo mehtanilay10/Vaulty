@@ -34,7 +34,7 @@ export function FoldersClient({ initialFolders }: { initialFolders: FolderWithCo
   const totalChildren = folders.reduce((sum, f) => sum + (f._count?.children || 0), 0);
 
   return (
-    <>
+    <div className="space-y-6">
       <div className="space-y-3">
         <PageHeader title="My Folders" icon={<Folder className="h-5 w-5" />} />
 
@@ -54,11 +54,11 @@ export function FoldersClient({ initialFolders }: { initialFolders: FolderWithCo
         <SectionHeader
           icon={<Layers className="h-4 w-4" />}
           title="Root folders"
-          description="Top-level categories used to organise your documents."
+          description="Top-level categories organizing your archive."
           count={folders.length}
           action={
             folders.length > 0 ? (
-              <div className="flex items-center gap-3 text-[11px] font-medium text-text-muted">
+              <div className="flex items-center gap-3 font-mono text-[11px] tabular-nums text-text-muted">
                 <span className="flex items-center gap-1.5">
                   <FileText className="h-3.5 w-3.5" />
                   {totalDocuments} files
@@ -92,11 +92,11 @@ export function FoldersClient({ initialFolders }: { initialFolders: FolderWithCo
               <Link
                 key={folder.id}
                 href={`/folders/${folder.id}`}
-                className="card card-hover flex flex-col justify-between p-4"
+                className="group flex flex-col justify-between rounded-xl border border-border-subtle bg-surface p-4 shadow-xs transition-all hover:border-border-strong hover:bg-surface-elevated hover:shadow-sm"
               >
                 <div>
                   <div className="mb-4 flex items-start justify-between gap-2">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-md border border-brand/15 bg-brand-subtle text-brand">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-border-subtle bg-surface-muted text-brand transition-colors group-hover:border-brand/25 group-hover:bg-brand-subtle">
                       <Folder className="h-5 w-5" />
                     </div>
                     {(folder.shares?.length ?? 0) > 0 && (
@@ -107,11 +107,11 @@ export function FoldersClient({ initialFolders }: { initialFolders: FolderWithCo
                     )}
                   </div>
 
-                  <h3 className="mb-1 truncate text-[13px] font-semibold text-text-primary">
+                  <h3 className="mb-1 truncate text-[14px] font-semibold tracking-tight text-text-primary group-hover:text-brand">
                     {folder.name}
                   </h3>
-                  <p className="text-[11px] text-text-muted">
-                    {folder._count?.documents || 0} documents &bull; {folder._count?.children || 0}{" "}
+                  <p className="font-mono text-[11px] tabular-nums text-text-muted">
+                    {folder._count?.documents || 0} files · {folder._count?.children || 0}{" "}
                     subfolders
                   </p>
                 </div>
@@ -137,6 +137,6 @@ export function FoldersClient({ initialFolders }: { initialFolders: FolderWithCo
         onClose={closeUpload}
         onUploadSuccess={() => router.refresh()}
       />
-    </>
+    </div>
   );
 }

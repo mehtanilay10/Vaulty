@@ -22,6 +22,7 @@ export default async function DashboardPage() {
     aiCompletedCount,
     expiringDocuments,
     vault,
+    authenticatorCount,
     sharedVaultCount,
     allWealthAccounts,
     upcomingCustomReminders,
@@ -74,6 +75,13 @@ export default async function DashboardPage() {
           where: { isFavorite: true },
           select: { id: true },
         },
+      },
+    }),
+    prisma.appCredential.count({
+      where: {
+        vault: { userId },
+        totpSecret: { not: null },
+        NOT: { totpSecret: "" },
       },
     }),
     prisma.vaultShare.count({ where: { sharedWithId: userId } }),
@@ -140,6 +148,7 @@ export default async function DashboardPage() {
             hasVault: Boolean(vault?.isConfigured),
             appCount: vault?._count.appCredentials ?? 0,
             bankCount: vault?._count.bankCredentials ?? 0,
+            authenticatorCount,
             favoriteCount,
             sharedCount: sharedVaultCount,
           }}

@@ -16,7 +16,7 @@ export function Tabs({
     <div className={cn("w-full border-b border-border-subtle", className)}>
       <div
         role="tablist"
-        className="flex items-center gap-1 overflow-x-auto overflow-y-hidden px-2 scrollbar-hide"
+        className="flex items-center gap-1 overflow-x-auto overflow-y-hidden px-1 scrollbar-hide"
       >
         {children}
       </div>
@@ -49,10 +49,10 @@ export function Tab({
         }
       }}
       className={cn(
-        "relative flex items-center gap-2 whitespace-nowrap rounded-t px-3 py-2.5 text-[13px] font-semibold transition-colors focus-visible:outline-none",
+        "relative flex items-center gap-2 whitespace-nowrap rounded-t-md px-3.5 py-2.5 text-[13px] font-semibold transition-colors focus-visible:outline-none",
         active
-          ? "text-brand after:absolute after:inset-x-1.5 after:bottom-0 after:h-[2.5px] after:rounded-full after:bg-brand shadow-[0_1px_0_0_transparent]"
-          : "text-text-muted hover:bg-surface-muted hover:text-text-primary",
+          ? "text-text-primary after:absolute after:inset-x-2 after:bottom-0 after:h-[2px] after:rounded-full after:bg-brand"
+          : "text-text-muted hover:bg-surface-muted/70 hover:text-text-primary",
       )}
     >
       {icon && <span className={cn(active ? "text-brand" : "text-text-muted")}>{icon}</span>}

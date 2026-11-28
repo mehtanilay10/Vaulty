@@ -142,9 +142,9 @@ export function FolderDetailClient({
             <CommandBarButton
               icon={<Settings className="h-3.5 w-3.5" />}
               onClick={() => setIsPropertiesOpen(true)}
-              title="Folder properties & sharing"
+              title="Edit folder & sharing"
             >
-              Properties
+              Edit
             </CommandBarButton>
           </CommandBar>
         </div>
@@ -155,24 +155,26 @@ export function FolderDetailClient({
           <SectionHeader
             icon={<Layers className="h-4 w-4" />}
             title="Subfolders"
-            description="Nested folders inside this location."
+            description="Nested collections inside this directory."
             count={folder.children.length}
           />
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3 lg:grid-cols-4">
             {folder.children.map((sub) => (
               <Link
                 key={sub.id}
                 href={`/folders/${sub.id}`}
-                className="card card-hover group flex items-center gap-3 p-4"
+                className="group flex items-center gap-3 rounded-xl border border-border-subtle bg-surface p-3.5 shadow-xs transition-all hover:border-border-strong hover:bg-surface-elevated hover:shadow-sm"
               >
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-brand/15 bg-brand-subtle text-brand">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border-subtle bg-surface-muted text-brand transition-colors group-hover:border-brand/25 group-hover:bg-brand-subtle">
                   <Folder className="h-4 w-4" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h3 className="truncate text-[13px] font-semibold text-text-primary">
+                  <h3 className="truncate text-[13px] font-semibold text-text-primary group-hover:text-brand">
                     {sub.name}
                   </h3>
-                  <p className="text-[11px] text-text-muted">{sub._count?.documents || 0} files</p>
+                  <p className="font-mono text-[11px] tabular-nums text-text-muted">
+                    {sub._count?.documents || 0} files
+                  </p>
                 </div>
                 <ChevronRight className="h-4 w-4 shrink-0 text-text-muted transition-transform group-hover:translate-x-0.5" />
               </Link>
@@ -215,7 +217,7 @@ export function FolderDetailClient({
                     ? `/family/${owner.id}/documents/${doc.id}`
                     : `/documents/${doc.id}`
                 }
-                className="card card-hover flex flex-col justify-between p-4"
+                className="group flex flex-col justify-between rounded-xl border border-border-subtle bg-surface p-4 shadow-xs transition-all hover:border-border-strong hover:bg-surface-elevated hover:shadow-sm"
               >
                 <div>
                   <div className="mb-3 flex items-start justify-between gap-2">
@@ -223,10 +225,10 @@ export function FolderDetailClient({
                       <img
                         src={doc.thumbnailUrl}
                         alt=""
-                        className="h-10 w-10 rounded-md border border-border-subtle object-cover"
+                        className="h-10 w-10 rounded-lg border border-border-subtle object-cover shadow-2xs"
                       />
                     ) : (
-                      <div className="flex h-10 w-10 items-center justify-center rounded-md border border-brand/15 bg-brand-subtle text-brand">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-border-subtle bg-surface-muted text-brand transition-colors group-hover:border-brand/25 group-hover:bg-brand-subtle">
                         <FileText className="h-5 w-5" />
                       </div>
                     )}
@@ -236,7 +238,7 @@ export function FolderDetailClient({
                     />
                   </div>
 
-                  <h3 className="mb-1 truncate text-[13px] font-semibold text-text-primary">
+                  <h3 className="mb-1 truncate text-[13.5px] font-semibold tracking-tight text-text-primary group-hover:text-brand">
                     {doc.name}
                   </h3>
 
@@ -245,7 +247,7 @@ export function FolderDetailClient({
                       {doc.tags.map((t) => (
                         <span
                           key={t.tag.id}
-                          className="rounded border border-border-subtle bg-surface-muted px-1.5 py-0.5 text-[10px] font-medium text-text-secondary"
+                          className="rounded-full border border-border-subtle bg-surface-muted px-2 py-0.5 font-mono text-[10px] text-text-secondary"
                         >
                           #{t.tag.name}
                         </span>
@@ -254,7 +256,7 @@ export function FolderDetailClient({
                   )}
                 </div>
 
-                <div className="flex items-center justify-between border-t border-border-subtle pt-2.5 text-[11px] text-text-muted">
+                <div className="mt-3 flex items-center justify-between border-t border-border-subtle pt-2.5 font-mono text-[11px] tabular-nums text-text-muted">
                   <span>{new Date(doc.createdAt).toLocaleDateString()}</span>
                   <span>{Math.round(doc.sizeBytes / 1024)} KB</span>
                 </div>

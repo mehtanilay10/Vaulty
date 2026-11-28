@@ -1,14 +1,14 @@
 {
-  "name": "Vaulty - Private Family Document Vault",
+  "name": "Vaulty — Personal & Family Vault",
   "short_name": "Vaulty",
-  "description": "Secure, private personal and family document storage with AI-powered summaries and granular recursive folder sharing.",
+  "description": "Private personal and family workspace for Google Drive documents & scans, zero-knowledge credentials & 2FA authenticator, multi-currency wealth ledgers, markdown notes, email auto-sync, reminders, and Gemini AI.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#f8fafc",
-  "theme_color": "#2563eb",
+  "background_color": "#0b0e14",
+  "theme_color": "#0b0e14",
   "orientation": "any",
-  "categories": ["productivity", "utilities"],
+  "categories": ["productivity", "finance", "utilities"],
   "icons": [
     {
       "src": "/favicon.svg",

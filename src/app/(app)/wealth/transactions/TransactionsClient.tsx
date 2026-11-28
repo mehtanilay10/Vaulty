@@ -188,7 +188,7 @@ export function TransactionsClient({ transactions }: TransactionsClientProps) {
 
         {hasFilters && (
           <div className="mt-2.5 flex items-center justify-between border-t border-border-subtle pt-2.5 text-[11px] text-text-muted">
-            <p>
+            <p className="font-mono tabular-nums">
               Showing {filteredTransactions.length} of {transactions.length} transactions
             </p>
             <button

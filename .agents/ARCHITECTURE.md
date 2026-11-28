@@ -1,132 +1,58 @@
-# Architecture, Integrations & Security
-
-## 1. Runtime Topology & System Architecture
-
-Vaulty is a private personal and family information workspace built on the Next.js App Router, PostgreSQL, Google Drive, and Google Gemini.
-
-- **Web Application:** Next.js 16.4.5 App Router, React 19.3.1, TypeScript strict mode.
-- **Authentication & Sessions:** Auth.js v5 beta with Prisma adapter, Google OAuth and email magic-link providers, JWT session strategy with 20-second in-memory session validation caching (`session-cache.ts`).
-- **Database & Persistence:** PostgreSQL via Prisma 6.3.
-- **File Storage:** Google Drive API using user-connected OAuth tokens. Google Drive is the primary concrete storage provider.
-- **AI Engine:** Google Gemini via `@google/genai` (`gemini-3.6-flash` default).
-- **Email Delivery:** Resend API (`resend` SDK) for transactional emails, magic links, family invitations, and reminder digests; Resend Inbound Webhooks for email sync forwarding.
-- **Browser Push:** Web Push via `web-push` using VAPID keys and service worker (`public/sw.js`).
-- **Styling & UI Primitives:** Tailwind CSS v4, semantic CSS variables, Lucide icons, `next-themes`, and custom Microsoft Fluent-inspired controls (`CommandBar`, `FolderTreeSelect`).
-- **Rich Text Canvas:** TipTap v3 (`@tiptap/react`, `@tiptap/starter-kit`, `@tiptap/markdown`, `@tiptap/extension-task-item`, `@tiptap/extension-task-list`) with bidirectional Markdown synchronization and `react-markdown` preview rendering.
-- **Background Workers:**
-  - AI Document Queue: Persisted PostgreSQL queue with standalone worker (`yarn ai:worker`) or authenticated cron (`/api/cron/ai-worker`).
-  - Email Transaction Sync: Mailbox crawler and transaction classifier with standalone daemon (`yarn worker:email`) or authenticated cron (`/api/cron/email-sync`).
-  - Reminders & Expiries: Scheduled processor endpoint (`/api/cron/reminders`) triggered daily at 03:30 UTC via `vercel.json`.
-
-```mermaid
-flowchart TD
-  Browser["Browser / PWA Client"] --> Next["Next.js App Router"]
-  Next --> Auth["Auth.js (with 20s Session Cache)"]
-  Next --> API["API Route Handlers"]
-  API --> Domain["Domain Services (src/lib)"]
-  Domain --> DB[("PostgreSQL / Prisma")]
-  Domain --> Drive["Google Drive API"]
-  Domain --> Gemini["Gemini API"]
-  Domain --> Mail["Resend API"]
-  AIWorker["AI Worker Daemon / Cron"] --> DB
-  AIWorker --> Drive
-  AIWorker --> Gemini
-  EmailWorker["Email Sync Worker / Cron"] --> DB
-  EmailWorker --> Gemini
-  Cron["Vercel Cron (03:30 UTC)"] --> ReminderCron["Reminder Cron Endpoint"]
-  ReminderCron --> DB
-  ReminderCron --> Mail
-  ReminderCron --> WebPush["Web Push (VAPID)"]
-```
+# Vaulty — System Architecture
 
 ---
 
-## 2. Route Groups & App Shell Structure
+## High-Level Runtime Topology
 
-- `/`: Public marketing and landing page.
-- `src/app/(app)/layout.tsx`: Authenticated application shell wrapping all protected views with `AppLockProvider`, `PasswordVaultProvider`, `UploadProvider`, `AppShell`, `ErrorBoundary`, and `AppLockScreen` (`force-dynamic`).
-- `src/app/layout.tsx`: Root wrapper containing `ThemeProvider`, `SessionProvider`, `FeedbackProvider`, and global `SiteFooter`.
-- `/auth/*`: Sign-in, verification request, and error pages (`/auth/signin`, `/auth/verify-request`, `/auth/error`).
-- `/share/[token]`: Public document share route; validates share tokens, passwords, expiration, and maximum view counts with signed session cookies.
-- `/api/passwords/recovery/verify` & `/api/passwords/recovery/rekey`: Token-gated recovery endpoints authorized via one-time reset tokens (or active sessions), exempted from standard session redirection in `proxy.ts`.
-- `src/proxy.ts`: Middleware boundary enforcing session authentication for protected paths, validating session version (defaulting unversioned legacy tokens to 0 so revocations invalidate them), and setting double-submit CSRF cookies.
+Vaulty is a full-stack Next.js `16.4.5` App Router application (`React 19.3.1`, TypeScript) deployed with PostgreSQL (`@prisma/client` `6.3`) and integrated external providers:
 
----
-
-## 3. External Integrations
-
-### Google OAuth & Google Drive Storage
-
-- Configured in `src/auth.ts`, `src/lib/google-drive/oauth.ts`, and `src/lib/storage/drive-provider.ts`.
-- Uses `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`.
-- Scopes: `openid`, `email`, `profile`, `drive.file`, and `drive.readonly`.
-- Original document binaries and generated AI artifacts live in the user's Google Drive under a structured hierarchy:
-  `Vaulty/Docs`, `Vaulty/Summary`, `Vaulty/Interpretation`, `Vaulty/Text`.
-- Drive OAuth refresh tokens are encrypted at rest with AES-256-GCM using a key purpose-derived from `AUTH_SECRET`.
-- Sync logic in `src/lib/sync/sync-engine.ts` tracks Drive file/folder metadata, records sync events, and reconciles conflicts.
-
-### Google Gemini AI
-
-- SDK: `@google/genai` with `GEMINI_API_KEY` and model `GEMINI_MODEL` (defaults to `gemini-3.6-flash`).
-- Used for document extraction, Markdown summaries, informational interpretations, structured date extraction, grounded chat (`/api/chat`), and financial email transaction classification.
-- Document prompts strictly forbid fabricated facts and mandate explicit uncertainty disclaimers. Medical interpretations are informational only (no medical diagnoses or prescription changes).
-- **Data Boundary:** Credential vault plaintext is never transmitted to Gemini. Only uploaded document contents and email text payloads are sent to Gemini.
-
-### Email (Resend API & Inbound Webhooks)
-
-- Uses `RESEND_API_KEY`, `RESEND_INBOUND_WEBHOOK_SECRET`, `INBOUND_EMAIL_DOMAIN`, and `EMAIL_FROM`.
-- Handled directly via the official `resend` package.
-- `src/lib/email.ts` dispatches application emails, family invitations, and daily reminder digests.
-- **Inbound Webhook (`/api/webhooks/resend/inbound`):** Receives forwarded emails via Svix-signed webhooks, resolves recipient addresses (`username+docs@vaulty.mnilay.com`), automatically cracks password-protected statement PDFs via `PdfPasswordSettings`, stages binary attachments in `InboundEmailAttachment`, and runs multi-module classification for documents, reminders, and wealth transactions without mailbox OAuth grants.
-
-### Microsoft Entra (Outlook Sync)
-
-- Configured in `src/lib/outlook/oauth.ts`.
-- Uses `MICROSOFT_CLIENT_ID`, `MICROSOFT_CLIENT_SECRET`, and `MICROSOFT_TENANT_ID`.
-- Scopes: `openid`, `offline_access`, `Mail.Read`.
-- Tokens are encrypted at rest with AES-256-GCM.
-
-### Web Push Notifications
-
-- Implemented via `web-push` using VAPID keys (`NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `WEB_PUSH_SUBJECT`).
-- Service worker at `public/sw.js` handles push events and notification clicks.
-- Client subscriptions stored in `PushSubscription` with encrypted endpoint auth keys.
+- **Web Tier & RSC/API**: Next.js App Router serves server-rendered layouts, Server Components, and REST route handlers (`src/app/api/**`), plus standalone landing/auth/share routes.
+- **Request Gate (`src/proxy.ts`)**: Runs on matched paths (excluding `_next/static`, `_next/image`, `_vercel`, `favicon.ico`, `manifest.json`, `icons`, and static asset extensions) to validate authenticated sessions and issue double-submit CSRF cookies.
+- **Database**: PostgreSQL holds user identities, sessions, folder trees, document indexes, wealth accounts/transactions, ciphertexts, staging queues, rate limits (`SecurityRateLimit`), and AI jobs (`AiJob`).
+- **File Storage**: User documents live in the user's connected Google Drive (`StorageConnection`, `src/lib/storage/drive-provider.ts`); Vaulty acts as an indexed, AI-enriched layer rather than holding opaque raw document blobs permanently. (Exception: temporary `InboundEmailAttachment` bytes staged from inbound email webhooks until imported.)
+- **Analytics**: `@vercel/analytics` (`<Analytics />` from `@vercel/analytics/next` rendered in `src/app/layout.tsx`, with `_vercel/*` allowed past `src/proxy.ts`).
 
 ---
 
-## 4. Security & Cryptography Model
+## Authentication & Session Integrity
 
-### Credential Vault Envelope Encryption
+- **Providers**: Auth.js (`next-auth@^5.0.0-beta.32`) configured with Google OAuth and Email Magic Links (Resend). In local `NODE_ENV=development`, `/api/dev-login` provides a gated dev bypass for `DEV_LOGIN_EMAIL`.
+- **Session Revocation (`sessionVersion`)**: Every `User` row carries an incrementing `sessionVersion`. `src/proxy.ts` calls `validateSessionVersion` (`src/lib/session-validation.ts`) so invoking `POST /api/user/sessions/revoke` invalidates active sessions across devices immediately.
 
-```mermaid
-sequenceDiagram
-  participant User as User (Browser)
-  participant KDF as Web Crypto (PBKDF2)
-  participant Local as In-Memory KEK
-  participant Server as Next.js API / DB
+---
 
-  User->>KDF: Master Password + Salt (600k iterations)
-  KDF-->>Local: Key Encryption Key (KEK)
-  Note over Local: AES-256-GCM (v2)
-  Local->>Server: Encrypted Credential Payloads (ciphertext, iv, tag)
-  Server-->>Server: Store in PostgreSQL (Zero-Knowledge)
-  Server->>Local: Return Encrypted Ciphertexts
-  Local->>User: Decrypt to Plaintext in Memory
-```
+## AI Pipeline & Background Workers
 
-- **Algorithm:** Version 2 envelope encryption using AES-256-GCM.
-- **Key Derivation:** Web Crypto PBKDF2-HMAC-SHA256 with 600,000 iterations and a 16-byte cryptographically random salt.
-- **Zero-Knowledge Guarantee:** Master passwords, plaintext credentials, and derived KEKs are never sent to or stored on the server.
-- **Brute-Force Lockout Defense:** `PasswordVault.failedAttempts` and `PasswordVault.lockedUntil` enforce a 15-minute lockout after 5 consecutive failed unlock or password change attempts.
-- **App Lock Cross-Device PIN Sync:** Setting an App Lock PIN wraps the KEK using `sha256(pin)` as an AES-KW / AES-GCM wrapping key and stores `appLockPinHash` and `appLockWrappedKey` on `PasswordVault`.
+- **Gemini Integration (`src/lib/gemini.ts`)**: Uses `@google/genai` with multi-key rotation (`GEMINI_API_KEY_1`..`N`, 30s cooldown tracking on rate limits) and model fallback (`DEFAULT_GEMINI_MODEL` -> `DEFAULT_GEMINI_FALLBACK_MODEL`).
+- **Queue & Execution**:
+  - Inline document AI (`POST /api/documents/[id]/ai`) and batch queueing (`POST /api/documents/ai/batch`).
+  - Asynchronous job queue (`AiJob`, `AiProcessing`) processed via `src/lib/ai/worker.ts` and callable from:
+    - Standalone loop worker: `src/workers/ai-worker.ts` (`yarn ai:worker`)
+    - Protected cron/admin endpoints: `/api/cron/ai-worker`, `/api/admin/ai-worker`, `/api/admin/cleanup-ai`
+    - GitHub Actions schedule (`.github/workflows/ai-worker-cron.yml`).
 
-### In-Memory Decryption & Memory Safety
+---
 
-- Password-protected PDF statements are cracked and parsed in-process using `pdfjs-dist`; attachment bytes and passwords are never transmitted to external APIs.
-- Memory budgets: scrypt operations enforce `maxmem: 128MB`; buffer conversions avoid spread operators; ZIP exports enforce a 50MB per-file and 200MB total ceiling.
+## Email & Notification Pipelines
 
-### CSRF & Authorization
+1. **Scheduled Reminders**:
+   - Vercel Cron (`vercel.json`: `"30 3 * * *"` calling `/api/cron/reminders`) executes `src/lib/reminder-worker.ts`.
+   - Evaluates active reminders against `notifyDaysBefore`, creates deduplicated `Notification` rows (`idempotencyKey`), dispatches transactional emails (`RESEND_API_KEY`, `src/lib/email.ts`), and sends Web Push alerts (`src/lib/web-push.ts` via VAPID keys + `PushSubscription`).
+2. **Email Auto-Sync**:
+   - Polls Gmail (`src/lib/gmail/`) and Outlook (`src/lib/outlook/`) via `/api/cron/email-sync` or standalone `src/workers/email-worker.ts` (`yarn worker:email`).
+   - Also triggered via `.github/workflows/email-sync-cron.yml`.
+3. **Inbound Forwarding Webhook**:
+   - Resend Inbound posts signed payloads to `POST /api/webhooks/resend/inbound`.
+   - `src/lib/sync/resend-webhook-verifier.ts` verifies the webhook signature (`RESEND_INBOUND_WEBHOOK_SECRET`), and `src/lib/sync/inbound-email-service.ts` extracts text/attachments into `InboundEmailAttachment` and multi-module import queues.
 
-- Double-submit CSRF cookie validation using HMAC-SHA256 signatures (`x-csrf-token` header vs `csrf-token` cookie) on all mutations.
-- Distributed sliding-window rate limiting backed by PostgreSQL (`SecurityRateLimit`).
-- All family and shared resource routes verify ownership or membership permissions server-side on every request.
+---
+
+## Security Headers, Theming & PWA
+
+- **HTTP Security Headers (`next.config.ts`)**: Sets `Strict-Transport-Security`, `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy: camera=(self), microphone=(), geolocation=()` (so in-app camera & QR scanners can access `getUserMedia` while third-party origins stay blocked), and a scoped `Content-Security-Policy` (allowing self, Next.js hydration/fonts, `blob:`/`data:` scanner/image previews, `cdnjs.cloudflare.com` PDF.js worker, Google avatars/Drive thumbnails, Vercel Analytics, and Google/Microsoft OAuth `form-action` redirects).
+- **Dark-First Theming**:
+  - `src/app/layout.tsx` includes a blocking pre-hydration inline script defaulting missing `localStorage.getItem("theme")` to `"dark"` (and resolving `"system"` against `prefers-color-scheme`) before first paint.
+  - `src/components/providers/ThemeProvider.tsx` manages `"light"`, `"dark"`, and `"system"` preferences with `defaultTheme="dark"`.
+- **PWA & Offline Support**:
+  - `public/manifest.json` defines standalone dark display metadata (`background_color` & `theme_color`: `#0b0e14`).
+  - `public/sw.js` provides service worker registration for offline shell support (`/offline`) and Web Push event handling (`PWAInstallButton`, `OfflineBanner`).

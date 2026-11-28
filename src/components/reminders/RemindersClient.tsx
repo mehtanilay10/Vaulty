@@ -661,21 +661,19 @@ export function RemindersClient({
             </Card>
 
             <aside className="space-y-4">
-              <Card className="p-4">
-                <div className="flex items-center gap-2">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-subtle text-brand">
+              <Card className="p-4.5">
+                <div className="flex items-center gap-2.5">
+                  <span className="flex h-8.5 w-8.5 items-center justify-center rounded-lg border border-brand/20 bg-brand-subtle text-brand">
                     <BellRing className="h-4 w-4" />
                   </span>
                   <div>
                     <h2 className="text-[13px] font-semibold text-text-primary">
                       Notification channels
                     </h2>
-                    <p className="text-[11px] text-text-muted">
-                      Managed centrally in your settings.
-                    </p>
+                    <p className="text-[11px] text-text-muted">Managed centrally in settings.</p>
                   </div>
                 </div>
-                <p className="mt-3 text-xs text-text-muted leading-relaxed">
+                <p className="mt-3 text-xs leading-relaxed text-text-muted">
                   Configure delivery channels (email, in-app, browser push) in{" "}
                   <Link href="/settings" className="font-semibold text-brand hover:underline">
                     Settings &rarr; Notification preferences
@@ -684,7 +682,7 @@ export function RemindersClient({
                 </p>
               </Card>
 
-              <Card className="rounded-2xl bg-surface-muted/40 p-4">
+              <Card className="bg-surface-muted/40 p-4.5">
                 <div className="flex items-start gap-2.5">
                   <BellRing className="mt-0.5 h-4 w-4 shrink-0 text-text-muted" />
                   <div>
@@ -811,7 +809,7 @@ export function RemindersClient({
               value={notifyDaysBefore}
               onChange={(vals) => setNotifyDaysBefore(vals as number[])}
               placeholder="Select reminder schedule..."
-              badgeClassName="bg-primary/10 text-primary border-primary/20"
+              badgeClassName="bg-brand-subtle text-brand border-brand/25"
             />
             <p className="mt-1.5 text-[11px] text-text-muted">
               Choose when to be notified. &quot;On due date&quot; alerts you on the due date itself.

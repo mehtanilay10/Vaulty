@@ -1,6 +1,6 @@
 /**
- * Envelope encryption for credentials using KEK + DEK pattern
- * Version 2: KEK derived from master password with 600,000 PBKDF2 iterations, DEK per credential
+ * Envelope encryption for credentials using KEK + DEK pattern.
+ * KEK derived from master password with 600,000 PBKDF2 iterations, DEK per credential.
  */
 
 import {

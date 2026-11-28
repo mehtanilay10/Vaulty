@@ -17,6 +17,8 @@ import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { AiStatusBadge } from "@/components/ui/AiStatusBadge";
 import { FolderTreeSelect } from "@/components/ui/FolderTreeSelect";
+import { Modal } from "@/components/ui/Modal";
+import { useFeedback } from "@/components/providers/FeedbackProvider";
 import {
   FileText,
   Search,
@@ -32,6 +34,8 @@ import {
   Download,
   Eye,
   Camera,
+  FolderInput,
+  Trash2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useGoogleDriveStatus } from "@/hooks/useGoogleDriveStatus";
@@ -67,6 +71,9 @@ export function DocumentsClient({
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [bulkBusy, setBulkBusy] = useState(false);
   const [bulkMessage, setBulkMessage] = useState<string | null>(null);
+  const [moveOpen, setMoveOpen] = useState(false);
+  const [moveFolderId, setMoveFolderId] = useState("");
+  const { confirmAction, toast } = useFeedback();
   const { openUpload, closeUpload, isOpen: isUploadOpen, openCamera } = useUpload();
   const searchParams = useSearchParams();
   const { isConnected } = useGoogleDriveStatus();
@@ -253,28 +260,98 @@ export function DocumentsClient({
     }
   };
 
+  const getOwnedSelectedIds = () =>
+    selectedIds.filter((id) =>
+      documents.some((doc) => doc.id === id && doc.ownerId === currentUserId),
+    );
+
+  const handleBulkMove = async () => {
+    const ownedIds = getOwnedSelectedIds();
+    if (!ownedIds.length || !moveFolderId) return;
+    setBulkBusy(true);
+    setBulkMessage(null);
+    try {
+      const response = await fetch("/api/documents/bulk", {
+        method: "POST",
+        headers: csrfHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ action: "move", documentIds: ownedIds, folderId: moveFolderId }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Could not move documents.");
+      setBulkMessage(
+        `Moved ${data.moved} document(s)${data.skipped ? ` (${data.skipped} skipped)` : ""}.`,
+      );
+      setSelectedIds([]);
+      setMoveOpen(false);
+      setMoveFolderId("");
+      router.refresh();
+    } catch (error) {
+      setBulkMessage(error instanceof Error ? error.message : "Bulk move failed.");
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    const ownedIds = getOwnedSelectedIds();
+    if (!ownedIds.length) return;
+    const confirmed = await confirmAction({
+      title: `Delete ${ownedIds.length} document(s)?`,
+      description:
+        "Selected documents will be permanently deleted from Vaulty and Google Drive. This cannot be undone.",
+      confirmLabel: "Delete documents",
+      tone: "danger",
+    });
+    if (!confirmed) return;
+
+    setBulkBusy(true);
+    setBulkMessage(null);
+    try {
+      const response = await fetch("/api/documents/bulk", {
+        method: "POST",
+        headers: csrfHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ action: "delete", documentIds: ownedIds }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Could not delete documents.");
+      const parts = [`Deleted ${data.deleted} document(s)`];
+      if (data.failed) parts.push(`${data.failed} failed`);
+      if (data.skipped) parts.push(`${data.skipped} skipped (not owned)`);
+      setBulkMessage(parts.join(", ") + ".");
+      if (data.failedNames?.length) {
+        toast(`Could not delete: ${data.failedNames.join(", ")}`, "error");
+      }
+      setSelectedIds([]);
+      router.refresh();
+    } catch (error) {
+      setBulkMessage(error instanceof Error ? error.message : "Bulk delete failed.");
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
   const hasFilters = Boolean(
     searchFilter || filterFolderId || typeFilter !== "all" || aiFilter !== "all",
   );
 
   return (
-    <>
+    <div className="space-y-5">
       <div className="space-y-3">
         <PageHeader title="All Documents" icon={<FileText className="h-5 w-5" />} />
 
         <CommandBar
           farItems={
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-0.5 rounded-lg border border-border-subtle bg-surface-muted/60 p-0.5">
               <button
                 type="button"
                 onClick={() => setViewMode("grid")}
                 title="Grid view"
                 aria-label="Grid view"
                 className={cn(
-                  "flex h-7 w-7 items-center justify-center rounded-none text-text-muted transition-colors",
+                  "flex h-7 w-7 items-center justify-center rounded-md text-text-muted transition-colors",
                   viewMode === "grid"
-                    ? "bg-surface-muted text-brand font-semibold"
-                    : "hover:bg-surface-muted hover:text-text-primary",
+                    ? "bg-surface text-brand shadow-2xs font-semibold"
+                    : "hover:text-text-primary",
                 )}
               >
                 <LayoutGrid className="h-3.5 w-3.5" />
@@ -285,10 +362,10 @@ export function DocumentsClient({
                 title="List view"
                 aria-label="List view"
                 className={cn(
-                  "flex h-7 w-7 items-center justify-center rounded-none text-text-muted transition-colors",
+                  "flex h-7 w-7 items-center justify-center rounded-md text-text-muted transition-colors",
                   viewMode === "list"
-                    ? "bg-surface-muted text-brand font-semibold"
-                    : "hover:bg-surface-muted hover:text-text-primary",
+                    ? "bg-surface text-brand shadow-2xs font-semibold"
+                    : "hover:text-text-primary",
                 )}
               >
                 <List className="h-3.5 w-3.5" />
@@ -325,6 +402,23 @@ export function DocumentsClient({
                 disabled={bulkBusy}
               >
                 Queue AI ({selectedIds.length})
+              </CommandBarButton>
+              <CommandBarButton
+                icon={<FolderInput className="h-3.5 w-3.5" />}
+                onClick={() => {
+                  setMoveFolderId("");
+                  setMoveOpen(true);
+                }}
+                disabled={bulkBusy}
+              >
+                Move
+              </CommandBarButton>
+              <CommandBarButton
+                icon={<Trash2 className="h-3.5 w-3.5 text-danger" />}
+                onClick={handleBulkDelete}
+                disabled={bulkBusy}
+              >
+                Delete
               </CommandBarButton>
               <CommandBarButton onClick={() => setSelectedIds([])}>Deselect</CommandBarButton>
             </>
@@ -457,14 +551,30 @@ export function DocumentsClient({
         </div>
 
         {selectedIds.length > 0 && (
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-brand/20 bg-brand-subtle/50 p-3">
-            <span className="text-sm font-medium text-text-primary">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-brand/25 bg-brand-subtle/40 px-4 py-3 shadow-xs">
+            <span className="font-mono text-xs font-semibold uppercase tracking-wider text-brand">
               {selectedIds.length} selected
             </span>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Button size="sm" onClick={handleBulkAi} disabled={bulkBusy}>
-                <Sparkles className="h-4 w-4" />
+                <Sparkles className="h-3.5 w-3.5" />
                 {bulkBusy ? "Queueing…" : "Generate AI summaries"}
+              </Button>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => {
+                  setMoveFolderId("");
+                  setMoveOpen(true);
+                }}
+                disabled={bulkBusy}
+              >
+                <FolderInput className="h-3.5 w-3.5" />
+                Move
+              </Button>
+              <Button size="sm" variant="danger" onClick={handleBulkDelete} disabled={bulkBusy}>
+                <Trash2 className="h-3.5 w-3.5" />
+                Delete
               </Button>
               <Button size="sm" variant="ghost" onClick={() => setSelectedIds([])}>
                 Clear
@@ -478,7 +588,7 @@ export function DocumentsClient({
           </p>
         )}
         {loadingResults ? (
-          <div className="py-10 text-center text-sm text-text-muted">
+          <div className="py-12 text-center text-sm text-text-muted">
             Updating document results…
           </div>
         ) : filteredDocs.length === 0 ? (
@@ -513,7 +623,7 @@ export function DocumentsClient({
             className={
               viewMode === "grid"
                 ? "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-                : "space-y-2"
+                : "overflow-hidden rounded-xl border border-border-subtle bg-surface shadow-xs divide-y divide-border-subtle"
             }
           >
             {filteredDocs.map((doc) => (
@@ -522,8 +632,8 @@ export function DocumentsClient({
                 href={`/documents/${doc.id}`}
                 className={
                   viewMode === "grid"
-                    ? "card card-hover flex flex-col justify-between p-4"
-                    : "card card-hover group/doc-row flex items-center justify-between gap-3 p-3"
+                    ? "group flex flex-col justify-between rounded-xl border border-border-subtle bg-surface p-4 shadow-xs transition-all hover:border-border-strong hover:bg-surface-elevated hover:shadow-sm"
+                    : "group/doc-row flex flex-col gap-3 px-4 py-3.5 transition-colors hover:bg-surface-muted/70 sm:flex-row sm:items-center sm:justify-between"
                 }
                 onClick={(event) => {
                   if (
@@ -536,11 +646,17 @@ export function DocumentsClient({
               >
                 <div
                   className={
-                    viewMode === "grid" ? "min-w-0" : "flex min-w-0 flex-1 items-center gap-3"
+                    viewMode === "grid" ? "min-w-0" : "flex min-w-0 flex-1 items-center gap-3.5"
                   }
                 >
-                  <div className="mb-3 flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2">
+                  <div
+                    className={
+                      viewMode === "grid"
+                        ? "mb-3 flex items-start justify-between gap-2"
+                        : "flex shrink-0 items-center gap-2.5"
+                    }
+                  >
+                    <div className="flex items-center gap-2.5">
                       <input
                         type="checkbox"
                         aria-label={`Select ${doc.name}`}
@@ -550,16 +666,16 @@ export function DocumentsClient({
                           event.preventDefault();
                           event.stopPropagation();
                         }}
-                        className="h-4 w-4 accent-[var(--brand)]"
+                        className="h-4 w-4 rounded accent-[var(--brand)]"
                       />
                       {doc.thumbnailUrl ? (
                         <img
                           src={doc.thumbnailUrl}
                           alt=""
-                          className="h-10 w-10 rounded-md border border-border-subtle object-cover"
+                          className="h-10 w-10 rounded-lg border border-border-subtle object-cover shadow-2xs"
                         />
                       ) : (
-                        <div className="flex h-10 w-10 items-center justify-center rounded-md border border-brand/15 bg-brand-subtle text-brand">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-border-subtle bg-surface-muted text-brand">
                           {doc.mimeType === "application/pdf" ? (
                             <FileText className="h-5 w-5" />
                           ) : doc.mimeType.startsWith("image/") ? (
@@ -570,126 +686,151 @@ export function DocumentsClient({
                         </div>
                       )}
                     </div>
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      {doc.ownerId !== currentUserId && (
-                        <span className="rounded-full bg-info-subtle px-2 py-0.5 text-[11px] font-medium text-info">
+                    {viewMode === "grid" && (
+                      <div className="flex flex-wrap items-center justify-end gap-1">
+                        {doc.ownerId !== currentUserId && (
+                          <span className="rounded-full bg-info-subtle px-2 py-0.5 text-[10.5px] font-medium text-info">
+                            Shared with you
+                          </span>
+                        )}
+                        {(doc.shareLinks?.length ?? 0) > 0 && (
+                          <span className="rounded-full bg-brand-subtle px-2 py-0.5 text-[10.5px] font-medium text-brand">
+                            Link shared
+                          </span>
+                        )}
+                        <AiStatusBadge
+                          status={doc.aiProcessing?.status}
+                          createdAt={doc.aiProcessing?.createdAt}
+                          showQueueTime
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    {doc.aiProcessing?.status === "FAILED" && doc.aiProcessing.errorMessage && (
+                      <div className="mb-2 flex items-start justify-between gap-2 rounded-lg border border-danger/25 bg-danger-subtle/60 px-2.5 py-1.5">
+                        <p className="line-clamp-2 flex-1 text-[10.5px] text-danger">
+                          {doc.aiProcessing.errorMessage}
+                        </p>
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleRetryAi(doc.id);
+                          }}
+                          disabled={retryingId === doc.id}
+                          className="whitespace-nowrap text-[10.5px] font-semibold text-brand hover:underline disabled:opacity-50"
+                        >
+                          {retryingId === doc.id ? "Retrying..." : "Retry"}
+                        </button>
+                      </div>
+                    )}
+
+                    <p className="truncate font-mono text-[10px] uppercase tracking-wider text-text-muted">
+                      {doc.folder?.name || "Unfiled"}
+                    </p>
+                    <h3 className="mb-1 truncate text-[13.5px] font-semibold tracking-tight text-text-primary group-hover:text-brand group-hover/doc-row:text-brand">
+                      {doc.name}
+                    </h3>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      {doc.expiryDate && (
+                        <p
+                          className={`font-mono text-[11px] tabular-nums ${(() => {
+                            const t = new Date(doc.expiryDate).getTime();
+                            return !isNaN(t) && t < now ? "text-danger" : "text-warning";
+                          })()}`}
+                        >
+                          {(() => {
+                            const t = new Date(doc.expiryDate).getTime();
+                            return !isNaN(t) && t < now ? "Expired" : "Expires";
+                          })()}{" "}
+                          {(() => {
+                            try {
+                              const d = new Date(doc.expiryDate);
+                              return isNaN(d.getTime())
+                                ? String(doc.expiryDate)
+                                : d.toLocaleDateString();
+                            } catch {
+                              return String(doc.expiryDate);
+                            }
+                          })()}
+                        </p>
+                      )}
+                      {viewMode === "list" && doc.ownerId !== currentUserId && (
+                        <span className="rounded-full bg-info-subtle px-2 py-0.5 text-[10px] font-medium text-info">
                           Shared with you
                         </span>
                       )}
-                      {(doc.shareLinks?.length ?? 0) > 0 && (
-                        <span className="rounded-full bg-brand-subtle px-2 py-0.5 text-[11px] font-medium text-brand">
+                      {viewMode === "list" && (doc.shareLinks?.length ?? 0) > 0 && (
+                        <span className="rounded-full bg-brand-subtle px-2 py-0.5 text-[10px] font-medium text-brand">
                           Link shared
                         </span>
                       )}
-                      <AiStatusBadge
-                        status={doc.aiProcessing?.status}
-                        createdAt={doc.aiProcessing?.createdAt}
-                        showQueueTime
-                      />
                     </div>
+
+                    {doc.tags?.length > 0 && (
+                      <div className="mt-1.5 flex flex-wrap gap-1">
+                        {doc.tags.map((t) => (
+                          <span
+                            key={t.tag.id}
+                            className="rounded-full border border-border-subtle bg-surface-muted px-2 py-0.5 font-mono text-[10px] text-text-secondary"
+                          >
+                            #{t.tag.name}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  {doc.aiProcessing?.status === "FAILED" && doc.aiProcessing.errorMessage && (
-                    <div className="mb-2 flex items-start justify-between gap-2 rounded border border-danger/20 bg-danger-subtle px-2 py-1.5">
-                      <p className="line-clamp-2 flex-1 text-[10px] text-danger">
-                        {doc.aiProcessing.errorMessage}
-                      </p>
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleRetryAi(doc.id);
-                        }}
-                        disabled={retryingId === doc.id}
-                        className="whitespace-nowrap text-[10px] font-semibold text-brand hover:underline disabled:opacity-50"
-                      >
-                        {retryingId === doc.id ? "Retrying..." : "Retry"}
-                      </button>
-                    </div>
-                  )}
-
-                  <h3 className="mb-1 truncate text-[13px] font-semibold text-text-primary">
-                    {doc.name}
-                  </h3>
-                  <p className="mb-1 truncate text-[12px] text-text-muted">
-                    {doc.folder?.name || "Unfiled"}
-                  </p>
-                  {doc.expiryDate && (
-                    <p
-                      className={`mb-2 text-[11px] ${(() => {
-                        const t = new Date(doc.expiryDate).getTime();
-                        return !isNaN(t) && t < now ? "text-danger" : "text-warning";
-                      })()}`}
-                    >
-                      {(() => {
-                        const t = new Date(doc.expiryDate).getTime();
-                        return !isNaN(t) && t < now ? "Expired" : "Expires";
-                      })()}{" "}
-                      {(() => {
-                        try {
-                          const d = new Date(doc.expiryDate);
-                          return isNaN(d.getTime())
-                            ? String(doc.expiryDate)
-                            : d.toLocaleDateString();
-                        } catch {
-                          return String(doc.expiryDate);
-                        }
-                      })()}
-                    </p>
-                  )}
-
-                  {doc.tags?.length > 0 && (
-                    <div className="mb-3 flex flex-wrap gap-1">
-                      {doc.tags.map((t) => (
-                        <span
-                          key={t.tag.id}
-                          className="rounded border border-border-subtle bg-surface-muted px-1.5 py-0.5 text-[10px] font-medium text-text-secondary"
-                        >
-                          #{t.tag.name}
-                        </span>
-                      ))}
-                    </div>
-                  )}
                 </div>
 
                 <div
                   className={
                     viewMode === "grid"
-                      ? "flex items-center justify-between border-t border-border-subtle pt-2.5 text-[11px] text-text-muted"
-                      : "flex shrink-0 items-center gap-3 text-[11px] text-text-muted"
+                      ? "mt-3 flex items-center justify-between border-t border-border-subtle pt-2.5 font-mono text-[11px] tabular-nums text-text-muted"
+                      : "flex shrink-0 items-center justify-between gap-4 pl-6 sm:pl-0 font-mono text-[11px] tabular-nums text-text-muted"
                   }
                 >
                   {viewMode === "list" && (
-                    <div className="flex items-center gap-1 opacity-0 group-hover/doc-row:opacity-100 transition-opacity">
-                      <button
-                        type="button"
-                        title="Download document"
-                        className="rounded p-1 text-text-muted hover:bg-surface-muted hover:text-text-primary cursor-pointer"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          window.open(`/api/documents/${doc.id}/file`, "_blank");
-                        }}
-                      >
-                        <Download className="h-4 w-4" />
-                      </button>
-                      <button
-                        type="button"
-                        title="View document details"
-                        className="rounded p-1 text-text-muted hover:bg-surface-muted hover:text-text-primary cursor-pointer"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          router.push(`/documents/${doc.id}`);
-                        }}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </button>
+                    <div className="flex items-center gap-2">
+                      <AiStatusBadge
+                        status={doc.aiProcessing?.status}
+                        createdAt={doc.aiProcessing?.createdAt}
+                        showQueueTime
+                      />
+                      <div className="flex items-center gap-0.5 sm:opacity-0 sm:group-hover/doc-row:opacity-100 transition-opacity">
+                        <button
+                          type="button"
+                          title="Download document"
+                          className="rounded-md p-1.5 text-text-muted hover:bg-surface-elevated hover:text-text-primary cursor-pointer"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            window.open(`/api/documents/${doc.id}/file`, "_blank");
+                          }}
+                        >
+                          <Download className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          title="View document details"
+                          className="rounded-md p-1.5 text-text-muted hover:bg-surface-elevated hover:text-text-primary cursor-pointer"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            router.push(`/documents/${doc.id}`);
+                          }}
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
                     </div>
                   )}
                   <div
                     className={
                       viewMode === "grid"
                         ? "flex items-center justify-between w-full"
-                        : "flex flex-col items-end gap-1"
+                        : "flex flex-col items-end gap-0.5 text-right"
                     }
                   >
                     <span>{new Date(doc.createdAt).toLocaleDateString()}</span>
@@ -702,12 +843,38 @@ export function DocumentsClient({
         )}
       </section>
       {hasMore && (
-        <div className="flex justify-center pt-5">
+        <div className="flex justify-center pt-3">
           <Button variant="secondary" onClick={loadMore} disabled={loadingMore || loadingResults}>
             {loadingMore ? "Loading…" : "Load more documents"}
           </Button>
         </div>
       )}
+
+      <Modal
+        open={moveOpen}
+        onClose={() => !bulkBusy && setMoveOpen(false)}
+        title={`Move ${selectedIds.length} document(s)`}
+        description="Choose a destination folder. Only documents you own will be moved."
+        maxWidth="sm"
+        footer={
+          <div className="flex justify-end gap-2">
+            <Button variant="secondary" onClick={() => setMoveOpen(false)} disabled={bulkBusy}>
+              Cancel
+            </Button>
+            <Button onClick={handleBulkMove} disabled={bulkBusy || !moveFolderId}>
+              {bulkBusy ? "Moving…" : "Move"}
+            </Button>
+          </div>
+        }
+      >
+        <FolderTreeSelect
+          folders={folders}
+          value={moveFolderId}
+          onChange={setMoveFolderId}
+          placeholder="Select destination folder..."
+          disabled={bulkBusy}
+        />
+      </Modal>
 
       <UploadModal
         isOpen={isUploadOpen}
@@ -716,6 +883,6 @@ export function DocumentsClient({
           router.refresh();
         }}
       />
-    </>
+    </div>
   );
 }

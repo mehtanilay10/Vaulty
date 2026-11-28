@@ -7,6 +7,8 @@ import { validateCSRFRequest } from "@/lib/csrf";
 import { CURRENT_PBKDF2_ITERATIONS } from "@/lib/kdf-config";
 import { z } from "zod";
 import { randomBytes } from "node:crypto";
+import { userRateLimitResponse } from "@/lib/security-rate-limit";
+import { RATE_LIMITS } from "@/lib/rate-limits";
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,6 +16,12 @@ export async function POST(req: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const rateLimited = await userRateLimitResponse({
+      userId: session.user.id,
+      ...RATE_LIMITS.passwordsResetConfirm,
+    });
+    if (rateLimited) return rateLimited;
 
     // Validate CSRF token
     if (!validateCSRFRequest(req)) {

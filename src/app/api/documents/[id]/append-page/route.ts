@@ -7,6 +7,8 @@ import { getProviderForDocument } from "@/lib/storage/factory";
 import { appendPagesToPdf, convertImageToPdf } from "@/lib/scanner/pdf-stitcher";
 import { ensureAiJobAndProcessing } from "@/lib/ai/job-service";
 import { GEMINI_MODEL } from "@/lib/gemini";
+import { userRateLimitResponse } from "@/lib/security-rate-limit";
+import { RATE_LIMITS } from "@/lib/rate-limits";
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -18,6 +20,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     if (!validateCSRFRequest(req)) {
       return NextResponse.json({ error: "Invalid CSRF token." }, { status: 403 });
     }
+
+    const rateLimited = await userRateLimitResponse({
+      userId: user.id,
+      ...RATE_LIMITS.documentsAppendPage,
+    });
+    if (rateLimited) return rateLimited;
 
     const { id } = await params;
     const access = await checkDocumentAccess(user.id, id);

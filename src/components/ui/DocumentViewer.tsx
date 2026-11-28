@@ -38,6 +38,7 @@ export function DocumentViewer({
   onEdit,
 }: DocumentViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const [numPages, setNumPages] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageInput, setPageInput] = useState("1");
@@ -120,6 +121,73 @@ export function DocumentViewer({
   const zoomOut = () => setScale((prev) => Math.max(Number((prev - 0.2).toFixed(2)), 0.4));
   const resetZoom = () => setScale(1.0);
 
+  // Mobile gestures: pinch-to-zoom and horizontal swipe between PDF pages.
+  // Listeners are attached natively (non-passive) so we can preventDefault
+  // the browser's own pinch-zoom while two fingers are down.
+  const changePageRef = useRef(changePage);
+  const numPagesRef = useRef(numPages);
+  useEffect(() => {
+    changePageRef.current = changePage;
+    numPagesRef.current = numPages;
+  });
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    let lastPinchDist = 0;
+    let touchStart: { x: number; y: number; time: number } | null = null;
+
+    const getDistance = (touches: TouchList) =>
+      Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
+
+    const onTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        lastPinchDist = getDistance(e.touches);
+        touchStart = null;
+      } else if (e.touches.length === 1) {
+        const t = e.touches[0];
+        touchStart = { x: t.clientX, y: t.clientY, time: Date.now() };
+      }
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 2 && lastPinchDist > 0) {
+        e.preventDefault();
+        const dist = getDistance(e.touches);
+        const factor = dist / lastPinchDist;
+        lastPinchDist = dist;
+        setScale((prev) => Number(Math.min(Math.max(prev * factor, 0.4), 3.0).toFixed(3)));
+      }
+    };
+
+    const onTouchEnd = (e: TouchEvent) => {
+      if (e.touches.length < 2) lastPinchDist = 0;
+      // Swipe navigation only for multi-page PDFs
+      if (!isImage && numPagesRef.current > 1 && touchStart && e.changedTouches.length === 1) {
+        const t = e.changedTouches[0];
+        const dx = t.clientX - touchStart.x;
+        const dy = t.clientY - touchStart.y;
+        const elapsed = Date.now() - touchStart.time;
+        if (elapsed < 600 && Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+          changePageRef.current(dx < 0 ? 1 : -1);
+        }
+      }
+      touchStart = null;
+    };
+
+    el.addEventListener("touchstart", onTouchStart, { passive: true });
+    el.addEventListener("touchmove", onTouchMove, { passive: false });
+    el.addEventListener("touchend", onTouchEnd);
+    el.addEventListener("touchcancel", onTouchEnd);
+    return () => {
+      el.removeEventListener("touchstart", onTouchStart);
+      el.removeEventListener("touchmove", onTouchMove);
+      el.removeEventListener("touchend", onTouchEnd);
+      el.removeEventListener("touchcancel", onTouchEnd);
+    };
+  }, [isImage]);
+
   // Handle ESC key to exit fullscreen
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -178,7 +246,11 @@ export function DocumentViewer({
           </div>
         </div>
 
-        <div className="relative flex-1 w-full overflow-auto flex items-center justify-center p-4 bg-gray-100 dark:bg-gray-950">
+        <div
+          ref={scrollRef}
+          className="relative flex-1 w-full overflow-auto flex items-center justify-center p-4 bg-gray-100 dark:bg-gray-950"
+          style={{ touchAction: "pan-x pan-y" }}
+        >
           {imageLoading && !imageError && (
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="flex flex-col items-center gap-2">
@@ -296,7 +368,7 @@ export function DocumentViewer({
         </button>
         {onEdit && (
           <button type="button" onClick={onEdit} className="btn btn-primary text-xs">
-            Edit / Properties
+            Edit
           </button>
         )}
       </div>
@@ -418,7 +490,11 @@ export function DocumentViewer({
           </div>
 
           {/* Document Content View */}
-          <div className="flex-1 overflow-auto flex justify-center bg-gray-100 dark:bg-gray-950 p-2 md:p-6 min-h-[420px]">
+          <div
+            ref={scrollRef}
+            className="flex-1 overflow-auto flex justify-center bg-gray-100 dark:bg-gray-950 p-2 md:p-6 min-h-[420px]"
+            style={{ touchAction: "pan-x pan-y" }}
+          >
             <ErrorBoundary fallback={renderErrorContent()}>
               <Document
                 key={retryKey}

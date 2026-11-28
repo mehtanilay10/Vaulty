@@ -32,6 +32,7 @@ interface SearchResults {
   wealth: SearchItem[];
   credentials: SearchItem[];
   reminders: SearchItem[];
+  suggestions?: SearchItem[];
 }
 
 const QUICK_NAV: SearchItem[] = [
@@ -78,7 +79,7 @@ const QUICK_NAV: SearchItem[] = [
   {
     id: "nav-notes",
     title: "Notes & Lists",
-    subtitle: "OneNote-style flat pages, to-dos, and attachments",
+    subtitle: "Rich text pages, to-dos, and attachments",
     url: "/notes",
     type: "nav",
     meta: "Page",
@@ -112,13 +113,14 @@ export function CommandPalette() {
     credentials: [],
     reminders: [],
   });
+  const [suggestions, setSuggestions] = useState<SearchItem[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   const router = useRouter();
+  const dialogRef = useRef<HTMLDialogElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
-  // Global open/close listeners
   useEffect(() => {
     const openPalette = () => {
       setQuery("");
@@ -140,33 +142,29 @@ export function CommandPalette() {
       if (!isInput && e.key === "/" && !isOpen) {
         e.preventDefault();
         openPalette();
-        return;
-      }
-
-      if (e.key === "Escape" && isOpen) {
-        e.preventDefault();
-        setIsOpen(false);
       }
     };
 
-    const handleCustomOpen = openPalette;
-
     window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("vaulty:open-command-palette", handleCustomOpen);
+    window.addEventListener("vaulty:open-command-palette", openPalette);
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("vaulty:open-command-palette", handleCustomOpen);
+      window.removeEventListener("vaulty:open-command-palette", openPalette);
     };
   }, [isOpen]);
 
-  // Focus input when opened
   useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
     if (isOpen) {
-      setTimeout(() => inputRef.current?.focus(), 50);
+      if (!dialog.open) dialog.showModal();
+      setTimeout(() => inputRef.current?.focus(), 20);
+    } else if (dialog.open) {
+      dialog.close();
+      dialog.returnValue = "";
     }
   }, [isOpen]);
 
-  // Debounced live search
   useEffect(() => {
     if (query.trim().length < 2) return;
 
@@ -186,6 +184,7 @@ export function CommandPalette() {
               reminders: [],
             },
           );
+          setSuggestions(data.suggestions || []);
           setSelectedIndex(0);
         }
       } catch (err) {
@@ -201,16 +200,19 @@ export function CommandPalette() {
     };
   }, [query]);
 
-  // Flatten active items for keyboard navigation
   const isSearchActive = query.trim().length >= 2;
+  const resultItems: SearchItem[] = [
+    ...results.documents,
+    ...results.folders,
+    ...results.wealth,
+    ...results.credentials,
+    ...results.reminders,
+  ];
+  const showingSuggestions = isSearchActive && resultItems.length === 0 && suggestions.length > 0;
   const flatItems: SearchItem[] = isSearchActive
-    ? [
-        ...results.documents,
-        ...results.folders,
-        ...results.wealth,
-        ...results.credentials,
-        ...results.reminders,
-      ]
+    ? resultItems.length > 0
+      ? resultItems
+      : suggestions
     : QUICK_NAV.filter(
         (nav) => !query.trim() || nav.title.toLowerCase().includes(query.toLowerCase()),
       );
@@ -244,13 +246,13 @@ export function CommandPalette() {
   const getItemIcon = (type: SearchItem["type"], url?: string) => {
     switch (type) {
       case "document":
-        return <FileText className="h-4 w-4 text-brand-600" />;
+        return <FileText className="h-4 w-4 text-brand" />;
       case "folder":
         return <Folder className="h-4 w-4 text-warning" />;
       case "wealth":
         return <Wallet className="h-4 w-4 text-success" />;
       case "credential":
-        return <Lock className="h-4 w-4 text-brand-500" />;
+        return <Lock className="h-4 w-4 text-purple-600 dark:text-purple-400" />;
       case "reminder":
         return <BellRing className="h-4 w-4 text-danger" />;
       case "nav":
@@ -259,27 +261,29 @@ export function CommandPalette() {
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center p-4 sm:p-6 md:p-20">
-      {/* Backdrop */}
+    <dialog
+      ref={dialogRef}
+      closedby="any"
+      aria-label="Universal Search Command Palette"
+      onCancel={(e) => {
+        e.preventDefault();
+        setIsOpen(false);
+      }}
+      onClick={(e) => {
+        if (e.target === dialogRef.current) setIsOpen(false);
+      }}
+      className={cn(
+        "vaulty-dialog fixed inset-0 z-50 m-0 h-full w-full max-h-none max-w-none border-0 bg-transparent p-4 sm:p-6 md:pt-20 outline-none",
+        isOpen ? "flex items-start justify-center" : "hidden",
+      )}
+    >
       <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
-        onClick={() => setIsOpen(false)}
-      />
-
-      {/* Palette Dialog */}
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label="Universal Search Command Palette"
-        className="relative w-full max-w-2xl transform overflow-hidden rounded-2xl bg-surface border border-border shadow-fluent-64 transition-all"
+        className="relative w-full max-w-2xl overflow-hidden rounded-xl border border-border bg-surface-elevated shadow-fluent-64"
         onKeyDown={handleListKeyDown}
       >
-        {/* Search Input Bar */}
-        <div className="relative flex items-center gap-3 border-b border-border px-4 py-3.5">
-          <Search className="h-5 w-5 text-text-muted shrink-0" />
+        <div className="relative flex items-center gap-3 border-b border-border-subtle px-4 py-3.5">
+          <Search className="h-4 w-4 text-text-muted shrink-0" />
           <input
             ref={inputRef}
             type="text"
@@ -291,97 +295,104 @@ export function CommandPalette() {
           {loading && <Loader2 className="h-4 w-4 text-brand animate-spin shrink-0" />}
           {query && !loading && (
             <button
+              type="button"
               onClick={() => {
                 setQuery("");
                 inputRef.current?.focus();
               }}
+              aria-label="Clear search query"
               className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-muted transition-colors"
             >
               <X className="h-4 w-4" />
             </button>
           )}
-          <kbd className="hidden sm:inline-flex items-center gap-1 rounded-lg bg-surface-muted px-2.5 py-1 text-xs text-text-muted border border-border-subtle">
+          <kbd className="hidden sm:inline-flex items-center rounded border border-border-subtle bg-surface-muted px-2 py-0.5 font-mono text-[10px] font-semibold text-text-muted">
             ESC
           </kbd>
         </div>
 
-        {/* Results Body */}
-        <div
-          ref={listRef}
-          className="max-h-[60vh] overflow-y-auto px-2 py-1 divide-y divide-border-subtle"
-        >
+        <div ref={listRef} className="max-h-[58vh] overflow-y-auto px-2 py-2">
           {flatItems.length === 0 ? (
             <div className="py-12 text-center text-text-muted text-sm">
               {loading ? "Searching everywhere..." : `No results found for "${query}"`}
             </div>
           ) : (
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               {!isSearchActive && (
-                <div className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-text-muted">
-                  Quick Navigation
-                </div>
+                <div className="px-3 py-1.5 section-eyebrow">Quick Navigation</div>
+              )}
+              {showingSuggestions && (
+                <div className="px-3 py-1.5 section-eyebrow">No exact matches — recent items</div>
               )}
 
               {flatItems.map((item, index) => {
                 const isSelected = index === selectedIndex;
                 return (
-                  <div
+                  <button
                     key={`${item.type}-${item.id}`}
+                    type="button"
                     onClick={() => navigateTo(item.url)}
                     onMouseEnter={() => setSelectedIndex(index)}
                     className={cn(
-                      "group flex items-center justify-between gap-3 rounded-lg px-3 py-3 text-sm cursor-pointer transition-colors",
+                      "group flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-colors",
                       isSelected
-                        ? "bg-brand-50 dark:bg-brand-900/30 text-brand"
+                        ? "bg-brand-subtle text-brand"
                         : "hover:bg-surface-muted text-text-primary",
                     )}
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-surface-muted border border-border-subtle group-hover:border-border">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border-subtle bg-surface">
                         {getItemIcon(item.type, item.url)}
                       </div>
                       <div className="min-w-0">
-                        <div className="font-medium truncate">{item.title}</div>
-                        <div className="text-xs text-text-muted truncate">{item.subtitle}</div>
+                        <div className="font-medium truncate text-[13px]">{item.title}</div>
+                        <div className="text-[11px] text-text-muted truncate">{item.subtitle}</div>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
                       {item.meta && (
-                        <span className="rounded bg-surface-muted px-2 py-0.5 text-xs text-text-muted border border-border-subtle">
+                        <span className="rounded border border-border-subtle bg-surface-muted px-2 py-0.5 font-mono text-[10px] text-text-muted">
                           {item.meta}
                         </span>
                       )}
                       <ArrowRight
                         className={cn(
-                          "h-4 w-4 transition-transform",
+                          "h-3.5 w-3.5 transition-transform",
                           isSelected ? "text-brand translate-x-0.5" : "text-transparent",
                         )}
                       />
                     </div>
-                  </div>
+                  </button>
                 );
               })}
             </div>
           )}
         </div>
 
-        {/* Footer shortcuts */}
-        <div className="flex items-center justify-between border-t border-border bg-surface-muted/50 px-4 py-3 text-xs text-text-muted">
+        <div className="flex items-center justify-between border-t border-border-subtle bg-surface-muted/50 px-4 py-2.5 text-[11px] text-text-muted">
           <div className="flex items-center gap-4">
             <span className="flex items-center gap-1.5">
-              <kbd className="rounded-lg bg-surface px-2 py-1 border border-border-subtle">↑</kbd>
-              <kbd className="rounded-lg bg-surface px-2 py-1 border border-border-subtle">↓</kbd>
+              <kbd className="rounded border border-border-subtle bg-surface px-1.5 py-0.5 font-mono">
+                ↑
+              </kbd>
+              <kbd className="rounded border border-border-subtle bg-surface px-1.5 py-0.5 font-mono">
+                ↓
+              </kbd>
               <span className="text-text-secondary">Navigate</span>
             </span>
             <span className="flex items-center gap-1.5">
-              <kbd className="rounded-lg bg-surface px-2 py-1 border border-border-subtle">↵</kbd>
+              <kbd className="rounded border border-border-subtle bg-surface px-1.5 py-0.5 font-mono">
+                ↵
+              </kbd>
               <span className="text-text-secondary">Open</span>
             </span>
           </div>
-          <span className="text-text-secondary">Vaulty Universal Search</span>
+          <span className="font-mono text-[10px] uppercase tracking-wider text-text-muted">
+            Vaulty Omnibox
+          </span>
         </div>
       </div>
-    </div>
+    </dialog>
   );
 }

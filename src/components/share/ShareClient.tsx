@@ -254,14 +254,17 @@ export function ShareClient({ token }: { token: string }) {
 
   return (
     <ShareFrame>
-      <div className="mb-5">
+      <div className="mb-6 rounded-2xl border border-border-subtle bg-surface p-5 shadow-xs sm:p-6">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <div className="flex min-w-0 items-start gap-3.5">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-brand/15 bg-brand-subtle text-brand shadow-fluent-2">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-brand/20 bg-brand-subtle text-brand">
               <FileText className="h-5 w-5" />
             </div>
             <div className="min-w-0">
-              <h1 className="truncate text-[1.35rem] font-semibold leading-7 tracking-tight text-text-primary">
+              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-text-muted">
+                Encrypted Share Record
+              </p>
+              <h1 className="mt-0.5 truncate text-[1.4rem] font-semibold leading-tight tracking-tight text-text-primary">
                 {document.name}
               </h1>
               <p className="mt-1 text-[12px] text-text-muted">
@@ -289,16 +292,18 @@ export function ShareClient({ token }: { token: string }) {
           </a>
         </div>
 
-        <div className="mt-4 flex flex-wrap items-center gap-2">
+        <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-border-subtle pt-4">
           <Badge variant="success">
             <ShieldCheck className="h-3 w-3" />
             Server verified
           </Badge>
           <Badge>
             <Eye className="h-3 w-3" />
-            {shareLink?.maxViews
-              ? `${shareLink.viewCount || 0} / ${shareLink.maxViews} views`
-              : `${shareLink?.viewCount || 0} views`}
+            <span className="font-mono tabular-nums">
+              {shareLink?.maxViews
+                ? `${shareLink.viewCount || 0} / ${shareLink.maxViews} views`
+                : `${shareLink?.viewCount || 0} views`}
+            </span>
           </Badge>
           {shareLink?.expiresAt && (
             <Badge variant="warning">
@@ -310,13 +315,13 @@ export function ShareClient({ token }: { token: string }) {
       </div>
 
       <Card className="overflow-hidden p-0">
-        <div className="px-1 pt-1">
+        <div className="px-3 pt-1">
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as ShareTab)}>
             <Tab
               value="preview"
               active={activeTab === "preview"}
               onClick={() => setActiveTab("preview")}
-              icon={<Eye className="w-4 h-4" />}
+              icon={<Eye className="h-4 w-4" />}
             >
               Preview
             </Tab>
@@ -325,7 +330,7 @@ export function ShareClient({ token }: { token: string }) {
 
         <div className="p-3 sm:p-4">
           {activeTab === "preview" && (
-            <div className="flex h-[500px] w-full items-center justify-center overflow-hidden rounded-lg border border-border-subtle bg-surface-muted md:h-[600px]">
+            <div className="flex h-[520px] w-full items-center justify-center overflow-hidden rounded-xl border border-border-subtle bg-surface-muted md:h-[640px]">
               <DocumentViewer
                 fileUrl={fileProxyUrl}
                 mimeType={document.mimeType}

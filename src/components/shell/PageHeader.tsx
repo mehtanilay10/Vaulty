@@ -86,6 +86,7 @@ function crumbsForPath(pathname: string): Crumb[] | undefined {
 
 interface PageHeaderProps {
   title: string;
+  subtitle?: string;
   icon?: React.ReactNode;
   actions?: React.ReactNode;
   breadcrumbs?: Crumb[];
@@ -96,6 +97,7 @@ interface PageHeaderProps {
 
 export function PageHeader({
   title,
+  subtitle,
   icon,
   actions,
   breadcrumbs,
@@ -114,22 +116,25 @@ export function PageHeader({
           {icon && (
             <div
               className={cn(
-                "flex shrink-0 items-center justify-center rounded-md border border-border-subtle bg-surface-muted text-text-secondary",
+                "flex shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-text-secondary shadow-fluent-2",
                 compact ? "h-8 w-8" : "h-9 w-9",
               )}
             >
               {icon}
             </div>
           )}
-          <h1
-            className={cn(
-              "font-semibold tracking-tight text-text-primary",
-              truncateTitle ? "truncate" : "break-words",
-              compact ? "text-base leading-6" : "text-lg leading-7",
-            )}
-          >
-            {title}
-          </h1>
+          <div className="min-w-0">
+            <h1
+              className={cn(
+                "font-semibold tracking-tight text-text-primary",
+                truncateTitle ? "truncate" : "break-words",
+                compact ? "text-base leading-6" : "text-lg sm:text-[1.3rem] leading-7",
+              )}
+            >
+              {title}
+            </h1>
+            {subtitle && <p className="mt-0.5 truncate text-xs text-text-muted">{subtitle}</p>}
+          </div>
         </div>
         {actions && <div className="flex flex-wrap items-center gap-2 sm:shrink-0">{actions}</div>}
       </div>

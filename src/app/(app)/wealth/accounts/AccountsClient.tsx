@@ -219,9 +219,9 @@ export function AccountsClient({ accounts }: AccountsClientProps) {
 
       {/* Merge mode banner */}
       {mergeMode && (
-        <div className="rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="rounded-xl border border-brand/20 bg-brand-subtle/50 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-center gap-3">
-            <GitMerge className="h-4 w-4 shrink-0 text-primary" />
+            <GitMerge className="h-4 w-4 shrink-0 text-brand" />
             <div>
               <p className="text-[13px] font-medium text-text-primary">Select accounts to merge</p>
               <p className="text-[12px] text-text-muted">
@@ -342,7 +342,7 @@ export function AccountsClient({ accounts }: AccountsClientProps) {
               </button>
             )}
           </div>
-          <p className="shrink-0 text-[11px] text-text-muted">
+          <p className="shrink-0 font-mono text-[11px] tabular-nums text-text-muted">
             Showing {filteredAccounts.length} of {accounts.length}{" "}
             {accounts.length === 1 ? "account" : "accounts"}
             {hasQuery ? ` matching "${query.trim()}"` : ""}

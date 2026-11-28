@@ -1711,10 +1711,10 @@ export function EmailSyncClient({
                         />
 
                         <div
-                          className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 ${
+                          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border ${
                             isOverdue
-                              ? "bg-red-500/10 text-red-600"
-                              : "bg-amber-500/10 text-amber-600"
+                              ? "border-danger/25 bg-danger-subtle text-danger"
+                              : "border-warning/25 bg-warning-subtle text-warning"
                           }`}
                         >
                           <Clock3 className="h-4 w-4" />
@@ -1726,7 +1726,7 @@ export function EmailSyncClient({
                               {r.title}
                             </span>
                             <Badge variant={isOverdue ? "danger" : "warning"}>{r.category}</Badge>
-                            <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
+                            <span className="font-mono text-xs tabular-nums font-medium text-warning">
                               Due: {dueDate.toLocaleDateString()}
                             </span>
                           </div>
@@ -1745,7 +1745,7 @@ export function EmailSyncClient({
 
                       <div className="flex items-center gap-3 self-end md:self-center shrink-0">
                         {r.amount && (
-                          <span className="font-semibold text-sm text-text-primary">
+                          <span className="font-mono font-semibold text-sm tabular-nums text-text-primary">
                             {formatCurrency(Number(r.amount), r.currency || "INR")}
                           </span>
                         )}

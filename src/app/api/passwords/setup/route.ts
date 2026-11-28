@@ -6,6 +6,8 @@ import { validateCSRFRequest } from "@/lib/csrf";
 import { isBase64 } from "@/lib/api-validation";
 import { z } from "zod";
 import { CURRENT_PBKDF2_ITERATIONS } from "@/lib/kdf-config";
+import { userRateLimitResponse } from "@/lib/security-rate-limit";
+import { RATE_LIMITS } from "@/lib/rate-limits";
 
 class VaultAlreadyConfiguredError extends Error {
   constructor() {
@@ -30,6 +32,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     const userId = session.user.id;
+
+    const rateLimited = await userRateLimitResponse({
+      userId,
+      ...RATE_LIMITS.passwordsSetup,
+    });
+    if (rateLimited) return rateLimited;
 
     // Validate CSRF token
     if (!validateCSRFRequest(req)) {

@@ -49,7 +49,7 @@ export function Navbar({
 
   return (
     <>
-      <header className="command-bar fixed left-0 right-0 top-0 z-40 flex h-14 items-center justify-between px-3 sm:px-6">
+      <header className="command-bar fixed left-0 right-0 top-0 z-40 flex h-14 items-center justify-between px-3 sm:px-5">
         <div className="relative z-20 flex items-center gap-2">
           {onToggleSidebar && (
             <button
@@ -58,7 +58,7 @@ export function Navbar({
               aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
               aria-pressed={sidebarCollapsed}
               title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-              className="hidden h-8 w-8 shrink-0 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-surface-muted hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand md:inline-flex"
+              className="hidden h-8 w-8 shrink-0 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-surface-muted hover:text-text-primary md:inline-flex"
             >
               <SidebarToggleIcon className="h-4 w-4" />
             </button>
@@ -72,35 +72,32 @@ export function Navbar({
           </Link>
         </div>
 
-        {/* Desktop Centered Search (Triggers Omnibox Command Palette) */}
-        <div className="absolute left-1/2 top-1/2 z-10 hidden w-full max-w-xs -translate-x-1/2 -translate-y-1/2 pointer-events-none sm:block sm:max-w-sm md:max-w-sm lg:max-w-md xl:max-w-lg">
-          <div
+        {/* Desktop Centered Search Trigger */}
+        <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 hidden w-full max-w-xs -translate-x-1/2 -translate-y-1/2 sm:block sm:max-w-sm lg:max-w-md">
+          <button
+            type="button"
             onClick={() => window.dispatchEvent(new CustomEvent("vaulty:open-command-palette"))}
-            className="group relative flex items-center cursor-pointer pointer-events-auto"
+            aria-label="Search your vault"
+            title="Search documents, wealth, credentials, reminders (Ctrl+K)"
+            className="pointer-events-auto group flex h-8.5 w-full items-center justify-between rounded-lg border border-border bg-surface/90 px-3 text-left text-[12.5px] text-text-muted shadow-fluent-2 transition-colors hover:border-text-muted hover:bg-surface"
           >
-            <Search className="pointer-events-none absolute left-3 h-3.5 w-3.5 text-text-muted group-hover:text-text-primary transition-colors" />
-            <input
-              type="text"
-              readOnly
-              placeholder="Search vault..."
-              className="input h-8.5 w-full rounded-md pl-9 pr-18 text-[13px] shadow-xs transition-all cursor-pointer group-hover:border-border hover:bg-surface-muted/50"
-              aria-label="Search your vault"
-              title="Search documents, wealth, credentials, reminders (Ctrl+K)"
-            />
-            <kbd className="pointer-events-none absolute right-2.5 hidden rounded border border-border-subtle bg-surface-muted px-1.5 py-0.5 text-[10px] font-semibold text-text-muted sm:block">
-              Ctrl + K
+            <span className="flex items-center gap-2 truncate">
+              <Search className="h-3.5 w-3.5 shrink-0 text-text-muted transition-colors group-hover:text-brand" />
+              <span className="truncate">Search documents, accounts, keys…</span>
+            </span>
+            <kbd className="hidden shrink-0 rounded border border-border-subtle bg-surface-muted px-1.5 py-0.5 font-mono text-[10px] font-semibold text-text-muted sm:inline-block">
+              Ctrl K
             </kbd>
-          </div>
+          </button>
         </div>
 
-        {/* Action icons right side */}
-        <div className="relative z-20 flex shrink-0 items-center gap-1 sm:gap-2">
-          {/* Mobile search toggle button (Triggers Omnibox Command Palette) */}
+        {/* Right Action Rail */}
+        <div className="relative z-20 flex shrink-0 items-center gap-1 sm:gap-1.5">
           <button
             type="button"
             onClick={() => window.dispatchEvent(new CustomEvent("vaulty:open-command-palette"))}
             aria-label="Search"
-            className="flex h-8.5 w-8.5 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-surface-muted hover:text-text-primary sm:hidden"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-surface-muted hover:text-text-primary sm:hidden"
           >
             <Search className="h-4 w-4" />
           </button>
@@ -111,7 +108,7 @@ export function Navbar({
           <PWAInstallButton />
 
           {onOpenUpload && (
-            <div className="inline-flex items-center rounded-md shadow-xs">
+            <div className="inline-flex items-center rounded-lg shadow-fluent-2">
               <button
                 type="button"
                 onClick={() => {
@@ -122,10 +119,10 @@ export function Navbar({
                 title={
                   isDriveConnected ? "Upload document to Vaulty" : "Connect Google Drive to upload"
                 }
-                className="btn btn-primary h-8.5 rounded-r-none border-r border-white/20 px-3 text-xs flex items-center gap-1.5 disabled:cursor-not-allowed disabled:opacity-50"
+                className="btn btn-primary h-8 rounded-r-none border-r border-white/20 px-2.5 text-xs flex items-center gap-1.5 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Upload className="h-3.5 w-3.5" />
-                <span>Upload</span>
+                <span className="hidden xs:inline sm:inline">Upload</span>
               </button>
               <Dropdown
                 align="right"
@@ -134,15 +131,14 @@ export function Navbar({
                     type="button"
                     aria-label="More creation actions"
                     title="Quick Actions"
-                    className="btn btn-primary h-8.5 rounded-l-none px-2 text-xs flex items-center justify-center hover:bg-brand-hover"
+                    className="btn btn-primary h-8 rounded-l-none px-1.5 text-xs flex items-center justify-center hover:bg-brand-hover"
                   >
                     <ChevronDown className="h-3.5 w-3.5" />
                   </button>
                 }
               >
-                <div className="w-64 py-1 sm:w-72">
-                  {/* Documents Module */}
-                  <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
+                <div className="w-64 py-0.5 sm:w-72">
+                  <div className="px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-text-muted">
                     Documents
                   </div>
                   <DropdownItem
@@ -173,28 +169,27 @@ export function Navbar({
                     </DropdownItem>
                   )}
 
-                  <div className="my-1 border-t border-border-subtle" />
+                  <div className="my-1.5 border-t border-border-subtle" />
 
-                  {/* Credentials Module */}
-                  <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
+                  <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-text-muted">
                     Credentials
                   </div>
                   <DropdownItem href="/credentials?tab=APP&action=new">
-                    <Globe className="h-4 w-4 text-brand shrink-0" />
+                    <Globe className="h-4 w-4 text-purple-600 dark:text-purple-400 shrink-0" />
                     <div className="flex flex-col text-left">
                       <span className="font-medium text-text-primary">Add App Credential</span>
                       <span className="text-[11px] text-text-muted">Website & app login</span>
                     </div>
                   </DropdownItem>
                   <DropdownItem href="/credentials?tab=BANK&action=new">
-                    <Building2 className="h-4 w-4 text-brand shrink-0" />
+                    <Building2 className="h-4 w-4 text-purple-600 dark:text-purple-400 shrink-0" />
                     <div className="flex flex-col text-left">
                       <span className="font-medium text-text-primary">Add Bank Credential</span>
                       <span className="text-[11px] text-text-muted">Netbanking, PINs & ATM</span>
                     </div>
                   </DropdownItem>
                   <DropdownItem href="/credentials?tab=AUTH&action=new">
-                    <ShieldCheck className="h-4 w-4 text-brand shrink-0" />
+                    <ShieldCheck className="h-4 w-4 text-purple-600 dark:text-purple-400 shrink-0" />
                     <div className="flex flex-col text-left">
                       <span className="font-medium text-text-primary">Set Up Authenticator</span>
                       <span className="text-[11px] text-text-muted">
@@ -203,21 +198,20 @@ export function Navbar({
                     </div>
                   </DropdownItem>
 
-                  <div className="my-1 border-t border-border-subtle" />
+                  <div className="my-1.5 border-t border-border-subtle" />
 
-                  {/* Wealth, Notes & Reminders Module */}
-                  <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
+                  <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-text-muted">
                     Wealth & Planning
                   </div>
                   <DropdownItem href="/wealth/accounts?action=new">
-                    <Wallet className="h-4 w-4 text-brand shrink-0" />
+                    <Wallet className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
                     <div className="flex flex-col text-left">
                       <span className="font-medium text-text-primary">Add Wealth Account</span>
                       <span className="text-[11px] text-text-muted">Bank, card, or asset</span>
                     </div>
                   </DropdownItem>
                   <DropdownItem href="/notes?action=new">
-                    <StickyNote className="h-4 w-4 text-brand shrink-0" />
+                    <StickyNote className="h-4 w-4 text-teal-600 dark:text-teal-400 shrink-0" />
                     <div className="flex flex-col text-left">
                       <span className="font-medium text-text-primary">New Note Page</span>
                       <span className="text-[11px] text-text-muted">
@@ -226,7 +220,7 @@ export function Navbar({
                     </div>
                   </DropdownItem>
                   <DropdownItem href="/reminders?action=new">
-                    <Bell className="h-4 w-4 text-brand shrink-0" />
+                    <Bell className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
                     <div className="flex flex-col text-left">
                       <span className="font-medium text-text-primary">New Reminder</span>
                       <span className="text-[11px] text-text-muted">Due date, bill, or task</span>
@@ -257,7 +251,7 @@ export function Navbar({
             }
             align="right"
           >
-            <div className="border-b border-border-subtle px-3 py-2.5">
+            <div className="border-b border-border-subtle px-2.5 py-2 mb-1">
               <p className="truncate text-[13px] font-semibold text-text-primary">
                 {session?.user?.name || "User Account"}
               </p>

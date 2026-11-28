@@ -352,7 +352,7 @@ export function PasswordForm({
 
         <div className="space-y-2">
           <Label htmlFor="icon">Icon</Label>
-          <div className="grid grid-cols-5 gap-2">
+          <div className="grid grid-cols-6 gap-2">
             {AVAILABLE_ICONS.map(({ name: iconName, Component: Icon }) => (
               <button
                 key={iconName}

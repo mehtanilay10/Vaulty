@@ -284,7 +284,7 @@ export function SearchClient({ initialQuery }: { initialQuery: string }) {
           <Link
             key={doc.id}
             href={`/documents/${doc.id}`}
-            className="card card-hover flex flex-col justify-between p-4"
+            className="group flex flex-col justify-between rounded-xl border border-border-subtle bg-surface p-4 shadow-xs transition-all hover:border-border-strong hover:bg-surface-elevated hover:shadow-sm"
           >
             <div>
               <div className="mb-3 flex items-center justify-between gap-2">
@@ -292,10 +292,10 @@ export function SearchClient({ initialQuery }: { initialQuery: string }) {
                   <img
                     src={doc.thumbnailUrl}
                     alt=""
-                    className="h-10 w-10 rounded-md border border-border-subtle object-cover"
+                    className="h-10 w-10 rounded-lg border border-border-subtle object-cover shadow-2xs"
                   />
                 ) : (
-                  <div className="flex h-10 w-10 items-center justify-center rounded-md border border-brand/15 bg-brand-subtle text-brand">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-border-subtle bg-surface-muted text-brand transition-colors group-hover:border-brand/25 group-hover:bg-brand-subtle">
                     <FileText className="h-5 w-5" />
                   </div>
                 )}
@@ -304,15 +304,15 @@ export function SearchClient({ initialQuery }: { initialQuery: string }) {
                 </Badge>
               </div>
 
-              <h3 className="mb-1 truncate text-[13px] font-semibold text-text-primary">
-                {highlightMatch(doc.name, query)}
-              </h3>
-              <p className="mb-2 truncate text-[11px] text-text-muted">
+              <p className="mb-0.5 truncate font-mono text-[10px] uppercase tracking-wider text-text-muted">
                 {doc.folder?.name || "Unfiled"}
               </p>
+              <h3 className="mb-2 truncate text-[13.5px] font-semibold tracking-tight text-text-primary group-hover:text-brand">
+                {highlightMatch(doc.name, query)}
+              </h3>
 
               {doc.aiProcessing?.summaryMarkdown && (
-                <p className="line-clamp-2 rounded border border-border-subtle bg-surface-muted p-2.5 text-[11px] leading-relaxed text-text-secondary">
+                <p className="line-clamp-2 rounded-lg border border-border-subtle bg-surface-muted/60 p-2.5 text-[11.5px] leading-relaxed text-text-secondary">
                   {highlightMatch(doc.aiProcessing.summaryMarkdown.replace(/#/g, ""), query)}
                 </p>
               )}
@@ -320,7 +320,9 @@ export function SearchClient({ initialQuery }: { initialQuery: string }) {
 
             <div className="mt-3 flex items-center justify-between border-t border-border-subtle pt-2.5 text-[11px] text-text-muted">
               <span className="truncate">Owner: {doc.owner?.name || doc.owner?.email}</span>
-              <span className="shrink-0">{new Date(doc.createdAt).toLocaleDateString()}</span>
+              <span className="shrink-0 font-mono tabular-nums">
+                {new Date(doc.createdAt).toLocaleDateString()}
+              </span>
             </div>
           </Link>
         ))}

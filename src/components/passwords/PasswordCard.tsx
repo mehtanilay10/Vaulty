@@ -412,17 +412,17 @@ export function PasswordCard({
     decryptedData.name || (nameLooksEncrypted ? "Encrypted credential" : credential.name);
 
   return (
-    <Card className="overflow-hidden p-0 transition-colors hover:border-border-hover">
-      <div className="flex items-center gap-2 px-4 py-3">
+    <Card className="overflow-hidden p-0 transition-all hover:border-border-strong">
+      <div className="flex items-center gap-2 px-4 py-3.5">
         <button
           type="button"
           onClick={handleExpand}
           disabled={isDecrypting}
           aria-expanded={isExpanded}
           aria-label={`${isExpanded ? "Collapse" : "Expand"} ${displayName || "credential"}`}
-          className="flex min-w-0 flex-1 items-center gap-3 rounded-lg text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+          className="flex min-w-0 flex-1 items-center gap-3.5 rounded-lg text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
         >
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-purple-500/20 bg-purple-500/10 text-purple-600 dark:text-purple-400">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border-subtle bg-surface-muted text-brand">
             {IconComponent ? (
               <IconComponent
                 className="h-5 w-5"
@@ -439,24 +439,28 @@ export function PasswordCard({
               <ChevronRight
                 className={`h-4 w-4 shrink-0 text-text-muted transition-transform duration-200 ${isExpanded ? "rotate-90" : ""}`}
               />
-              <h3 className="truncate text-sm font-semibold text-text-primary">{displayName}</h3>
+              <h3 className="truncate text-[14px] font-semibold tracking-tight text-text-primary">
+                {displayName}
+              </h3>
               {isDecrypting && (
-                <span className="shrink-0 text-[11px] text-text-muted">Opening…</span>
+                <span className="shrink-0 font-mono text-[11px] text-text-muted">Decrypting…</span>
               )}
             </div>
-            <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-text-muted">
-              {type === "APP" ? "App credential" : "Bank credential"}
+            <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-text-muted">
+              <span className="font-mono text-[10.5px] uppercase tracking-wider">
+                {type === "APP" ? "Application" : "Banking"}
+              </span>
               {readOnly && (
                 <Badge variant="info" className="gap-1 py-0">
                   <Lock className="h-2.5 w-2.5" /> Read-only
                 </Badge>
               )}
-            </p>
-            {lastAccessedAt && (
-              <p suppressHydrationWarning className="mt-1 text-[11px] text-text-muted">
-                Last accessed {formatLastAccessed(lastAccessedAt)}
-              </p>
-            )}
+              {lastAccessedAt && (
+                <span suppressHydrationWarning className="font-mono text-[10.5px] text-text-muted">
+                  · Accessed {formatLastAccessed(lastAccessedAt)}
+                </span>
+              )}
+            </div>
           </div>
         </button>
 

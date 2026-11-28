@@ -7,6 +7,8 @@ import { checkDocumentAccess } from "@/lib/authz";
 import { hashSharePassword } from "@/lib/share-crypto";
 import { validateCSRFRequest } from "@/lib/csrf";
 import { getAppBaseUrl } from "@/lib/url";
+import { userRateLimitResponse } from "@/lib/security-rate-limit";
+import { RATE_LIMITS } from "@/lib/rate-limits";
 
 const MAX_SHARE_EXPIRY_HOURS = 8760;
 const MAX_SHARE_VIEWS = 1000;
@@ -28,6 +30,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     }
 
     const { id } = await params;
+    const rateLimited = await userRateLimitResponse({
+      userId: user.id,
+      ...RATE_LIMITS.documentsShare,
+    });
+    if (rateLimited) return rateLimited;
     if (!validateCSRFRequest(req)) {
       return NextResponse.json({ error: "Invalid CSRF token." }, { status: 403 });
     }
@@ -141,6 +148,11 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     }
 
     const { id } = await params;
+    const rateLimited = await userRateLimitResponse({
+      userId: user.id,
+      ...RATE_LIMITS.documentsShare,
+    });
+    if (rateLimited) return rateLimited;
     if (!validateCSRFRequest(req)) {
       return NextResponse.json({ error: "Invalid CSRF token." }, { status: 403 });
     }

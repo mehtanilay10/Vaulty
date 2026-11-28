@@ -94,8 +94,15 @@ export function NotificationsBell() {
     const handler = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     };
+    const keyHandler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
     document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
+    document.addEventListener("keydown", keyHandler);
+    return () => {
+      document.removeEventListener("mousedown", handler);
+      document.removeEventListener("keydown", keyHandler);
+    };
   }, [open]);
 
   const markAllRead = async () => {
@@ -110,29 +117,32 @@ export function NotificationsBell() {
   return (
     <div ref={ref} className="relative">
       <button
+        type="button"
         onClick={() => {
           setOpen((v) => !v);
           if (!open) fetchNotifications();
         }}
-        className="relative flex items-center justify-center rounded-lg p-2 transition-colors hover:bg-surface-muted text-text-secondary hover:text-text-primary"
+        className="relative flex h-8 w-8 items-center justify-center rounded-lg text-text-secondary transition-colors hover:bg-surface-muted hover:text-text-primary"
         aria-label="Notifications"
+        aria-expanded={open}
       >
-        <Bell className="h-5 w-5" />
+        <Bell className="h-[18px] w-[18px]" />
         {unreadCount > 0 && (
-          <span className="absolute top-0.5 right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand px-1 text-[9px] font-bold text-white shadow-sm ring-2 ring-surface">
+          <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand px-1 font-mono text-[9px] font-bold text-white ring-2 ring-surface">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-80 overflow-hidden rounded-xl border border-border-subtle bg-surface-elevated shadow-fluent-16">
-          <div className="flex items-center justify-between border-b border-border-subtle bg-surface-muted/70 px-3 py-2">
-            <span className="text-[12px] font-medium text-text-primary">Notifications</span>
+        <div className="animate-fade-up absolute right-0 top-full z-50 mt-2 w-80 overflow-hidden rounded-xl border border-border bg-surface-elevated shadow-fluent-16">
+          <div className="flex items-center justify-between border-b border-border-subtle bg-surface-muted/60 px-3.5 py-2.5">
+            <span className="text-[12px] font-semibold text-text-primary">Notifications</span>
             {unreadCount > 0 && (
               <button
+                type="button"
                 onClick={markAllRead}
-                className="text-[11px] font-medium text-brand hover:underline"
+                className="text-[11px] font-semibold text-brand hover:underline"
               >
                 Mark all read
               </button>
@@ -166,28 +176,31 @@ export function NotificationsBell() {
                 const Icon = (TYPE_ICONS[n.type] ?? Bell) as React.ElementType;
                 const actionUrl = getSafeNotificationUrl(n.actionUrl);
                 const className = cn(
-                  "flex items-start gap-2.5 border-b border-border-subtle px-3 py-2.5 last:border-0 transition-colors",
-                  !n.read ? "bg-brand-subtle/10" : "bg-transparent",
+                  "flex items-start gap-2.5 border-b border-border-subtle px-3.5 py-2.5 last:border-0 transition-colors",
+                  !n.read ? "bg-brand-subtle/35" : "bg-transparent",
                   actionUrl ? "cursor-pointer hover:bg-surface-muted" : "",
                 );
 
                 const itemContent = (
                   <>
-                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-surface text-text-secondary">
-                      <Icon className="h-4 w-4" />
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-border-subtle bg-surface text-text-secondary">
+                      <Icon className="h-3.5 w-3.5" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-[12px] font-medium text-text-primary">{n.title}</p>
+                      <p className="text-[12px] font-semibold text-text-primary">{n.title}</p>
                       <p className="mt-0.5 text-[11px] leading-relaxed text-text-muted">
                         {n.message}
                       </p>
                       {actionUrl && (
-                        <span className="mt-1 block truncate text-[11px] font-medium text-brand">
+                        <span className="mt-1 block truncate text-[11px] font-semibold text-brand">
                           View details →
                         </span>
                       )}
                     </div>
-                    <span suppressHydrationWarning className="shrink-0 text-[11px] text-text-muted">
+                    <span
+                      suppressHydrationWarning
+                      className="shrink-0 font-mono text-[10px] text-text-muted"
+                    >
                       {new Date(n.createdAt).toLocaleDateString()}
                     </span>
                   </>
@@ -209,13 +222,13 @@ export function NotificationsBell() {
                 );
               })}
           </div>
-          <div className="border-t border-border-subtle px-3 py-2 text-center">
+          <div className="border-t border-border-subtle bg-surface-muted/30 px-3 py-2 text-center">
             <Link
               href="/notifications"
               onClick={() => setOpen(false)}
-              className="text-[11px] font-medium text-brand hover:underline"
+              className="text-[11px] font-semibold text-brand hover:underline"
             >
-              View all
+              View all notifications
             </Link>
           </div>
         </div>

@@ -418,15 +418,15 @@ export function ChatClient({
               >
                 {messages.length === 0 && (
                   <div className="flex h-full flex-col items-center justify-center px-4 py-12 text-center">
-                    <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl border border-brand/15 bg-brand-subtle text-brand shadow-fluent-2">
-                      <Sparkles className="h-6 w-6" />
+                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl border border-brand/20 bg-brand-subtle text-brand">
+                      <Sparkles className="h-5 w-5" />
                     </div>
-                    <h3 className="mb-1.5 text-[17px] font-semibold text-text-primary">
-                      Ask anything about your vault
+                    <h3 className="mb-1.5 text-[18px] font-semibold tracking-tight text-text-primary">
+                      Ask anything about your archive
                     </h3>
-                    <p className="max-w-sm text-[13px] leading-relaxed text-text-muted">
-                      I can search through your documents, summaries, and extracted text, then
-                      answer with citations back to the source files.
+                    <p className="max-w-md text-[13px] leading-relaxed text-text-muted">
+                      Search across documents, AI summaries, and extracted OCR text—answered with
+                      direct citations to your files.
                     </p>
                     <div className="mt-5 flex flex-wrap justify-center gap-2">
                       {suggestions.map((suggestion) => (
@@ -437,7 +437,7 @@ export function ChatClient({
                             setInput(suggestion);
                             textareaRef.current?.focus();
                           }}
-                          className="rounded-full border border-border-subtle bg-surface px-3 py-1.5 text-[11px] font-medium text-text-secondary transition-colors hover:border-brand/40 hover:bg-brand-subtle hover:text-brand"
+                          className="rounded-full border border-border-subtle bg-surface px-3.5 py-1.5 text-[11.5px] font-medium text-text-secondary shadow-2xs transition-colors hover:border-brand/40 hover:bg-brand-subtle hover:text-brand"
                         >
                           {suggestion}
                         </button>
@@ -452,22 +452,22 @@ export function ChatClient({
                     className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
                   >
                     <div
-                      className={`max-w-[85%] rounded-xl px-4 py-3 ${
+                      className={`max-w-[85%] rounded-2xl px-4 py-3 ${
                         msg.role === "user"
-                          ? "rounded-br-sm bg-brand text-white shadow-fluent-2"
-                          : "rounded-bl-sm border border-border-subtle bg-surface-muted"
+                          ? "rounded-br-sm bg-brand text-white shadow-xs"
+                          : "rounded-bl-sm border border-border-subtle bg-surface shadow-2xs"
                       }`}
                     >
                       {msg.role === "user" ? (
-                        <p className={`text-sm whitespace-pre-wrap text-white`}>{msg.content}</p>
+                        <p className="whitespace-pre-wrap text-sm text-white">{msg.content}</p>
                       ) : (
                         <CustomMarkdown content={msg.content} />
                       )}
                       {msg.role === "assistant" &&
                         msg.referencedDocs &&
                         msg.referencedDocs.length > 0 && (
-                          <div className="mt-3 pt-2 border-t border-border-subtle/50">
-                            <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mb-1.5">
+                          <div className="mt-3 border-t border-border-subtle pt-2.5">
+                            <p className="mb-1.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-text-muted">
                               Sources
                             </p>
                             <div className="flex flex-wrap gap-1.5">
@@ -477,9 +477,9 @@ export function ChatClient({
                                   href={`/documents/${doc.id}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-surface border border-border-subtle text-text-secondary text-[11px] hover:text-brand hover:border-brand/50 transition-colors"
+                                  className="inline-flex items-center gap-1 rounded-md border border-border-subtle bg-surface-muted px-2 py-1 text-[11px] text-text-secondary transition-colors hover:border-brand/40 hover:text-brand"
                                 >
-                                  <FileText className="w-3 h-3" />
+                                  <FileText className="h-3 w-3" />
                                   {doc.name}
                                 </Link>
                               ))}

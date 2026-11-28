@@ -1,44 +1,42 @@
 # Vaulty — AI Agent & Developer Guide
 
-> **Source of truth:** This guide and the companion documents in `.agents/` describe the checked-in repository, not an aspirational roadmap. Verified against the codebase and updated on 2026-11-25. Re-check code before relying on any behavior that may have changed.
+> **Source of truth:** All documentation under `.agents/` and `README.md` is derived directly from the checked-in repository (`src/`, `prisma/`, `public/`, `package.json`, `vercel.json`, `.github/`). Verify code before relying on behavior that may have changed.
 
 ## Mission
 
-Vaulty is a private personal and family information workspace for important documents, credentials, wealth records, reminders, and AI-assisted understanding. It is a Next.js application backed by PostgreSQL/Prisma, Google Drive, Auth.js, and Google Gemini.
+Vaulty is a private personal and family information workspace for Google Drive-backed documents & multi-page camera scans, zero-knowledge credentials & 2FA TOTP authenticators, multi-currency wealth ledgers & statement imports, tri-mode Markdown notes, email auto-sync, recurring reminders, and Gemini AI understanding.
 
 ---
 
-## Consolidated Documentation Index
+## Documentation Index
 
-The developer and agent documentation is organized into 8 focused, non-redundant guides:
-
-| Document                                                                              | Primary Scope & Focus Areas                                                                                                                                                     |
-| :------------------------------------------------------------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| [**`AGENTS.md`**](file:///d:/GitHub/Vaulty/.agents/AGENTS.md)                         | Central entry point, mission, non-negotiable engineering rules, repository map, and safe change workflow.                                                                       |
-| [**`PRODUCT.md`**](file:///d:/GitHub/Vaulty/.agents/PRODUCT.md)                       | Product scope, supported surfaces, implemented modules, and complete business workflows (Documents, AI, Credentials, Wealth, Statement/Email sync, Reminders, Family).          |
-| [**`ARCHITECTURE.md`**](file:///d:/GitHub/Vaulty/.agents/ARCHITECTURE.md)             | Runtime topology, data flow, external integrations (Drive, Gemini, Resend, Gmail/Outlook, Web Push), client-side envelope encryption, App Lock PIN sync, and security controls. |
-| [**`DATA_MODEL.md`**](file:///d:/GitHub/Vaulty/.agents/DATA_MODEL.md)                 | PostgreSQL data model, Prisma schema, enums, performance compound indexes, and migration guidelines.                                                                            |
-| [**`API.md`**](file:///d:/GitHub/Vaulty/.agents/API.md)                               | Exhaustive REST API reference across all routes, request/response formats, query optimization, CSRF, and cron bearer authorization.                                             |
-| [**`DEVELOPMENT.md`**](file:///d:/GitHub/Vaulty/.agents/DEVELOPMENT.md)               | Setup, environment variables, NPM scripts, background workers/cron, automated testing (36 test suites / 273 tests), manual QA checklists, and troubleshooting guide.            |
-| [**`CODING_CONVENTIONS.md`**](file:///d:/GitHub/Vaulty/.agents/CODING_CONVENTIONS.md) | Code architecture, server/client boundaries, avoiding $N+1$ queries, UI/UX visual design system, typography scale, single-primary button hierarchy, and accessibility rules.    |
-| [**`UI_DESIGN_SYSTEM.md`**](file:///d:/GitHub/Vaulty/.agents/UI_DESIGN_SYSTEM.md)     | Design tokens, CommandBar specification, FolderTreeSelect hierarchy, Note editor canvas, spacing cadence, skeletons, and accessibility patterns.                                |
+| Document                                                                                | Scope                                                                                                                                                        |
+| :-------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [**`AGENTS.md`**](file:///d:/GitHub/Vaulty/.agents/AGENTS.md)                           | Entry point, non-negotiable engineering rules, repository map, and safe change workflow                                                                      |
+| [**`PRODUCT.md`**](file:///d:/GitHub/Vaulty/.agents/PRODUCT.md)                         | App surfaces, sidebar navigation order, feature modules, and end-to-end user workflows                                                                       |
+| [**`ARCHITECTURE.md`**](file:///d:/GitHub/Vaulty/.agents/ARCHITECTURE.md)               | Next.js runtime topology, `src/proxy.ts` request gate, Google Drive, Gemini workers, Email/Push, PWA, and `@vercel/analytics`                                |
+| [**`SECURITY_AND_CRYPTO.md`**](file:///d:/GitHub/Vaulty/.agents/SECURITY_AND_CRYPTO.md) | Client-side AES-256-GCM envelope encryption, PBKDF2, offline recovery, App Lock, local PDF decryption, CSRF, and PostgreSQL rate limiting                    |
+| [**`DATA_MODEL.md`**](file:///d:/GitHub/Vaulty/.agents/DATA_MODEL.md)                   | PostgreSQL & Prisma schema (`prisma/schema.prisma`): 39 models, 16 enums, compound indexes, and migration rules                                              |
+| [**`API.md`**](file:///d:/GitHub/Vaulty/.agents/API.md)                                 | Verified REST API catalog across all route handlers under `src/app/api/`, including auth, CSRF, and cron/webhook protection                                  |
+| [**`DEVELOPMENT.md`**](file:///d:/GitHub/Vaulty/.agents/DEVELOPMENT.md)                 | Environment setup, `.env.example` keys, Yarn 4.5.3 scripts, standalone workers, Vitest/Playwright testing, and troubleshooting                               |
+| [**`CODING_CONVENTIONS.md`**](file:///d:/GitHub/Vaulty/.agents/CODING_CONVENTIONS.md)   | Server/client boundaries, $N+1$ query prevention, validation, error sanitization, and TypeScript rules                                                       |
+| [**`UI_DESIGN_SYSTEM.md`**](file:///d:/GitHub/Vaulty/.agents/UI_DESIGN_SYSTEM.md)       | Obsidian Atelier / Warm Alabaster semantic tokens, typography, primitive library, native `<dialog>` modals, breadcrumbs & skeletons, and 3D landing showcase |
 
 ---
 
 ## Non-Negotiable Engineering Rules
 
-1. **Inspect before editing:** Read the target route, its client component, domain service/helper, Prisma model, and relevant tests before modifying behavior.
-2. **Treat code as truth:** If docs disagree with source, verify source and update docs in the same change. Never copy a stale or aspirational claim forward.
-3. **Keep authorization server-side:** Hiding a button or route link is not authorization. Check ownership, direct shares, family module permissions, and credential-vault access on every protected resource operation.
-4. **Authenticate and validate at API boundaries:** Use `getCurrentUser()` or `auth()`, Zod or explicit validation (including length caps on encrypted fields), and double-submit CSRF validation on all cookie-authenticated mutations.
-5. **Respect the existing stack:** Next.js App Router (Next.js 16.4.5), TypeScript (strict mode), React 19.3.1, Yarn 4.5.3, Tailwind CSS v4, Prisma 6.3, PostgreSQL, Auth.js v5 beta, Gemini (`@google/genai`). Do not replace libraries or restructure architecture without an explicit requirement.
-6. **Use Prisma migrations for schema changes:** Add an ordered migration (`yarn prisma migrate dev`), regenerate Prisma Client, and update `DATA_MODEL.md`. Never silently rely on `db push` for production.
-7. **Preserve data ownership boundaries:** A family member's read-only access does not make them an owner. Family data is accessed through explicit owner/member routes. The user's own document library displays owned vault documents.
-8. **Do not leak secrets:** Never log OAuth tokens, credential plaintext, master passwords, recovery keys, full email bodies, or sensitive document content. Sanitized error responses must not leak storage IDs, provider errors, or internal paths.
-9. **Eliminate $N+1$ database queries:** Never loop through candidate items awaiting remote database calls for authorization checks. Scope queries via database `where` clauses and perform candidate validations in memory.
-10. **Distributed rate limiting & memory safety:** Never use in-memory `Map` counters for rate limiting; use PostgreSQL-backed `consumeSecurityAttempt` (`SecurityRateLimit`). Enforce strict memory bounds on scrypt (`maxmem: 128MB`), buffer conversions (avoid spread-operator stack limits), and ZIP takeout budgets (50MB/file, 200MB total).
-11. **Maintain UI consistency & button hierarchy:** Use shared UI primitives (`src/components/ui/`), semantic tokens, a single solid primary button per section, and accessible touch/keyboard targets (`tabIndex={0}`, Enter/Space).
-12. **Keep docs in sync:** Changes to routes, models, environment variables, integrations, scheduled jobs, security controls, or product-visible behavior require corresponding `.agents/*.md` and README updates.
+1. **Inspect before editing:** Read the target page/route, client component, lib helper, Prisma model, and tests before modifying behavior.
+2. **Treat checked-in code as truth:** Never document or build against stale assumptions; keep `.agents/*.md` and `README.md` synced when behavior, routes, schemas, or env vars change.
+3. **Enforce authorization server-side:** Never rely on hidden UI controls. Verify ownership, direct folder/document shares, family module flags (`shareDocuments`, `shareWealth`, `shareCredentials`, `shareReminders`, `shareNotes`), and credential vault access on every protected endpoint.
+4. **Authenticate and validate at API boundaries:** Enforce Auth.js sessions + `sessionVersion` checks, explicit input validation (Zod/bounds checks), and HMAC double-submit CSRF validation (`src/lib/csrf.ts`) on cookie-authenticated mutations.
+5. **Respect the existing stack:** Next.js `16.4.5` (App Router), React `19.3.1`, TypeScript strict mode, Tailwind CSS `v4`, Prisma `6.3`, PostgreSQL, Auth.js `v5` beta, `@google/genai`, Yarn `4.5.3`, and `@vercel/analytics`.
+6. **Use Prisma migrations cleanly:** Schema edits require an ordered Prisma migration and updated `DATA_MODEL.md`. Avoid unmigrated production schema drift.
+7. **Protect secrets and plaintext:** Never log OAuth tokens, master passwords, recovery keys, unencrypted credential fields, full inbound emails, or storage IDs/paths in API error payloads.
+8. **Avoid $N+1$ database queries:** Push authorization filters into Prisma `where` clauses or batch queries; do not await per-item database calls inside loops.
+9. **Use PostgreSQL-backed rate limiting:** Never store rate-limit state in in-memory `Map` instances. Use `consumeSecurityAttempt` / `userRateLimitResponse` backed by `SecurityRateLimit` (`src/lib/security-rate-limit.ts`, `src/lib/rate-limits.ts`).
+10. **Enforce strict resource bounds:** Respect ZIP takeout ceilings, `MAX_UPLOAD_SIZE`, PBKDF2 iteration bounds, and non-blocking memory conversions (`Buffer` / `Uint8Array`).
+11. **Preserve UI discipline:** Use `src/components/ui/` primitives, semantic design tokens (`globals.css`), at most one primary solid button per visual section, breadcrumb headers (`PageHeader.tsx`) paired with matching `loading.tsx` skeletons, and accessible keyboard navigation.
 
 ---
 
@@ -46,34 +44,56 @@ The developer and agent documentation is organized into 8 focused, non-redundant
 
 ```text
 src/
-  app/                 App Router pages, layouts, API route handlers
-  components/          Feature UI and shared components
-    ui/                Domain-agnostic shared primitives (Button, Modal, Card, Blade, FolderTreeSelect, CommandBar...)
-    shell/             App shell, navigation, page headers, command palette, notifications
-    notes/             Note editor (TipTap integration) and Markdown previewer
-    documents/         Document detail, upload modals, camera scanner, document lists
-    wealth/            Accounts client, ledger, transaction forms, statement imports
-    passwords/         Credential lists, vault unlocking, TOTP authenticator, QR scanner
-    reminders/         Reminders client, calendar views, recurrence modals
-    family/            Family sharing management, module permissions, member views
-  lib/                 Domain services, authorization, integrations, workers, crypto
-  types/               Shared domain and DTO interfaces
-  workers/             Standalone worker entry points (ai-worker.ts, email-worker.ts)
+  app/
+    (app)/             Authenticated App Router routes + route-level loading.tsx skeletons
+    auth/              Sign-in, sign-out, verify-request, and master-password reset pages
+    share/[token]/     Public shared document viewer
+    offline/           PWA offline fallback page
+    api/               REST API handlers, webhooks, cron triggers, and admin endpoints
+    globals.css        Tailwind v4 @theme tokens, Obsidian Dark / Alabaster Light variables, 3D animations
+    layout.tsx         Root font setup, dark-first inline theme script, providers, SiteFooter, <Analytics />
+    page.tsx           Public landing page integrating <Vault3DShowcase />
+  proxy.ts             Next.js request middleware: auth sessionVersion checks, public paths, CSRF cookie issuance
+  components/
+    app-lock/          Cross-device PIN lock overlay & context (AppLockProvider, AppLockScreen)
+    auth/              AuthShell, SignInButton(s)
+    chat/              AI Chat interface (ChatClient)
+    dashboard/         DashboardOverviewClient (responsive 3-column bento overview)
+    documents/         CameraScanModal, DocumentDetailClient, DocumentPropertiesModal, DocumentQA, ShareModal, UploadModal
+    family/            FamilyClient, FamilyCredentialsClient, FamilyModulePicker, FamilyAcceptClient
+    folders/           FoldersClient, FolderDetailClient, CreateFolderModal, FolderPropertiesModal
+    icons/             VaultLogo
+    landing/           Vault3DShowcase (4-scene interactive CSS 3D product animation)
+    notes/             NotesClient, NoteEditor (TipTap), NoteMarkdown
+    notifications/     NotificationsClient, PushNotificationSetup
+    passwords/         PasswordsClient, PasswordCard, AuthenticatorCard, PasswordForm, QRScannerModal, RecoverySetupModal
+    providers/         ThemeProvider (dark default), SessionProvider, FeedbackProvider
+    reminders/         RemindersClient, ReminderCalendarClient
+    search/            SearchClient
+    settings/          SettingsClient, MasterPasswordManager, PdfPasswordSettings
+    shared/            SharedClient (documents shared with user)
+    shell/             AppShell, Sidebar, Navbar, MobileNav, PageHeader, CommandPalette, NotificationsBell, AppFooter, SiteFooter
+    ui/                Badge, Blade, Breadcrumbs, Button, Card, CommandBar, DocumentViewer, Dropdown, FolderTreeSelect, Modal (<dialog>), Skeleton, StatCard, Tabs, etc.
+    wealth/            AccountCard, AccountList, AccountFormModal, TransactionList, TransactionFormModal, MergeAccountModal, BulkDeleteAccountModal, WealthBreakdownChart, WealthSummaryCard
+  lib/                 Authz, envelope-crypto, family-crypto, key-wrap, key-recovery, totp, pdf-passwords, statement-parser, ai/, gmail/, outlook/, google-drive/, scanner/, storage/, sync/
+  types/               Shared TypeScript domain and DTO definitions
+  workers/             Standalone background runners (ai-worker.ts, email-worker.ts)
 prisma/
-  schema.prisma        PostgreSQL data model
+  schema.prisma        PostgreSQL schema (39 models, 16 enums)
   migrations/          Ordered SQL migrations
-  seed.ts              Seed script
-public/                PWA assets, brand SVGs, service worker (sw.js)
-.agents/               Consolidated AI agent and developer documentation
+public/
+  manifest.json        PWA web app manifest
+  sw.js                Service worker
+.github/workflows/     CI, CodeQL, Playwright E2E, ai-worker-cron, email-sync-cron
 ```
 
 ---
 
 ## Safe Change Workflow
 
-1. Identify all affected surfaces: page, client component, API, domain helper, Prisma model, integrations, worker, tests, docs.
-2. Read adjacent implementations and follow their established patterns.
-3. Validate all input on the server; scope database queries to the authenticated user or authorized owner.
-4. Make related database writes transactional (`prisma.$transaction`) where consistency requires it.
-5. Add or update focused unit tests; run `yarn type-check` and `yarn test`.
-6. Review `git diff` for accidental secrets, unrelated formatting, generated files, or data migrations that are not backward-safe.
+1. Inspect affected App Router pages, client components, API handlers, `src/lib/` services, Prisma models, and tests.
+2. Follow established patterns for auth, CSRF (`src/lib/csrf-client.ts` on client mutations), validation, and rate limiting.
+3. Wrap multi-table updates in `prisma.$transaction`.
+4. Ensure any new route under `src/app/(app)/` has breadcrumb configuration in `src/components/shell/PageHeader.tsx` and a matching `loading.tsx` skeleton.
+5. Update relevant `.agents/*.md` documentation and `README.md`.
+6. Run verification: `yarn type-check`, `yarn lint`, `yarn test`, and build check.

@@ -2,47 +2,32 @@ import { Skeleton } from "@/components/ui/Skeleton";
 
 export default function NotificationsLoading() {
   return (
-    <div className="space-y-6">
-      {/* PageHeader */}
-      <div className="space-y-2">
+    <div className="space-y-5">
+      <div className="space-y-1.5">
         <div className="flex items-center gap-1.5">
           <Skeleton className="h-3 w-16" />
-          <span className="text-text-muted">/</span>
+          <span className="text-text-muted/50 text-xs">/</span>
           <Skeleton className="h-3 w-24" />
         </div>
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <Skeleton className="h-9 w-9 rounded-md" />
-            <Skeleton className="h-6 w-32" />
-          </div>
-          <Skeleton className="h-8 w-28 rounded-lg" />
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-9 w-9 rounded-lg" />
+          <Skeleton className="h-7 w-40" />
         </div>
       </div>
 
-      {/* Push Notification Setup banner placeholder */}
-      <div className="rounded-xl border border-border-subtle bg-surface-muted/30 p-4">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <Skeleton className="h-8 w-8 rounded-lg" />
-            <div className="space-y-1.5">
-              <Skeleton className="h-3.5 w-40" />
-              <Skeleton className="h-3 w-64 max-w-full" />
-            </div>
-          </div>
-          <Skeleton className="h-8 w-24 rounded-lg" />
-        </div>
+      <Skeleton className="h-14 w-full rounded-xl" />
+
+      <div className="flex items-center justify-between">
+        <Skeleton className="h-3.5 w-44" />
+        <Skeleton className="h-7 w-28 rounded-lg" />
       </div>
 
-      {/* Notification items list */}
-      <div className="divide-y divide-border-subtle rounded-xl border border-border-subtle bg-surface">
+      <div className="card divide-y divide-border-subtle overflow-hidden p-0">
         {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="flex items-start gap-3 p-4">
-            <Skeleton className="h-7 w-7 rounded-md shrink-0" />
-            <div className="flex-1 space-y-2 py-0.5">
-              <div className="flex items-center gap-2">
-                <Skeleton className="h-3.5 w-48" />
-                <Skeleton className="h-2 w-2 rounded-full" />
-              </div>
+          <div key={i} className="flex items-start gap-3.5 px-4 py-3.5">
+            <Skeleton className="h-8 w-8 shrink-0 rounded-lg" />
+            <div className="flex-1 space-y-1.5">
+              <Skeleton className="h-3.5 w-48" />
               <Skeleton className="h-3 w-full max-w-md" />
             </div>
             <Skeleton className="h-3 w-16 shrink-0" />

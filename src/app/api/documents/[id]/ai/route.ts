@@ -6,6 +6,8 @@ import { ensureAiJobAndProcessing } from "@/lib/ai/job-service";
 import { GEMINI_MODEL } from "@/lib/gemini";
 import { timeoutStaleAiProcessing } from "@/lib/ai-timeout";
 import { validateCSRFRequest } from "@/lib/csrf";
+import { userRateLimitResponse } from "@/lib/security-rate-limit";
+import { RATE_LIMITS } from "@/lib/rate-limits";
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -17,6 +19,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     if (!validateCSRFRequest(req)) {
       return NextResponse.json({ error: "Invalid CSRF token." }, { status: 403 });
     }
+
+    const rateLimited = await userRateLimitResponse({
+      userId: user.id,
+      ...RATE_LIMITS.documentsAi,
+    });
+    if (rateLimited) return rateLimited;
 
     const { id } = await params;
     const access = await checkDocumentAccess(user.id, id);
